@@ -23,6 +23,12 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-30
 
+### Autorizzazione alla PR delle correzioni OpenCode e della vista Markdown
+
+**Decisione del manager:** autorizzati push del branch `fix/opencode-first-run-terminal` e apertura di una PR esclusivamente su `rosariomoscato/cubefarm`, verso il `main` del fork, per la CI su Ubuntu, Windows e macOS. Nessun merge o rilascio npm autorizzato.
+
+**Contenuto:** correzioni del commit `fa4e3fa` (cartella iniziale del CEO e risposta persistente del terminale), presentazione e conservazione del risultato Markdown del commit `232931d`. Il manager ha confermato la visualizzazione corretta anche dopo il riavvio. Verifiche locali: 148 test su 12 file, build e TypeScript superati; CI remota delle nuove modifiche ancora da verificare. Le restrizioni di pubblicazione nelle sezioni sottostanti descrivono gli stati precedenti.
+
 ### Analisi reale verificata e risultato Markdown separato dal terminale
 
 **Stato:** seguito locale sul branch `fix/opencode-first-run-terminal`, dopo il commit `fa4e3fa`; nessun push, PR o merge di queste correzioni. Il manager ha verificato manualmente il catalogo OpenCode dopo il riavvio e la permanenza della risposta del CEO dopo il completamento e il cambio scheda. La prova successiva di analisi è stata autorizzata separatamente.
