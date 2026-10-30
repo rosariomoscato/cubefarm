@@ -2,9 +2,52 @@
 
 A cartoon 3D office where a team of AI coding agents works through your GitHub issues. You walk the floors, look over their shoulders and watch their pull requests get tested and merged.
 
-Every agent is a real coding agent, **Claude Code, Codex or OpenCode**, running in a terminal of its own on your machine with your logins, settings, skills and MCP servers. Run the whole team on one, or give each agent its own. The office hands out the work, has every pull request reviewed and tested in a real browser, and merges what passes.
+Every agent is a real coding agent, **Claude Code, Codex or OpenCode V2**, running in a terminal of its own on your machine with your logins, settings, skills and MCP servers. Run the whole team on one, or give each agent its own. The office hands out the work, has every pull request reviewed and tested in a real browser, and merges what passes.
+
+## About this fork
+
+This is [Rosario Moscato's fork](https://github.com/rosariomoscato/cubefarm) of [leonvanzyl/cubefarm](https://github.com/leonvanzyl/cubefarm). It adds:
+
+- **OpenCode V2 for the CEO and team**, including version checks, private per-agent servers, MCP integration and session completion callbacks.
+- **Live model and reasoning-variant selection**, with searchable models from your OpenCode setup and changes applied to resumed chats.
+- **Manual read-only analysis**, without an issue or PR workflow, and **optional CEO onboarding** when connecting a project.
+- **Roomba pathfinding optimizations**, reducing collision checks and temporary heap allocations.
+
+Dates, descriptions, validation results and integration status are tracked in the [fork changelog](docs/FORK_CHANGELOG.md) (in Italian). The OpenCode changes are currently on `feat/opencode-ceo`; this does not imply they are already on the fork's `main` or published on npm.
 
 ## Get started
+
+### Use this fork from source
+
+Use a checkout containing the fork changes, then install dependencies and build:
+
+```bash
+npm ci
+npm run build
+```
+
+For an isolated, no-AI demo, start the server directly. In PowerShell:
+
+```powershell
+$env:SWARM_HOME = Join-Path $env:LOCALAPPDATA 'CubeFarm-Fork-Demo'
+$env:SWARM_PORT = '4419'
+$env:SWARM_HOST = '127.0.0.1'
+$env:SWARM_PREVIEW_PORT = '9600'
+$env:SWARM_DEMO = '1'
+node --import tsx server/index.ts --demo
+```
+
+On macOS/Linux:
+
+```bash
+SWARM_HOME="$HOME/.cubefarm-fork-demo" SWARM_PORT=4419 SWARM_HOST=127.0.0.1 SWARM_PREVIEW_PORT=9600 SWARM_DEMO=1 node --import tsx server/index.ts --demo
+```
+
+Open **http://127.0.0.1:4419/**. The banner must say **DEMO MODE**; GitHub and agents are simulated. These examples keep the fork's state and ports separate from an existing installation. Choose unused ports if needed, and stop the server with `Ctrl+C` when finished. A real office needs its own dedicated `SWARM_HOME`, `SWARM_DEMO=0`, and no `--demo` flag; real AI sessions consume your provider's quota.
+
+### Original npm package
+
+The commands below refer to the original published package, **not automatically to this fork or its local changes**. Installing or updating it does not install the features on `feat/opencode-ceo`.
 
 ```bash
 npx cubefarm
@@ -17,8 +60,8 @@ That's it. cubefarm checks your machine, starts the office and opens it in your 
 - **Node.js 22 or newer**: [nodejs.org](https://nodejs.org)
 - **git**
 - **The GitHub CLI**, signed in: install it from [cli.github.com](https://cli.github.com), then run `gh auth login`
-- **Claude Code, signed in**: it comes with cubefarm, so there's nothing to install. Run `npx cubefarm login` once to sign in with your Claude subscription. It's the default coding agent. In Real terminals, the CEO can use OpenCode 2 instead (CEO tab → Coding agent).
-- **Codex or OpenCode 2** (optional): if you have them installed and signed in, agents can run them instead (see [Coding agents](#coding-agents)). The CEO can also use OpenCode 2 in Real terminals.
+- **A signed-in coding agent**: Claude Code is bundled and remains the default. With this fork's **Real terminals** runtime, the CEO and team can use **OpenCode 2.x** instead; a Claude subscription is not required for OpenCode-only sessions. The Agent SDK runtime remains Claude-only.
+- **OpenCode 2.x**, if selected: install it separately, connect a provider in OpenCode and verify `opencode --version`. CubeFarm refuses V1, unsupported major versions and versions it cannot verify. It does not upgrade OpenCode for you. **Codex** is also optional for team members.
 - **Google Chrome**, for agents that test your app in a browser.
 
 It runs on Windows, macOS and Linux. Not sure you're ready? `npx cubefarm doctor` checks all of it.
@@ -35,7 +78,7 @@ Demo mode fakes GitHub and the agents, so it costs nothing and changes nothing.
 
 1. **Set up your company.** A short wizard asks your name, names your company and introduces your CEO.
 2. **Move in a project.** Pick one of your project folders or a GitHub repo, or start a new one. It gets its own floor. Every project needs to be on GitHub, because issues and pull requests are how the team works.
-3. **Let the CEO plan.** The CEO studies the project, writes its QA checklist and sizes the floor's team. New work only ever comes from you: give the CEO a brief (when the project moves in, or later with **Plan**) or message them, and they turn it into GitHub issues. The CEO never files issues on its own. Press `P` for your phone to chat with them and approve team changes, or meet the new agents waiting in the lobby and set them up (coding agent, model, effort) before you hire them.
+3. **Choose whether the CEO should plan.** Select the CEO's coding agent before connecting a project if you do not want its first task to use the default Claude Code. Normally the CEO studies the project, writes its QA checklist and sizes the floor's team. Turn off **Let the CEO study this repository and plan from the brief** to skip that initial AI request and plan; auto-assignment and auto-merge have separate switches. New work only ever comes from you: give the CEO a brief (when the project moves in, or later with **Plan**) or message them, and they turn it into GitHub issues. The CEO never files issues on its own. Press `P` for your phone to chat with them and approve team changes, or meet the new agents waiting in the lobby and set them up (coding agent, model, effort) before you hire them.
 4. **Watch the work.** Agents are interchangeable: a free agent picks up the next issue, builds it on a branch of its own and opens a pull request. Another agent reviews and tests it in a fresh session and a real browser, then posts a report with screenshots on the pull request. If QA fails, the author fixes it and it goes round again. With auto-merge on, a pull request merges itself once QA passes and GitHub's checks are green. Each agent works on a machine of its own (its own clone, worktree and temp folder; see [Agents](docs/agents.md)).
 
 ## Coding agents
@@ -44,7 +87,7 @@ Every agent, the CEO included, is the actual coding-agent CLI in a terminal on y
 
 | | Claude Code | Codex | OpenCode |
 | --- | --- | --- | --- |
-| Install | comes with cubefarm: `npx cubefarm login` | your own, signed in | your own, signed in |
+| Install | bundled; sign in with Claude Code | your own, signed in | your own, signed in; **2.x required** |
 | What the office sees | every step, plus cost and usage | every step, once you trust its hooks | each finished turn |
 | Status | the default; available for the CEO | experimental | experimental; V2, available for the CEO |
 
@@ -56,6 +99,22 @@ Every agent, the CEO included, is the actual coding-agent CLI in a terminal on y
 - **Cloud agents.** Optionally, agents work in an [Upstash Box](docs/cloud.md) each instead of on your computer, so they finish their task even with the office closed or your laptop shut. Connect your Upstash account in Settings → Cloud agents; your Claude subscription, API keys and GitHub are set up once for every Box.
 
 More in [How it works](docs/how-it-works.md#agents-terminals).
+
+### OpenCode V2 setup
+
+1. Select **Real terminals** in the manager's console → Settings. OpenCode is not used by the Claude Agent SDK runtime.
+2. For the **CEO**, choose **OpenCode** on the CEO tab or in its **Setup**. For the **team**, set the default coding agent in Settings or override it per member. The CEO's default is independent of the team's.
+3. Click **Browse OpenCode models**, search by name/ID or filter by provider, select a model and an optional variant, then press **Use model** to save. The **Selected** summary shows the saved choice.
+4. The effort control becomes an **OpenCode variant** selector, offering only variants supported by that model. For example, `provider/model#medium` requests its `medium` variant; manual model entry is still available.
+5. Model and variant changes apply when the **next task or a resumed idle chat starts**, not to a task already running.
+
+The inventory is project-specific and read without AI generation. Use **Refresh** to reload it. **OpenCode default** clears an override; a worker with an OpenCode office default instead inherits that office default. Each agent uses a private server (`--standalone`), leaving your shared OpenCode service's configuration separate. OpenCode is currently **local-only**, not supported in Upstash Boxes. See [the full guide](docs/agents.md#the-ceo-on-opencode).
+
+### Read-only analysis without an issue or PR
+
+Open a team member's terminal panel → **Start read-only analysis**, enter a question and press **Start analysis**. The agent reads the repository checkout and replies without a development worktree, dependency installation, PR handoff or automatic missing-PR retry. Send a follow-up to continue the analysis, or press **Clear desk** to return the agent to normal scheduling.
+
+Analysis is local-only. Its no-write/no-shell rules are **agent instructions, not a sandbox**. For a controlled first test, skip CEO onboarding, turn off auto-assignment and auto-merge, and set periodic CEO reviews to zero separately. See [Manual read-only analysis](docs/agents.md#manual-read-only-analysis).
 
 ## What's in the office
 
@@ -137,6 +196,8 @@ A gamepad works too (left stick walks, right stick looks, A uses, B goes back, X
 
 ## Updating
 
+For this fork, follow its own Git branches and the [fork changelog](docs/FORK_CHANGELOG.md), then rebuild the checkout. The npm update instructions below apply to the original published package, not to unmerged fork changes.
+
 `npx` keeps using the version it downloaded first. When a newer one is out, cubefarm tells you as it starts. To update:
 
 ```bash
@@ -156,6 +217,7 @@ Running it from a clone of this repo (`npm start`)? Then the office updates itse
 
 ## Learn more
 
+- [Fork changelog](docs/FORK_CHANGELOG.md): dated features, fixes, validation results and integration status since customization began (Italian)
 - [How it works](docs/how-it-works.md): the life of an issue, QA, auto-merge, models and usage, agents' terminals, the safety model and floor previews
 - [Agents](docs/agents.md): interchangeable agents, team sizes and the CEO's team changes, each agent's machine and how it signs in
 - [Cloud agents](docs/cloud.md): agents in Upstash Boxes that keep working while the office is closed: setup, sign-in, costs and limits
