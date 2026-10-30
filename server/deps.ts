@@ -9,6 +9,8 @@ import path from 'node:path';
 /** Named for the preview, where it started; desks share it. */
 export const INSTALL_MARKER = '.cubefarm-preview-install';
 export const INSTALL_TIMEOUT_MS = 15 * 60_000;
+/** A quiet npm process still gets a visible, bounded-frequency status message. */
+export const INSTALL_PROGRESS_MS = 60_000;
 /** Desk installs running at once, office-wide; the rest queue. */
 export const MAX_DESK_INSTALLS = 2;
 
@@ -164,7 +166,13 @@ export async function installDesk(dir: string, cb: DepsCallbacks, install: (dir:
     cb.installing();
     await deskInstalls(async () => {
       log(['$ npm ci']);
-      await install(dir);
+      const started = Date.now();
+      const progress = setInterval(() => log([`npm ci is still running (${Math.floor((Date.now() - started) / 60_000)} min elapsed; install timeout ${INSTALL_TIMEOUT_MS / 60_000} min).`]), INSTALL_PROGRESS_MS);
+      try {
+        await install(dir);
+      } finally {
+        clearInterval(progress);
+      }
     });
     await writeMarker(dir, state.hash);
     log(['Dependencies installed.']);

@@ -21,7 +21,48 @@ Questo documento raccoglie le personalizzazioni di [rosariomoscato/cubefarm](htt
 
 La data della prima modifica è ricavata dalla cronologia Git; non viene usata come attestazione della data di creazione del fork su GitHub.
 
+## 2026-10-31
+
+### Consolidamento autorizzato e prova completa su un progetto reale
+
+**Decisione del manager:** autorizzati push del branch `fix/manager-requested-refinements` e apertura di un’unica PR verso il `main` di `rosariomoscato/cubefarm`, comprendente `962ce11` (dipendenze/watchdog) e `4ac28f4` (richieste esplicite dopo QA positivo). Nessun merge o rilascio npm autorizzato. Le restrizioni di pubblicazione nelle sezioni sottostanti descrivono lo stato precedente.
+
+**Validazione manuale completata:** dopo il riavvio dell’ufficio, la richiesta di rifinitura della [PR #13 di space-monsters](https://github.com/rosariomoscato/space-monsters/pull/13) è stata accettata tramite l’API manager, marcata `managerRequested` e affidata ad Ada sulla stessa PR. Terminata la modifica, il QA è passato al round 2 con esito positivo; il controllo dello stato ha confermato il ritorno a `passed`, senza errore dell’agente e con merge automatico ancora disattivato. Il manager ha approvato la nuova anteprima e ha eseguito il merge dall’app. GitHub ha confermato il merge `21e3bdac7a18df5ba819be01f309cd791a76cdb5`. Verificato così il ciclo issue → sviluppo → QA → rifinitura richiesta dal manager → nuovo QA → approvazione visiva → merge manuale nell’app, senza modifica manuale dello stato.
+
+**Limiti conservati:** il secondo QA è stato svolto da Ada in una sessione separata; non è una revisione di un diverso autore umano. I rapporti del progetto dichiarano sette test, lint, typecheck, build e controlli desktop/320px nelle due lingue superati; i controlli remoti disponibili erano Vercel/preview, non una CI GitHub completa del progetto. Il difetto mobile preesistente dell’overlay iniziale è rimasto fuori ambito. Per CubeFarm restano i 207 test mirati su 14 file e build/TypeScript passati; le instabilità iniziali sono riportate sotto. La CI indipendente della nuova PR è ancora da verificare. Nessuna ulteriore richiesta AI a CEO o agenti per questo consolidamento documentale e pubblicazione.
+
+### Richieste esplicite del manager dopo un QA positivo
+
+**Stato:** modifiche sul branch locale `fix/manager-requested-refinements`, che include anche la correzione dipendenze/watchdog `962ce11` ancora non integrata nel main. Nessun push o merge autorizzato per questo seguito. Preparazione della correzione autorizzata dal manager; nessun nuovo incarico AI avviato per applicare la rifinitura.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Richiedi modifiche dopo QA | Flusso | Nel Kanban, una PR pronta al merge offre il comando EN/IT «Request changes / Richiedi modifiche». Il dialogo richiede una nota (massimo 1.000 caratteri) e avverte dell’avvio di lavoro AI. Il percorso manager può rinviare una PR con stato `passed`; i tool di triage del CEO mantengono le restrizioni precedenti. Restano i rifiuti per PR chiuse/mergeate, sconosciute, in QA o già in correzione. |
+| Richiesta distinta da un fallimento QA | Tracciamento | Il motivo `manager` identifica il lavoro aggiuntivo senza sostituire riepilogo, controlli, link al rapporto o SHA del precedente QA. Lo stato interno `failed` è riutilizzato esclusivamente come coda sviluppatore, non come nuovo verdetto; scheda e badge distinguono le modifiche richieste dal manager. Le istruzioni al developer, al QA successivo e alla ripresa dopo riavvio non dichiarano che il precedente QA sia fallito. |
+| Nuovi commit e nuovo QA | Verifica | La richiesta conserva separatamente l’head corrente (`requestedSha`). Un semplice rerun di controlli o l’assenza di nuovi commit non soddisfa una richiesta di rifinitura. Dopo il push il lavoro torna al QA, non direttamente al merge, anche se il vecchio commit aveva superato tutti i controlli. Il retest esplicito non consuma il budget dei round richiesti dal QA. Anche il recupero dei vecchi budget non considera sufficiente un pass storico per una richiesta ancora pendente. |
+| Test e build | Verifica | Gruppo finale: **207 test passati su 14 file**, incluse convalida del rinvio, conservazione del motivo manager nei successivi rinvii, esiti delle correzioni, prompt QA, recupero al riavvio, proprietà delle PR, merge gate, watchdog, dipendenze, schede, i18n, analisi e CEO. Build e TypeScript superati, soglie invariate. Verifica manuale del nuovo comando e del ciclo completo manager → developer → nuovo QA ancora da eseguire dopo il riavvio. |
+
+**Contesto della richiesta:** la PR di prova aveva superato QA, ma il manager preferisce tre celle di punteggio allineate all’HUD anziché una riga discorsiva. I criteri completi sono stati pubblicati sulla stessa PR. I tentativi di rinvio con il server precedente sono stati rifiutati dalla convalida (nota troppo lunga, poi stato `passed` non ammesso), senza nuovi incarichi. Nessuna manipolazione manuale dello stato dell’ufficio per aggirare la regola.
+
+**Limiti delle verifiche:** il primo gruppo esteso ha avuto timeout ed errori `ENOENT` nello stato temporaneo dei test. Un successivo run analisi/CEO ha rilevato un salvataggio lingua inatteso; il test isolato è passato. Un checkout temporaneo del precedente main e il branch corrente hanno poi entrambi superato i due file, e il gruppo finale completo è passato. Non è dimostrata la causa dell’instabilità; gli esiti iniziali non vengono cancellati dal risultato finale. Il checkout diagnostico temporaneo e il suo collegamento alle dipendenze sono stati rimossi senza toccare le dipendenze originali. Restano i consueti avvisi di build sui bundle e su Rapier.
+
+**Prova installazione precedente:** l’installazione reale isolata, senza avvio di Ada, è infine riuscita in 408 secondi e ha scritto il marker coerente con package e lockfile. Il successivo incarico sulla prima issue è partito; questo non garantisce prestazioni future del registry. Il workflow della vecchia factory resta disabilitato e il merge automatico del progetto resta spento.
+
 ## 2026-10-30
+
+### Preparazione dipendenze: watchdog coordinato e attesa visibile
+
+**Stato:** correzione sul nuovo branch locale `fix/dependency-install-watchdog`, non integrata nel `main` e non pubblicata. Indagine e sviluppo autorizzati dal manager senza nuove richieste AI, riavvio dell’ufficio o riassegnazione automatica dell’issue di prova.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Timeout coordinati per fase | Correzione | Il watchdog distingue una preparazione Git bloccata dall’installazione dipendenze in attesa o in esecuzione. Quando il runtime segnala `Installing dependencies`, l’installatore mantiene la responsabilità del proprio timeout; il watchdog non rimette il lavoro in coda dopo i primi 10 minuti. Invariati il timeout locale npm di 15 minuti, il limite delle installazioni simultanee e i controlli sugli altri stati. Il segnale è del runtime, non persistito nello stato dell’agente. |
+| Installazione meno silenziosa | Diagnostica | Ogni minuto di esecuzione locale di npm, il log riceve un avviso con il tempo trascorso e il timeout. Il messaggio è generato dall’ufficio, non inoltra output npm potenzialmente sensibile e non pretende di attestare progresso dei download. Il timer viene rimosso sia al successo sia al fallimento; l’attesa in coda non è conteggiata come esecuzione npm. Le note di preparazione sono riportate anche nel terminale già esistente dell’agente. |
+| Regressioni isolate | Verifica | 71 test passati su otto file: watchdog, dipendenze, nuova integrazione installazione/watchdog, analisi, CEO, terminale, OpenCode runner e macchine cloud. Le sessioni simulate dimostrano che il lavoro resta in preparazione oltre 10 minuti durante l’installazione e parte una sola volta dopo la sua conclusione, sia in caso di successo sia di fallimento. Confermati gli invariati controlli sulle preparazioni senza installazione e sulle sessioni silenziose, e la pulizia dei timer di avanzamento. Build e TypeScript superati; nessuna modifica alle soglie dei test. |
+
+**Causa osservata nella prima issue reale:** preparazione rimessa in coda dal watchdog a 10 minuti; successivo timeout di npm a 15 minuti, senza marker di installazione completata. Nel log npm sono presenti numerosi fetch mancanti dalla cache con tempi da circa due minuti fino a oltre 14 minuti e un tentativo `ECONNRESET`. Non risultavano nuove esecuzioni della precedente factory; l’issue era priva dell’etichetta `ready` che ne attivava il dispatch. Il workflow di collegamento è stato poi disabilitato su autorizzazione esplicita, senza eliminare repository o segreti.
+
+**Limiti:** un successivo `npm ping` al registry ufficiale è riuscito in circa un secondo, ma non dimostra che i download siano tornati veloci né separa gli effetti di rete, cache, disco o carico locale. Nessuna nuova installazione reale, cambio di registry/proxy, pulizia cache o modifica antivirus effettuati. Il problema ambientale dei download lenti non è dichiarato risolto. La nuova correzione server richiede un riavvio prima della prova manuale; l’issue resta da riassegnare soltanto con il manager. Restano gli avvisi preesistenti di build su bundle e import Rapier. La prima versione del nuovo test d’integrazione non isolava il ritardo simulato della preparazione macchina: corretto il mock, poi superato il gruppo completo riportato sopra.
 
 ### PR #4 integrata: correzioni OpenCode e risultati Markdown
 

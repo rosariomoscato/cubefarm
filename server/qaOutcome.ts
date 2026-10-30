@@ -39,7 +39,7 @@ export function qaOutcome(pass: boolean, rec: QaRoundRecord, pr: QaPull | null):
 /** A conflict found before QA tested the head: the head it was found on, and the fixReason of the test QA was queued for. */
 export interface PreQa {
   sha: string;
-  fixReason: 'qa' | 'checks' | 'conflict' | null;
+  fixReason: 'qa' | 'checks' | 'conflict' | 'manager' | null;
 }
 
 /**

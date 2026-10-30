@@ -44,6 +44,12 @@ After completion, the agent remains reserved for manual analysis follow-ups; **S
 
 When connecting a project, turn off **Let the CEO study this repository and plan from the brief** to skip both onboarding and the initial planning request. The brief field is then disabled. This does not disable the CEO's periodic reviews; set their interval to zero separately if desired. Automatic issue assignment and automatic merge can both be disabled before connection. Existing callers retain onboarding and automatic merge unless they explicitly send `onboardCeo: false` and `autoMerge: false`.
 
+## Manager refinements after QA passed
+
+In Kanban → **Ready to merge**, choose **Request changes** to send an open, QA-passed PR back to its author or a free agent. A nonblank note (at most 1,000 characters) is required. Confirming starts agent work and may consume AI quota, even when automatic issue assignment is off. It updates the same PR; it does not enable automatic merge.
+
+The prior successful QA report, checks and tested/passed commit remain recorded. The pending task is marked as **manager-requested changes**, not a new failed QA verdict. The developer must push a new commit, and a fresh QA round must review the changes before the PR is ready again. The CEO's triage tools cannot reopen a successful review this way. PRs that are closed, merged, untracked, queued for QA, being tested or already being fixed are refused.
+
 ## Local models
 
 Codex and OpenCode agents can run on a model server on your computer instead of a subscription. Start the server, load a coding model, and give the agent (or the office default) a model named `<server>/<model>`:
