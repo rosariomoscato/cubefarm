@@ -23,6 +23,14 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-30
 
+### PR #4 integrata: correzioni OpenCode e risultati Markdown
+
+**Riferimenti e stato:** [PR #4 del fork](https://github.com/rosariomoscato/cubefarm/pull/4) integrata con conferma esplicita del manager; merge commit `acf7c0ba022ef8fcd4fd8cc50eddd3cd258b972b`. Checkout locale riportato sul `main` e aggiornato in fast-forward. I branch di lavoro sono conservati; nessuna pubblicazione npm, nessuna modifica al progetto di prova e nessuna nuova richiesta AI.
+
+**Verifiche:** revisione mirata del diff senza problemi bloccanti individuati (autovalutazione, non approvazione indipendente); [CI della PR, run 41134350240](https://github.com/rosariomoscato/cubefarm/actions/runs/41134350240), superata su Ubuntu, Windows e macOS per TypeScript, test, build e smoke test del pacchetto. Il confronto Git tra l’albero del merge e la revisione CI `1d7b153` non mostra differenze. I precedenti 148 test locali e le conferme manuali del manager restano descritti sotto; nessuna nuova esecuzione locale completa è implicata dal confronto degli alberi.
+
+**Documentazione e limiti:** questa voce aggiorna solo lo stato di integrazione. Restano validi i limiti sugli estratti delle analisi precedenti, sulla conservazione dei log e sull’assenza di sandbox. Le sezioni sottostanti che indicano branch locale, merge non autorizzato o CI in attesa sono registrazioni storiche. La CI successiva su `main` è distinta dalla CI della PR e viene monitorata separatamente.
+
 ### Autorizzazione alla PR delle correzioni OpenCode e della vista Markdown
 
 **Decisione del manager:** autorizzati push del branch `fix/opencode-first-run-terminal` e apertura di una PR esclusivamente su `rosariomoscato/cubefarm`, verso il `main` del fork, per la CI su Ubuntu, Windows e macOS. Nessun merge o rilascio npm autorizzato.
