@@ -23,6 +23,21 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-30
 
+### Integrazione EN/IT nel main del fork e verifica successiva
+
+**Riferimenti e stato:** [PR #3 del fork](https://github.com/rosariomoscato/cubefarm/pull/3), integrata con autorizzazione esplicita del manager; merge commit `2a5200de7ebb63b639c0dcfb6cb028659c74dd99`. Checkout locale aggiornato in fast-forward sul `main` del fork. Nessuna cancellazione del branch di lavoro, nessun aggiornamento dell’installazione globale e nessuna pubblicazione npm.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| CI indipendente superata | Verifica | [Run 41084777570](https://github.com/rosariomoscato/cubefarm/actions/runs/41084777570) sulla revisione `fa9d3e2`: 230 file superati su ogni sistema. Windows: 2.536 test passati; Ubuntu/macOS: 2.534 passati e 2 test riservati a Windows saltati. TypeScript, build e smoke test demo del pacchetto superati su tutti e tre i sistemi, inclusa la soglia invariata degli 8 ms. |
+| Revisione finale e merge | Integrazione | Revisione mirata senza blocchi individuati, uscita dalla bozza e successiva autorizzazione separata al merge. Nessuna modifica al pathfinding o alle soglie dei test. |
+| Verifica del main integrato | Verifica | Confronto Git senza differenze tra l’albero del merge e la revisione passata in CI; nuova build/TypeScript e 129 test mirati su 12 file superati. |
+| Nuova demo isolata | Verifica | Controllati cambio EN/IT, preferenza italiana dopo reload, navigazione Pocket, dettatura simulata che conserva la bozza senza invio automatico, interruzione con Esc e risposta italiana del CEO demo. Nessun errore console rilevato; demo e scheda diagnostica arrestate al termine. Nessuna cattura del microfono o richiesta AI/ElevenLabs reale da parte dell’agente. |
+
+**Limiti conservati:** la localizzazione è iniziale e non integrale. La dettatura hardware in Chrome è stata verificata dall’utente; il controllo browser successivo al merge usa riconoscimento simulato. Il risultato positivo della CI non cancella i fallimenti prestazionali locali né dimostra che il solo piano energetico fosse la causa. Le sezioni precedenti/sottostanti mantengono gli stati storici di bozza, sospensione e indagine.
+
+**Aggiornamento documentale:** README e report allineati allo stato integrato, senza ulteriori cambiamenti al codice applicativo. La CI sul `main` documentale, quando disponibile, è separata dal run della PR riportato sopra.
+
 ### PR in bozza per verifica CI indipendente
 
 **Decisione del manager:** autorizzati il push di `feat/english-italian` e l’apertura di una **PR in bozza esclusivamente su `rosariomoscato/cubefarm`**, per eseguire la CI su runner separati. Nessun merge o rilascio autorizzato. Le precedenti note di sospensione del push descrivono lo stato storico prima di questa decisione.

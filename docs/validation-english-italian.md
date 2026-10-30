@@ -2,7 +2,17 @@
 
 Date: 2026-10-30. Product commit: `3d438ce`, branch `feat/english-italian`, based on fork `main` at `7c9c148`.
 
-Publication update: after the investigation and unsuccessful low-load readiness checks, the manager authorized a **draft PR on the fork for CI verification**. This changes the publication decision, not the measured local result below. No merge is authorized and no fully green local suite is claimed.
+Integration update: [fork PR #3](https://github.com/rosariomoscato/cubefarm/pull/3) was first opened as a draft for independent CI, then moved to review after a targeted self-review. The manager separately authorized its merge into the fork's `main`: commit `2a5200de7ebb63b639c0dcfb6cb028659c74dd99`. This changes integration status, not the measured local result below. No fully green local suite is claimed, and no global-install update or npm publication was performed.
+
+## Independent CI and post-merge verification
+
+[CI run 41084777570](https://github.com/rosariomoscato/cubefarm/actions/runs/41084777570) passed on `fa9d3e272dbdf34a130c3f1df8ecdc16d10d702a`, with the existing Node 24 workflow and unchanged thresholds:
+
+- Windows: **230 files, 2,536 tests passed**.
+- Ubuntu and macOS: **230 files passed, 2,534 tests passed and 2 existing Windows-only tests skipped** on each.
+- All 17 walkways tests, TypeScript, build and demo package smoke test passed on every runner.
+
+The local checkout was fast-forwarded to fork `main`. Its merge tree had no differences from the tested PR head. A fresh production build/TypeScript check and the **129-test, 12-file targeted regression group** passed again on the merged code. A new demo with separate state and ports verified EN/IT switching, saved Italian preference after reload, Pocket labels, simulated dictation preserving a draft without automatic sending, Esc cancellation and an Italian scripted CEO reply. No browser console errors were observed. The demo and browser tab were stopped afterwards; no live provider request or agent microphone capture was performed.
 
 ## Complete execution in groups
 
@@ -46,4 +56,4 @@ That baseline also failed the same assertion, measuring **8.913 ms** against the
 - The manager confirmed normal Italian dictation, draft preservation and cancellation with Esc in Chrome. Their Brave installation did not transcribe. Browser automation separately verified startup timeout feedback, preserved drafts and successful retry using fake recognition only.
 - No real AI/ElevenLabs requests, microphone capture by the coding agent, global installation changes or changes to the manager's demo were needed.
 - The earlier monolithic final attempt hit the external 20-minute command limit; the grouped execution above resolves the coverage uncertainty, but not the remaining performance failure.
-- At the time of this grouped local validation, push and PR creation were held back because validation was **not fully green**. The subsequent draft-PR authorization is recorded above; nothing was merged or published to npm.
+- At the time of this grouped local validation, push and PR creation were held back because validation was **not fully green**. The subsequent draft-PR, independent CI and separately authorized merge are recorded above; nothing was published to npm.

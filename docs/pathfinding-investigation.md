@@ -2,7 +2,7 @@
 
 Date: 2026-10-30. Feature branch: `feat/english-italian` (`353fe8e`, product changes in `3d438ce`). Baseline: fork `origin/main`, `7c9c148`.
 
-Publication update: the manager subsequently authorized publishing the branch and opening a **draft PR on the fork to run independent CI**. The PR must disclose the remaining local performance failure; no merge or threshold change is authorized. Statements about publication being on hold below describe the earlier investigation stages.
+Integration update: the manager subsequently authorized a draft PR for independent CI. [Fork PR #3](https://github.com/rosariomoscato/cubefarm/pull/3) passed [CI on Ubuntu, Windows and macOS](https://github.com/rosariomoscato/cubefarm/actions/runs/41084777570), including the unchanged 8 ms assertion, and was then moved to review. Following a separate explicit authorization it was merged into fork `main` as `2a5200de7ebb63b639c0dcfb6cb028659c74dd99`. No pathfinding or threshold change was made. Publication/merge restrictions mentioned below describe earlier stages; the local measurements and their limitations remain valid despite the successful remote run. Global installation and npm publication remain untouched.
 
 ## Conclusion
 
