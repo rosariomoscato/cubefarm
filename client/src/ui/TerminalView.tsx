@@ -6,6 +6,8 @@ import { isBusy, kanbanFor, agentsOnRepo, useStore } from '../store';
 import { AgentSetup } from './AgentSettings';
 import { confirmDialog } from './Confirm';
 import { LiveTerminal } from './LiveTerminal';
+import { AnalysisReply, TerminalDetails } from './AnalysisReply';
+import { savedAnalysisReply } from './savedAnalysisReply';
 import { effectiveModel } from '../../../shared/models';
 import { assignChoices } from '../pocket/pocketData';
 import { agentLabel, signInFor, workerCli } from './floorRows';
@@ -85,6 +87,7 @@ export function TerminalView({ agentId }: { agentId: string }) {
   // Any free agent takes either: an issue from the backlog, or a pull request waiting for QA.
   const choices = assignChoices(cols);
   const chosen = choices.find((c) => c.key === pick);
+  const reply = agent?.task === 'analysis' && agent.status === 'done' ? savedAnalysisReply(log) : null;
 
   if (!agent || !repo) {
     return (
@@ -224,6 +227,8 @@ export function TerminalView({ agentId }: { agentId: string }) {
         </div>
       )}
 
+      {reply && <AnalysisReply reply={reply} />}
+      <TerminalDetails collapsed={!!reply}>
       <div className={`term-split ${agent.hasScreenshot ? 'term-split-2' : ''}`}>
         {agent.terminal ? (
           <LiveTerminal agentId={agent.id} />
@@ -253,6 +258,7 @@ export function TerminalView({ agentId }: { agentId: string }) {
           </div>
         )}
       </div>
+      </TerminalDetails>
 
       <form
         className="term-input"

@@ -6,6 +6,9 @@ export const languageOf = (value: unknown): Language => value === 'it' ? 'it' : 
 export const languageTag = (value: unknown) => languageOf(value) === 'it' ? 'it-IT' : 'en-US';
 
 export const italian: Readonly<Record<string, string>> = {
+  'Analysis result': 'Risultato dell’analisi',
+  'Terminal and technical log': 'Terminale e log tecnico',
+  'Saved log excerpt: older analyses did not store the full Markdown. The original output remains in the terminal.': 'Estratto del log salvato: le analisi precedenti non conservavano il Markdown completo. L’output originale resta nel terminale.',
   '🎧 Listening in a moment…': '🎧 Ascolto tra un istante…',
   'Turning your words into text…': 'Trascrizione in corso…',
   'Starting the mic…': 'Avvio del microfono…',

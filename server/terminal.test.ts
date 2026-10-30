@@ -27,4 +27,38 @@ describe('AgentTerminal', () => {
     expect(t.live).toBe(false);
     t.dispose();
   });
+
+  it('retains a closed full-screen reply across shrinking and reconnecting', async () => {
+    const t = new AgentTerminal();
+    const again = new AgentTerminal();
+    try {
+      t.resize(79, 17);
+      t.write('\x1b[?1049h\x1b[HReply in the first row\x1b[17;1HWaiting');
+      await t.flush();
+      t.retainReply('Risposta finale salvata.\nNessun progetto collegato.');
+      await t.flush();
+      t.resize(35, 16);
+      expect(t.screen()).toContain('Risposta finale salvata.');
+      expect(t.screen()).toContain('Nessun progetto collegato.');
+      again.resize(t.cols, t.rows);
+      again.write(t.snapshot());
+      await again.flush();
+      expect(again.screen()).toContain('Risposta finale salvata.');
+      expect(again.screen()).toContain('Nessun progetto collegato.');
+    } finally {
+      t.dispose();
+      again.dispose();
+    }
+  });
+
+  it('does not interpret control sequences in a retained reply', async () => {
+    const t = new AgentTerminal();
+    try {
+      t.retainReply('Keep this\x1b[2J\x1b[H and this');
+      await t.flush();
+      expect(t.screen()).toContain('Keep this and this');
+    } finally {
+      t.dispose();
+    }
+  });
 });

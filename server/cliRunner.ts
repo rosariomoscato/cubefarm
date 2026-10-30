@@ -572,7 +572,10 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
       if (l && lives.get(term) === l) {
         l.session = null;
         if (keep && opts.keepAlive && l.proc) waitAtPrompt(l);
-        else endLive(l);
+        else {
+          void endLive(l);
+          if (cli === 'opencode' && r.text) term.retainReply(r.text);
+        }
       }
       cb.tool(null);
       cb.finished({ ...r, costUsd, turns });

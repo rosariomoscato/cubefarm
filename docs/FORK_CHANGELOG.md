@@ -23,6 +23,41 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-30
 
+### Autorizzazione alla PR delle correzioni OpenCode e della vista Markdown
+
+**Decisione del manager:** autorizzati push del branch `fix/opencode-first-run-terminal` e apertura di una PR esclusivamente su `rosariomoscato/cubefarm`, verso il `main` del fork, per la CI su Ubuntu, Windows e macOS. Nessun merge o rilascio npm autorizzato.
+
+**Contenuto:** correzioni del commit `fa4e3fa` (cartella iniziale del CEO e risposta persistente del terminale), presentazione e conservazione del risultato Markdown del commit `232931d`. Il manager ha confermato la visualizzazione corretta anche dopo il riavvio. Verifiche locali: 148 test su 12 file, build e TypeScript superati; CI remota delle nuove modifiche ancora da verificare. Le restrizioni di pubblicazione nelle sezioni sottostanti descrivono gli stati precedenti.
+
+### Analisi reale verificata e risultato Markdown separato dal terminale
+
+**Stato:** seguito locale sul branch `fix/opencode-first-run-terminal`, dopo il commit `fa4e3fa`; nessun push, PR o merge di queste correzioni. Il manager ha verificato manualmente il catalogo OpenCode dopo il riavvio e la permanenza della risposta del CEO dopo il completamento e il cambio scheda. La prova successiva di analisi è stata autorizzata separatamente.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Prima analisi manuale reale | Verifica | Risposta italiana su un repository del manager con OpenCode e GPT-6.1 Terra. Al controllo successivo: checkout Git pulito; agente in stato `done`, senza errori, branch, issue o PR associati; nessuna issue/PR restituita dalla ricerca GitHub, su tutti gli stati, degli elementi aggiornati nell’intervallo della prova. Assegnazione e merge automatici ancora disattivati, revisioni del CEO a zero e coda vuota. |
+| Risultato leggibile | Interfaccia | Le analisi concluse mostrano la risposta in un riquadro Markdown, usando il renderer sicuro già presente (HTML non eseguito, protocolli pericolosi disabilitati, immagini remote non caricate). Terminale e log tecnico restano disponibili in una sezione richiudibile, montata solo quando viene aperta. Nuove etichette EN/IT. Nessuna modifica al layout dei terminali durante il lavoro o degli altri task. |
+| Risposta integrale delle nuove analisi | Persistenza | Al completamento riuscito, il Markdown completo è conservato come voce `reply` nel log persistente e distribuito tramite il watch esistente, non nei normali snapshot. Non è limitato all’anteprima tecnica di 30 righe; resta soggetto alla normale conservazione del log. La vista seleziona solo la risposta dell’ultima richiesta, senza confondere risultati degli strumenti o follow-up precedenti. |
+| Compatibilità con analisi precedenti | Interfaccia | Quando esiste solo la vecchia anteprima tecnica, questa è resa come Markdown e indicata esplicitamente come **estratto**, senza ricostruire o inventare le righe mancanti. L’output originale resta nel terminale. Nessuna nuova richiesta AI o modifica dello stato dell’ufficio per recuperarlo. |
+| Regressioni e browser | Verifica | 148 test passati in 12 file (nuova presentazione/estrazione, analisi, CEO, catalogo, terminale, runner, plugin, i18n e journal); build e TypeScript superati. Nel browser dell’ufficio esistente verificati l’estratto salvato, quattro intestazioni, una tabella, etichette italiane, terminale tecnico inizialmente smontato e successivamente apribile senza perdere il risultato. Nessuna nuova generazione AI durante sviluppo o verifica della vista. |
+
+**Limiti della verifica di sola lettura:** non era stato registrato un confronto prima/dopo della prova, quindi il checkout pulito e le tracce disponibili non escludono modifiche temporanee poi annullate o operazioni non registrate. Le regole dell’analisi sono istruzioni, non una sandbox. Il salvataggio integrale è stato verificato con sessioni simulate e lettura dello stato isolato su disco, non ripetendo l’analisi reale. Le nuove modifiche server richiedono un riavvio dell’ufficio per le analisi future; la vista client è stata verificata riutilizzando i log già disponibili. I primi tentativi paralleli di test/typecheck hanno raggiunto il timeout del comando; le verifiche successive, eseguite separatamente, sono passate. Restano gli avvisi preesistenti di build su bundle e import Rapier.
+
+### Correzioni locali: primo catalogo OpenCode e risposta del CEO nel terminale
+
+**Stato:** modifiche sul branch locale `fix/opencode-first-run-terminal`, non integrate nel `main`, non pubblicate su npm. Merge rinviato alla conclusione dei test e alla conferma del manager.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Catalogo prima del primo incarico | Correzione | La lettura dei modelli del CEO crea prima la sua cartella dedicata, in modo idempotente. OpenCode non riceve più una posizione inesistente (HTTP 404). Nessun avvio del CEO, generazione AI o creazione di checkout; le posizioni dei repository non vengono create implicitamente. |
+| Risposta finale persistente nel terminale | Correzione | Quando una sessione OpenCode viene chiusa, la risposta finale passa dallo schermo alternativo interattivo allo scrollback normale, che può riadattarsi alle dimensioni del riquadro. I caratteri di controllo della risposta sono rimossi. Le sessioni mantenute attive conservano il loro schermo interattivo. |
+| Regressioni isolate | Verifica | 30 test passati in quattro file: `ceoRuntime`, `opencodeModels`, `terminal`, `cliRunnerOpenCode`. Coperti creazione della cartella prima del catalogo, letture ripetute senza sessioni, chiusura del CEO, ridimensionamento, replay dello snapshot e rimozione dei controlli terminale. Nessuna nuova richiesta AI reale. |
+| Verifica estesa | Verifica | 91 test passati su sette file, includendo anche `cliRunner`, `clis` e `opencodePlugin`. Build di produzione e TypeScript superati; `git diff --check` senza errori. Restano gli avvisi di build già presenti sui bundle e sull’import di Rapier. Nessun nuovo run CI remoto avviato per queste correzioni. |
+
+**Diagnosi e limiti:** nel primo ufficio reale il CEO ha risposto in italiano con OpenCode e il modello scelto dal manager. La risposta è rimasta salvata nel telefono. La diagnostica senza generazione ha trovato il testo nello snapshot del terminale; un riquadro più basso può tagliare le prime righe dello schermo alternativo dopo che la CLI si è chiusa e non può più ridisegnarlo. La correzione conserva il risultato in formato testuale, non promette di mantenere intatto ogni dettaglio grafico della TUI. La verifica manuale delle correzioni sul nuovo processo resta da completare; l’ufficio già in esecuzione non è stato riavviato o modificato per applicarle.
+
+**CI precedente chiusa:** il [run su main 41088218071](https://github.com/rosariomoscato/cubefarm/actions/runs/41088218071), commit `e6c17c9`, è infine passato su Ubuntu, Windows e macOS. I primi due tentativi macOS non avevano ottenuto un runner hosted per limiti di capacità ARM64; il tentativo successivo ha eseguito tutti i passaggi con successo, senza modifiche a codice, workflow, soglie o timeout. Questo esito riguarda il main precedente, non le nuove correzioni locali.
+
 ### Integrazione EN/IT nel main del fork e verifica successiva
 
 **Riferimenti e stato:** [PR #3 del fork](https://github.com/rosariomoscato/cubefarm/pull/3), integrata con autorizzazione esplicita del manager; merge commit `2a5200de7ebb63b639c0dcfb6cb028659c74dd99`. Checkout locale aggiornato in fast-forward sul `main` del fork. Nessuna cancellazione del branch di lavoro, nessun aggiornamento dell’installazione globale e nessuna pubblicazione npm.

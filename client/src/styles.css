@@ -2690,6 +2690,17 @@ input.inline:focus {
   flex: none;
 }
 
+.analysis-reply {
+  margin-bottom: 12px;
+}
+.analysis-terminal {
+  min-width: 0;
+}
+.analysis-terminal > summary {
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
 /* ui/AgentSettings.tsx: the ⚙️ Setup section of an agent's panel */
 .setup-toggle {
   flex: none;
