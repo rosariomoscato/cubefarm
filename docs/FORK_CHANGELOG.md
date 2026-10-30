@@ -23,6 +23,14 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### Consolidamento autorizzato e prova completa su un progetto reale
+
+**Decisione del manager:** autorizzati push del branch `fix/manager-requested-refinements` e apertura di un’unica PR verso il `main` di `rosariomoscato/cubefarm`, comprendente `962ce11` (dipendenze/watchdog) e `4ac28f4` (richieste esplicite dopo QA positivo). Nessun merge o rilascio npm autorizzato. Le restrizioni di pubblicazione nelle sezioni sottostanti descrivono lo stato precedente.
+
+**Validazione manuale completata:** dopo il riavvio dell’ufficio, la richiesta di rifinitura della [PR #13 di space-monsters](https://github.com/rosariomoscato/space-monsters/pull/13) è stata accettata tramite l’API manager, marcata `managerRequested` e affidata ad Ada sulla stessa PR. Terminata la modifica, il QA è passato al round 2 con esito positivo; il controllo dello stato ha confermato il ritorno a `passed`, senza errore dell’agente e con merge automatico ancora disattivato. Il manager ha approvato la nuova anteprima e ha eseguito il merge dall’app. GitHub ha confermato il merge `21e3bdac7a18df5ba819be01f309cd791a76cdb5`. Verificato così il ciclo issue → sviluppo → QA → rifinitura richiesta dal manager → nuovo QA → approvazione visiva → merge manuale nell’app, senza modifica manuale dello stato.
+
+**Limiti conservati:** il secondo QA è stato svolto da Ada in una sessione separata; non è una revisione di un diverso autore umano. I rapporti del progetto dichiarano sette test, lint, typecheck, build e controlli desktop/320px nelle due lingue superati; i controlli remoti disponibili erano Vercel/preview, non una CI GitHub completa del progetto. Il difetto mobile preesistente dell’overlay iniziale è rimasto fuori ambito. Per CubeFarm restano i 207 test mirati su 14 file e build/TypeScript passati; le instabilità iniziali sono riportate sotto. La CI indipendente della nuova PR è ancora da verificare. Nessuna ulteriore richiesta AI a CEO o agenti per questo consolidamento documentale e pubblicazione.
+
 ### Richieste esplicite del manager dopo un QA positivo
 
 **Stato:** modifiche sul branch locale `fix/manager-requested-refinements`, che include anche la correzione dipendenze/watchdog `962ce11` ancora non integrata nel main. Nessun push o merge autorizzato per questo seguito. Preparazione della correzione autorizzata dal manager; nessun nuovo incarico AI avviato per applicare la rifinitura.
