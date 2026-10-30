@@ -23,6 +23,20 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-30
 
+### Verifica completa EN/IT suddivisa in gruppi
+
+**Riferimento:** commit funzionale `3d438ce`, branch `feat/english-italian`, confronto con `main` del fork a `7c9c148`.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Copertura dell’intera suite | Verifica | Eseguiti tutti i 230 file di test in quattro gruppi, confrontando i report JSON con l’inventario Git: nessuna omissione o duplicazione. Risultato: 2.535 test passati e 1 fallito su 2.536. Workspace (44 test) e scala superati senza allentare soglie o timeout. |
+| Confronto del fallimento prestazionale | Diagnosi | Il budget di 8 ms del percorso fallisce anche in un worktree pulito del `main` del fork: circa 8,913 ms, contro 13,469 ms nel file eseguito da solo sul branch. Nessuna modifica ai file coinvolti; non si dichiara comunque verde la suite del branch. |
+| Dettatura verificata dall’utente | Verifica manuale | Confermati in Chrome dettatura normale, conservazione della bozza e interruzione con Esc, senza necessità di inviare messaggi. |
+
+**Stato:** push e apertura PR sospesi perché rimane un test prestazionale fallito, riprodotto anche sulla baseline. Nessun merge, pubblicazione npm, richiesta AI reale o modifica all’installazione globale. Worktree diagnostico separato; nessun cambiamento al codice applicativo durante questa verifica. Comandi, conteggi e limiti in `docs/validation-english-italian.md`.
+
+Questa esecuzione completa per gruppi sostituisce l’incertezza sulla copertura della precedente prova interrotta, non ne cancella la cronologia né risolve il budget prestazionale.
+
 ### Rifinitura della dettatura e compatibilità dei browser
 
 | Feature | Tipo | Breve descrizione |
