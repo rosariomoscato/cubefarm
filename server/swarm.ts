@@ -1416,7 +1416,11 @@ export class Swarm {
     let directory = process.cwd();
     if (agentId) {
       const a = this.agent(agentId);
-      directory = a.role === 'ceo' ? CEO_DIR : this.backend.mainDir(this.repo(a.repoId).fullName);
+      if (a.role === 'ceo') {
+        // OpenCode resolves the location before listing models, even before the CEO's first task.
+        return fs.mkdir(CEO_DIR, { recursive: true }).then(() => this.backend.openCodeModels(CEO_DIR, refresh));
+      }
+      directory = this.backend.mainDir(this.repo(a.repoId).fullName);
     } else if (repoId) directory = this.backend.mainDir(this.repo(repoId).fullName);
     return this.backend.openCodeModels(directory, refresh);
   }

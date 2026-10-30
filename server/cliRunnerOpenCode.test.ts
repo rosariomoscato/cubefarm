@@ -24,6 +24,31 @@ afterEach(() => {
 });
 
 describe('OpenCode failed turns', () => {
+  it('keeps the completed reply readable after closing a full-screen CEO terminal', async () => {
+    vi.useFakeTimers();
+    spawn.mockImplementation(() => {
+      const exits: ((code: number) => void)[] = [];
+      return { write: () => undefined, resize: () => undefined, onData: () => undefined,
+        onExit: (cb: (code: number) => void) => exits.push(cb), setMeta: () => undefined,
+        kill: () => exits.forEach((cb) => cb(0)) };
+    });
+    const term = new AgentTerminal();
+    const retained = vi.spyOn(term, 'retainReply');
+    const finished = vi.fn();
+    startCliSession({
+      cwd: process.env.SWARM_HOME!, prompt: 'Hello', systemAppend: '', model: '', effort: 'medium',
+      browserTesting: false, additionalDirectories: [], role: 'ceo', cli: 'opencode', terminal: term,
+    }, { log: () => undefined, tool: () => undefined, sessionId: () => undefined,
+      browserUrl: () => undefined, screenshot: () => undefined, finished });
+    await vi.advanceTimersByTimeAsync(0);
+    term.write('\x1b[?1049h\x1b[HTransient reply');
+    handleHook(spawn.mock.calls[0][3].token, { hook_event_name: 'TurnComplete', last_assistant_message: 'Persistent reply' });
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(retained).toHaveBeenCalledExactlyOnceWith('Persistent reply');
+    expect(term.live).toBe(false);
+    expect(finished).toHaveBeenCalledWith(expect.objectContaining({ ok: true, text: 'Persistent reply' }));
+    term.dispose();
+  });
   it('restarts an idle OpenCode CLI when its model or variant changes, preserving the resume ID', async () => {
     vi.useFakeTimers();
     spawn.mockImplementation(() => {
@@ -33,6 +58,7 @@ describe('OpenCode failed turns', () => {
         kill: () => exits.forEach((cb) => cb(0)) };
     });
     const term = new AgentTerminal();
+    const retained = vi.spyOn(term, 'retainReply');
     const finished = vi.fn();
     const opts = {
       cwd: process.env.SWARM_HOME!, prompt: 'Hello', systemAppend: '', model: 'openai/model#xhigh', effort: 'medium' as const,
@@ -45,6 +71,7 @@ describe('OpenCode failed turns', () => {
     handleHook(spawn.mock.calls[0][3].token, { hook_event_name: 'TurnComplete', session_id: 'ses_existing', last_assistant_message: 'Done' });
     await vi.advanceTimersByTimeAsync(3000);
     expect(finished).toHaveBeenCalledTimes(1);
+    expect(retained).not.toHaveBeenCalled(); // an idle CLI is still live and must keep its interactive screen
     const next = startCliSession({ ...opts, model: 'openai/other#medium', resumeSessionId: 'ses_existing' }, callbacks);
     await vi.advanceTimersByTimeAsync(0);
     expect(spawn).toHaveBeenCalledTimes(2);

@@ -23,6 +23,21 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-30
 
+### Correzioni locali: primo catalogo OpenCode e risposta del CEO nel terminale
+
+**Stato:** modifiche sul branch locale `fix/opencode-first-run-terminal`, non integrate nel `main`, non pubblicate su npm. Merge rinviato alla conclusione dei test e alla conferma del manager.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Catalogo prima del primo incarico | Correzione | La lettura dei modelli del CEO crea prima la sua cartella dedicata, in modo idempotente. OpenCode non riceve più una posizione inesistente (HTTP 404). Nessun avvio del CEO, generazione AI o creazione di checkout; le posizioni dei repository non vengono create implicitamente. |
+| Risposta finale persistente nel terminale | Correzione | Quando una sessione OpenCode viene chiusa, la risposta finale passa dallo schermo alternativo interattivo allo scrollback normale, che può riadattarsi alle dimensioni del riquadro. I caratteri di controllo della risposta sono rimossi. Le sessioni mantenute attive conservano il loro schermo interattivo. |
+| Regressioni isolate | Verifica | 30 test passati in quattro file: `ceoRuntime`, `opencodeModels`, `terminal`, `cliRunnerOpenCode`. Coperti creazione della cartella prima del catalogo, letture ripetute senza sessioni, chiusura del CEO, ridimensionamento, replay dello snapshot e rimozione dei controlli terminale. Nessuna nuova richiesta AI reale. |
+| Verifica estesa | Verifica | 91 test passati su sette file, includendo anche `cliRunner`, `clis` e `opencodePlugin`. Build di produzione e TypeScript superati; `git diff --check` senza errori. Restano gli avvisi di build già presenti sui bundle e sull’import di Rapier. Nessun nuovo run CI remoto avviato per queste correzioni. |
+
+**Diagnosi e limiti:** nel primo ufficio reale il CEO ha risposto in italiano con OpenCode e il modello scelto dal manager. La risposta è rimasta salvata nel telefono. La diagnostica senza generazione ha trovato il testo nello snapshot del terminale; un riquadro più basso può tagliare le prime righe dello schermo alternativo dopo che la CLI si è chiusa e non può più ridisegnarlo. La correzione conserva il risultato in formato testuale, non promette di mantenere intatto ogni dettaglio grafico della TUI. La verifica manuale delle correzioni sul nuovo processo resta da completare; l’ufficio già in esecuzione non è stato riavviato o modificato per applicarle.
+
+**CI precedente chiusa:** il [run su main 41088218071](https://github.com/rosariomoscato/cubefarm/actions/runs/41088218071), commit `e6c17c9`, è infine passato su Ubuntu, Windows e macOS. I primi due tentativi macOS non avevano ottenuto un runner hosted per limiti di capacità ARM64; il tentativo successivo ha eseguito tutti i passaggi con successo, senza modifiche a codice, workflow, soglie o timeout. Questo esito riguarda il main precedente, non le nuove correzioni locali.
+
 ### Integrazione EN/IT nel main del fork e verifica successiva
 
 **Riferimenti e stato:** [PR #3 del fork](https://github.com/rosariomoscato/cubefarm/pull/3), integrata con autorizzazione esplicita del manager; merge commit `2a5200de7ebb63b639c0dcfb6cb028659c74dd99`. Checkout locale aggiornato in fast-forward sul `main` del fork. Nessuna cancellazione del branch di lavoro, nessun aggiornamento dell’installazione globale e nessuna pubblicazione npm.

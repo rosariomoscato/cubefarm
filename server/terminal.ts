@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { stripVTControlCharacters } from 'node:util';
 import xtermHeadless from '@xterm/headless';
 import xtermSerialize from '@xterm/addon-serialize';
 import type { WebSocket } from 'ws';
@@ -76,6 +77,12 @@ export class AgentTerminal {
   /** A dim line from the office itself, e.g. between sessions. */
   note(text: string) {
     this.write(`\r\n\x1b[2m${text}\x1b[0m\r\n`);
+  }
+
+  /** A closed full-screen CLI cannot redraw after resize. Keep its final reply in reflowable scrollback. */
+  retainReply(text: string) {
+    this.write('\x1b[?1049l\x1b[0m\r\n');
+    this.write(`${stripVTControlCharacters(text).replace(/\r?\n/g, '\r\n')}\r\n`);
   }
 
   get live() {

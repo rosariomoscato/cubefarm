@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CEO_ID } from '../shared/types.ts';
 import type { SessionCallbacks, SessionOptions } from './agentRunner.ts';
@@ -33,7 +34,7 @@ async function office(openCodeInstalled = true, problem?: string) {
   swarm = new Swarm(backend);
   vi.spyOn(swarm.journal, 'hasPastDays').mockResolvedValue(true);
   await swarm.init();
-  return { swarm, sessions, send };
+  return { swarm, sessions, send, backend };
 }
 
 describe('the CEO coding agent', () => {
@@ -77,6 +78,20 @@ describe('the CEO coding agent', () => {
     const agent = swarm.snapshot().agents.find((a) => a.repoId === repo.id)!;
     expect((await swarm.openCodeModels(agent.id)).directory).toBe((await swarm.openCodeModels(undefined, repo.id)).directory);
     expect(() => swarm.openCodeModels('missing')).toThrow();
+  });
+  it('creates the CEO location before reading models without starting a session', async () => {
+    const { swarm, sessions, backend } = await office();
+    expect(await fs.stat(`${home}/ceo`).catch(() => null)).toBeNull();
+    const read = vi.spyOn(backend, 'openCodeModels').mockImplementation(async (directory) => {
+      expect((await fs.stat(directory)).isDirectory()).toBe(true);
+      return { directory, models: [], defaultModel: null };
+    });
+    await swarm.openCodeModels(CEO_ID, undefined, true);
+    await swarm.openCodeModels(CEO_ID);
+    expect(read).toHaveBeenCalledWith(path.join(home, 'ceo'), true);
+    expect(read).toHaveBeenCalledTimes(2);
+    expect(sessions).toHaveLength(0);
+    expect(swarm.snapshot().repos).toHaveLength(0);
   });
   it('rejects V1 for the CEO, an explicit team hire and a hire inheriting the office default', async () => {
     const { swarm } = await office(true, openCodeVersionProblem('1.18.29')!);
