@@ -9,12 +9,13 @@ import { CLIP_MAX_BYTES, clipProblem } from '../../../shared/clipLimits';
 import type { ListenProvider } from '../../../shared/types';
 import { api } from '../api';
 import { useStore } from '../store';
+import { languageTag } from '../../../shared/i18n';
 import { isConfirmOpen } from './Confirm';
 import { bindings } from './controls';
 import { HANDS_FREE_IDLE, handsFree, type HandsFree, type HandsFreeEvent, type Room } from './handsFree';
 import { closesMic, HOLD_MS, isTalkKey, type KeyPlace } from './micKeys';
 import { freshEars, heardLevel, heardWords, listenRules, sendsWhenDone, verdict, type Ears, type MicMode } from './micSilence';
-import { cantListen, micErrorLine, phrasesText, withTranscript, type MicCaps, type Phrase } from './micText';
+import { cantListen, micErrorLine as errorLine, phrasesText, withTranscript, type MicCaps, type Phrase } from './micText';
 import { holdMusicDuck } from './music';
 import { getAudioPrefs, listenChime, setMicOpen, subscribeAudio } from './sfx';
 
@@ -94,11 +95,12 @@ export function micCaps(): MicCaps {
 }
 
 const listening = () => useStore.getState().settings.listen ?? { provider: 'off' as ListenProvider, autoSend: false, handsFree: false };
+const micErrorLine = (code: string) => errorLine(code, useStore.getState().settings.language);
 
 /** Why the 🎙 can't listen now, or '' when it can. */
 export function micProblem(): string {
   const { provider } = listening();
-  return provider === 'off' ? '' : cantListen(provider, micCaps(), useStore.getState().voiceKeySet);
+  return provider === 'off' ? '' : cantListen(provider, micCaps(), useStore.getState().voiceKeySet, useStore.getState().settings.language);
 }
 
 // ---------- one listening session ----------
@@ -157,7 +159,7 @@ export function listen(id: string, mode: MicMode) {
   if (!target || session || target.disabled()) return;
   const { provider } = listening();
   if (provider === 'off') return;
-  const why = cantListen(provider, micCaps(), useStore.getState().voiceKeySet);
+  const why = micProblem();
   if (why) return void explain(why, id);
   const n = ++sessions;
   const s: Session = {
@@ -210,7 +212,7 @@ function check(n: number) {
   if (!s || s.finishing) return;
   const now = performance.now();
   if (!s.ears) {
-    if (now - s.began > STARTUP_MS) cancel('stopped');
+    if (now - s.began > STARTUP_MS) fail(n, micErrorLine(s.provider === 'browser' ? 'startup-timeout' : 'recording-startup-timeout'));
     return;
   }
   const v = verdict(s.ears, now, listenRules(s.mode, listening().autoSend));
@@ -221,7 +223,7 @@ function check(n: number) {
 /** The mic is live. */
 function started(n: number) {
   const s = live(n);
-  if (!s || s.ears) return;
+  if (!s || s.ears || s.finishing) return;
   s.ears = freshEars(performance.now());
   micAllowed = true;
   set({ live: true });
@@ -339,10 +341,9 @@ function recognise(n: number): Hearing | null {
     return null;
   }
   const r = new R();
-  r.lang = navigator.language || 'en-US';
+  r.lang = languageTag(useStore.getState().settings.language);
   r.continuous = true;
   r.interimResults = true;
-  let error = '';
   r.onstart = () => started(n);
   r.onresult = (e) => {
     const phrases: Phrase[] = Array.from(e.results, (x) => ({ transcript: x[0]?.transcript ?? '', final: x.isFinal }));
@@ -350,13 +351,12 @@ function recognise(n: number): Hearing | null {
     heard(n, text, speaking);
   };
   r.onerror = (e) => {
-    error = e.error;
+    fail(n, micErrorLine(e.error)); // some browsers never emit onend after an error
   };
   r.onend = () => {
     const s = live(n);
     if (!s) return;
-    if (error) fail(n, micErrorLine(error));
-    else deliver(s); // stopped by us, or the browser stopped by itself after a quiet
+    deliver(s); // stopped by us, or the browser stopped by itself after a quiet
   };
   try {
     r.start();
@@ -364,7 +364,11 @@ function recognise(n: number): Hearing | null {
     queueMicrotask(() => fail(n, micErrorLine('audio-capture')));
     return null;
   }
-  return { stop: () => r.stop(), abort: () => r.abort() };
+  return { stop: () => r.stop(), abort: () => {
+    // Ignore late events, including a synchronous onend from abort; they must not deliver or revive this session.
+    r.onstart = r.onresult = r.onerror = r.onend = null;
+    try { r.abort(); } catch { /* the browser may already have stopped or never started */ }
+  } };
 }
 
 // ---------- recording for ElevenLabs ----------

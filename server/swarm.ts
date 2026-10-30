@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { analysisPrompt } from './analysisPrompt.ts';
+import { communicationInstructions, languageOf } from '../shared/i18n.ts';
 import type { WebSocket } from 'ws';
 import type { Backend } from './backend.ts';
 import type { LogEntry, SessionHandle, SessionResult } from './agentRunner.ts';
@@ -494,6 +495,7 @@ export class Swarm {
   private state: Persisted = {
     settings: {
       sessionLimit: 0,
+      language: 'en',
       defaultModel: DEFAULT_MODEL,
       defaultEffort: 'medium',
       runtime: 'terminal',
@@ -625,6 +627,7 @@ export class Swarm {
       cacheDir: path.join(HOME_DIR, backend.demo ? 'demo-voice' : 'voice'),
       settings: () => this.state.settings.voice,
       listen: () => this.state.settings.listen,
+      language: () => languageOf(this.state.settings.language),
       messages: () => this.state.messages,
       officeNote: (text) => this.postMessage('office', text),
       keyChanged: (view) => this.broadcast({ type: 'voiceKey', ...view }),
@@ -741,6 +744,7 @@ export class Swarm {
         officeId: typeof loaded.officeId === 'string' && /^[a-z0-9]{6}$/.test(loaded.officeId) ? loaded.officeId : this.state.officeId,
       };
       for (const m of this.state.messages) this.messageSeq = Math.max(this.messageSeq, m.id + 1);
+      this.state.settings.language = languageOf(this.state.settings.language);
       if (!EFFORTS.includes(this.state.settings.defaultEffort)) this.state.settings.defaultEffort = 'medium';
       if (this.state.settings.runtime !== 'sdk') this.state.settings.runtime = 'terminal';
       if (!isCli(this.state.settings.defaultCli)) this.state.settings.defaultCli = 'claude';
@@ -2690,7 +2694,7 @@ export class Swarm {
       issueTitle: 'Read-only analysis', sessionId: session ?? null, sessionCli: session ? a.sessionCli : null,
       startedAt: Date.now(), endedAt: null, costUsd: 0, turns: 0, lastError: null });
     this.appendLog(a, [{ kind: 'system', text: '━━━ Read-only analysis · no issue or PR workflow ━━━' }, { kind: 'manager', text: `▶ ${text.trim()}` }]);
-    this.startAgentSession(a, repo, this.backend.mainDir(repo.fullName), text.trim(), analysisPrompt(a.name, repo.fullName), session);
+    this.startAgentSession(a, repo, this.backend.mainDir(repo.fullName), text.trim(), analysisPrompt(a.name, repo.fullName) + '\n' + communicationInstructions(this.state.settings.language), session);
     this.save();
     return this.agentView(a, false);
   }
@@ -3757,7 +3761,7 @@ export class Swarm {
     const rt = this.agentRt.get(id)!;
     if (rt.session) {
       this.appendLog(a, [{ kind: 'manager', text: `▶ Manager: ${text}` }]);
-      if (!typed) rt.session.send(text);
+      if (!typed) rt.session.send(a.task === 'analysis' ? `${communicationInstructions(this.state.settings.language)}\n${text}` : text);
       return;
     }
     if (a.status === 'preparing') throw new HttpError(409, `${a.name} is still setting up; try again in a moment`);
@@ -3775,6 +3779,7 @@ export class Swarm {
 
   updateSettings(patch: Partial<SwarmSettings>) {
     const s = this.state.settings;
+    if (patch.language === 'en' || patch.language === 'it') s.language = patch.language;
     if (patch.sessionLimit !== undefined) s.sessionLimit = Math.max(0, Math.round(Number(patch.sessionLimit)) || 0);
     // The default model belongs to the default coding agent: a new agent starts on its own default.
     if (isCli(patch.defaultCli) && patch.defaultCli !== s.defaultCli) {
@@ -4383,7 +4388,7 @@ export class Swarm {
 
   private ceoPromptInput(a: PersistedAgent): Parameters<typeof ceoSystemPrompt>[0] {
     const s = this.state.settings;
-    return { name: a.name, company: s.companyName, manager: s.managerName, notesFile: path.join(CEO_DIR, 'NOTES.md'), sessionLimit: s.sessionLimit, maxAgents: s.maxAgents, scaling: s.scaling, cli: s.runtime === 'terminal' && this.backend.terminals ? a.cli || 'claude' : 'claude' };
+    return { name: a.name, company: s.companyName, manager: s.managerName, notesFile: path.join(CEO_DIR, 'NOTES.md'), sessionLimit: s.sessionLimit, maxAgents: s.maxAgents, scaling: s.scaling, cli: s.runtime === 'terminal' && this.backend.terminals ? a.cli || 'claude' : 'claude', language: languageOf(s.language) };
   }
 
   private async runCeoJob(a: PersistedAgent, job: CeoJob) {
@@ -4495,7 +4500,7 @@ export class Swarm {
       this.appendLog(a, [{ kind: 'manager', text: `▶ Manager: ${t}` }]);
       this.ceoIssues.managerMessage(); // a new request: the issue cap counts from here
       this.ceoAsked = true;
-      rt.session.send(`Message from the manager (they read your reply on their phone, so keep it short):\n${t}`);
+      rt.session.send(`${communicationInstructions(this.state.settings.language)}\nMessage from the manager (they read your reply on their phone, so keep it short):\n${t}`);
       return;
     }
     this.enqueueCeo({ kind: 'chat', text: t, at: Date.now() });

@@ -23,6 +23,41 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-30
 
+### Rifinitura della dettatura e compatibilità dei browser
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Avvio del microfono bloccato | Correzione | Il timeout già presente di circa 10 secondi ora mostra un errore invece di annullare silenziosamente l’ascolto. Mantiene la bozza, libera l’attenuazione audio e permette di riprovare. |
+| Errori senza evento finale | Robustezza | Gli errori di riconoscimento vengono mostrati anche se il browser non emette `onend`; le callback tardive dopo l’annullamento non riattivano la sessione. |
+| Stati e messaggi EN/IT | Localizzazione | Tradotti avvio, ascolto, trascrizione, tooltip, etichette accessibili, errori e istruzioni principali della dettatura. |
+| Compatibilità verificata | Documentazione | L’utente ha confermato la dettatura italiana in Chrome e segnalato l’avvio giallo senza trascrizione in Brave. Nessun blocco per nome del browser né passaggio automatico a servizi a pagamento; documentata l’alternativa Windows + H. |
+
+**Stato:** consolidata insieme alla prima localizzazione nel commit locale che introduce questa voce, sul branch `feat/english-italian`, come autorizzato dall’utente. Nessun push o pubblicazione.
+
+**Verifiche:** **129 test mirati e di regressione superati su 12 file**, inclusi timeout, riprova, callback tardive, errori senza `onend`, conservazione della bozza, normale trascrizione simulata, voce, dettatura, vivavoce e localizzazione. TypeScript e build superati. Nel browser, su una demo separata: simulato riconoscimento che non parte, errore italiano dopo circa 10 secondi, bozza conservata e riprova con trascrizione simulata senza invio automatico; nessun errore console. Demo di verifica arrestata senza toccare quella dell’utente. Nessuna cattura del microfono o chiamata AI/ElevenLabs reale da parte dell’agente.
+
+**Suite completa finale non conclusa:** il comando con un worker è stato interrotto al limite esterno di 20 minuti; durante la prova sono comparsi un timeout nel test di scala (`server/scale.test.ts`) e un superamento della soglia temporale del percorso (`client/src/world/walkways.test.ts`). Entrambi i file rieseguiti separatamente sono passati (**18 test su 2 file**), senza modificare soglie o timeout dei test. Non si dichiara quindi superata la suite completa dello stato finale; il precedente risultato completo sotto resta riferito alla versione provata allora.
+
+### Prima localizzazione inglese/italiano
+
+**Stato:** modifiche consolidate nel commit locale sul nuovo branch `feat/english-italian`, basato sul `main` del fork dopo PR #2. Nessun push, pubblicazione npm o modifica all’installazione globale.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Lingua dell’ufficio | Nuova funzionalità | Scelta English/Italiano salvata sul server, condivisa tra dispositivi, disponibile all’avvio, nel wizard, nelle impostazioni della console e in Pocket. Vecchi uffici e valori non supportati ricadono sull’inglese. |
+| Interfaccia principale | Localizzazione | Dizionario centralizzato con fallback inglese e interpolazione; tradotti navigazione, wizard e controlli principali di chat, CEO, progetti, modelli e analisi. Nessuna riscrittura del DOM o traduzione dei contenuti dell’utente. |
+| Comunicazione CEO e analisi | Integrazione | Istruzioni di risposta nella lingua scelta, anche nei messaggi a un CEO attivo e nei follow-up di analisi. Codice, issue, PR e brief QA del repository restano in inglese. |
+| Voce e dettatura | Integrazione | Locale dell’ufficio per il riconoscimento nel browser, preferenza per voci compatibili, campione italiano e hint lingua ElevenLabs. Richieste/cache inglesi retrocompatibili e clip già salvate invariate. |
+| Demo e regressioni | Verifica | Chat di stato e analisi demo italiane; test su fallback, interpolazione, migrazione, persistenza, istruzioni, scelta delle voci e payload ElevenLabs senza richieste reali. |
+
+**Verifiche:** TypeScript e build superati (restano gli avvisi già noti su Rapier e dimensioni dei chunk); suite completa avviata durante la lavorazione: **2.527 test superati su 228 file**. Le ultime aggiunte ai test, successive all’avvio della suite, sono state validate con **58 test mirati superati su 5 file**, inclusi payload HTTP ElevenLabs simulati, cache tra lingue, placeholder, migrazione e persistenza. `git diff --check` senza errori di whitespace. Nel browser: wizard italiano, cambio EN↔IT, preferenza dopo reload, console/impostazioni, navigazione Pocket e risposta italiana del CEO demo; nessun errore console rilevato. Demo isolata arrestata al termine. Nessuna richiesta AI o ElevenLabs reale.
+
+**Limiti:** prima copertura, non traduzione integrale; pannelli secondari, descrizioni avanzate, notifiche, errori, log, etichette 3D e alcuni script demo restano inglesi. La lingua dei modelli è istruita, non imposta tecnicamente. Voci italiane dipendenti da dispositivo/provider. Dettagli in `docs/languages.md`.
+
+### Integrazione delle modifiche precedenti
+
+I commit `8adf85b` e `6365848` sono stati integrati nel `main` del fork tramite [PR #2](https://github.com/rosariomoscato/cubefarm/pull/2), merge `7c9c148`. CI superata su Ubuntu, macOS e Windows. Le note seguenti conservano lo stato storico alla registrazione iniziale; nessuna pubblicazione npm del fork.
+
 ### Registro del fork e README
 
 | Feature | Tipo | Breve descrizione |

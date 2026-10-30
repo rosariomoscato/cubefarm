@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { SAMPLE_LINE, speechText, standupLine, type DayPart } from '../shared/speech.ts';
+import { languageOf, voiceSample, type Language } from '../shared/i18n.ts';
 import { clampKeepDays, KEEP_DAYS_DEFAULT } from '../shared/voiceClips.ts';
 import { clipProblem, clipType } from '../shared/clipLimits.ts';
 import type { ListenSettings, PhoneMessage, VoiceCacheView, VoiceOption, VoiceSettings } from '../shared/types.ts';
@@ -170,9 +171,9 @@ export class VoiceApiError extends Error {
 export interface VoiceApi {
   checkKey(key: string): Promise<void>;
   listVoices(key: string): Promise<Omit<VoiceOption, 'recommended'>[]>;
-  synthesize(key: string, req: { voiceId: string; model: string; text: string }, signal: AbortSignal): Promise<Buffer>;
+  synthesize(key: string, req: { voiceId: string; model: string; text: string; language?: Language }, signal: AbortSignal): Promise<Buffer>;
   /** Speech to Text: the words in `audio` (a clipType() type). */
-  transcribe(key: string, req: { audio: Buffer; type: string }, signal: AbortSignal): Promise<string>;
+  transcribe(key: string, req: { audio: Buffer; type: string; language?: Language }, signal: AbortSignal): Promise<string>;
 }
 
 export interface VoiceKeyView {
@@ -186,6 +187,7 @@ export interface VoiceDeps {
   cacheDir: string;
   settings(): VoiceSettings;
   listen(): ListenSettings;
+  language?(): Language;
   /** The phone messages the office still has, oldest first. */
   messages(): readonly PhoneMessage[];
   /** Posts an office message on the manager's phone. */
@@ -354,7 +356,7 @@ export class Voice {
     if (!this.key) throw new HttpError(409, 'Add your ElevenLabs API key in Settings → Voice to talk instead of type, or pick the browser there.');
     this.requireKey();
     const key = this.key;
-    const text = await this.deps.api.transcribe(key, { audio, type: clipType(contentType) }, AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS)).catch((err) => {
+    const text = await this.deps.api.transcribe(key, { audio, type: clipType(contentType), ...(this.deps.language?.() === 'it' ? { language: 'it' as const } : {}) }, AbortSignal.timeout(TRANSCRIBE_TIMEOUT_MS)).catch((err) => {
       if (err instanceof VoiceApiError && err.status === 403) throw new HttpError(502, 'Your ElevenLabs key may not use Speech to Text: allow it for the key on elevenlabs.io (Developers → API Keys).');
       return this.failed(err, key, 'turn your speech into text');
     });
@@ -366,7 +368,7 @@ export class Voice {
   /** GET /api/voice/sample: the settings' Test button, in `voiceId` (default: the chosen voice). */
   async sampleAudio(voiceId?: string): Promise<Buffer> {
     const s = this.deps.settings();
-    return this.audio('sample', voiceId || s.voiceId, s.model, SAMPLE_LINE);
+    return this.audio('sample', voiceId || s.voiceId, s.model, this.deps.language?.() === 'it' ? voiceSample('it') : SAMPLE_LINE);
   }
 
   /** GET /api/voice/standup: the CEO's line at a stand-up in the 3D office, made once per wording and cached. */
@@ -379,7 +381,8 @@ export class Voice {
   private async audio(name: string, voiceId: string, model: string, text: string, m?: PhoneMessage): Promise<Buffer> {
     if (!VOICE_ID.test(voiceId)) throw new HttpError(400, 'Pick an ElevenLabs voice first.');
     // The voice, model and words are in the file name, so a new voice or a reused message id never plays stale audio.
-    const hash = crypto.createHash('sha256').update(`${voiceId}\n${model}\n${text}`).digest('hex').slice(0, 12);
+    const language = languageOf(this.deps.language?.());
+    const hash = crypto.createHash('sha256').update(`${voiceId}\n${model}\n${text}${language === 'it' ? '\nit' : ''}`).digest('hex').slice(0, 12);
     const file = path.join(this.deps.cacheDir, `${name}-${hash}.mp3`);
     const cached = await fs.readFile(file).catch(() => null);
     if (cached) {
@@ -389,7 +392,7 @@ export class Voice {
     this.requireKey();
     const busy = this.making.get(file);
     if (busy) return busy;
-    const made = this.oneAtATime(() => this.synthesize(file, { voiceId, model, text }, m)).finally(() => this.making.delete(file));
+    const made = this.oneAtATime(() => this.synthesize(file, { voiceId, model, text, ...(language === 'it' ? { language } : {}) }, m)).finally(() => this.making.delete(file));
     this.making.set(file, made);
     return made;
   }
@@ -400,7 +403,7 @@ export class Voice {
     return run;
   }
 
-  private async synthesize(file: string, req: { voiceId: string; model: string; text: string }, m?: PhoneMessage): Promise<Buffer> {
+  private async synthesize(file: string, req: { voiceId: string; model: string; text: string; language?: Language }, m?: PhoneMessage): Promise<Buffer> {
     this.requireKey(); // the key may have been rejected or removed while this waited its turn
     const key = this.key;
     const audio = await this.deps.api.synthesize(key, req, AbortSignal.timeout(SYNTH_TIMEOUT_MS)).catch((err) => this.failed(err, key, 'speak the message'));

@@ -303,7 +303,9 @@ function fakeSession(opts: SessionOptions, cb: SessionCallbacks, fullName: strin
   if (opts.task === 'analysis') {
     cb.sessionId(opts.resumeSessionId ?? `demo-analysis-${crypto.randomUUID()}`);
     const timer = setTimeout(() => {
-      const text = `Demo analysis of ${fullName}: no files changed, no issue or PR created. A real agent would read the checkout and answer your request.`;
+      const text = opts.systemAppend?.includes('Office language: Italian')
+        ? `Analisi demo di ${fullName}: nessun file modificato, nessuna issue o PR creata. Un agente reale leggerebbe il checkout e risponderebbe alla tua richiesta.`
+        : `Demo analysis of ${fullName}: no files changed, no issue or PR created. A real agent would read the checkout and answer your request.`;
       cb.log([{ kind: 'text', text }]);
       cb.finished({ ok: true, text, costUsd: 0, turns: 1, errors: [] });
     }, 500);
@@ -1297,6 +1299,15 @@ function ceoSession(opts: SessionOptions, cb: SessionCallbacks): SessionHandle {
       const agents = s.floors.reduce((n, f) => n + f.team.size, 0);
       const issues = s.floors.reduce((n, f) => n + f.backlog.length, 0);
       const pending = s.pendingChanges.length;
+      if (opts.systemAppend?.includes('Office language: Italian')) return [
+        `**Situazione attuale:** ${s.floors.length} piani, ${agents} agenti e ${issues} issue aperte.`,
+        '',
+        '- Il team sta lavorando al backlog.',
+        `- ${pending ? `**${pending}** modifiche al team attendono la tua approvazione.` : 'Nessuna modifica al team in attesa.'}`,
+        '- Il QA verifica di nuovo ogni PR dopo una correzione.',
+        '',
+        '> Sono il CEO demo: questa risposta è simulata, senza richieste AI reali.',
+      ].join('\n');
       // Real CEOs answer in Markdown, so the demo one does too: every element the phone renders.
       const rows = s.floors.map((f) => `| ${f.floor} | \`${f.repo.split('/').pop()}\` | ${f.team.size} | ${f.backlog.length} | ${f.pullRequests.length} |`);
       return [
@@ -1366,9 +1377,9 @@ function ceoSession(opts: SessionOptions, cb: SessionCallbacks): SessionHandle {
       timers.push(
         setTimeout(() => {
           if (stopped || done) return;
-          const said = text.split('\n').slice(1).join(' ').trim() || text;
+          const said = text.split('keep it short):\n').pop()?.trim() || text;
           cb.log([{ kind: 'text', text: `● Noted: "${short(said, 70)}"` }]);
-          cb.turn?.(`Noted, I'll factor that in: "${short(said, 90)}"`);
+          cb.turn?.(text.includes('Office language: Italian') ? `Ricevuto, ne terrò conto: "${short(said, 90)}"` : `Noted, I'll factor that in: "${short(said, 90)}"`);
         }, 1500),
       );
     },

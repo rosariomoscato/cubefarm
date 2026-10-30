@@ -76,22 +76,23 @@ export const elevenLabs: VoiceApi = {
     return out;
   },
 
-  async synthesize(key, { voiceId, model, text }, signal) {
+  async synthesize(key, { voiceId, model, text, language }, signal) {
     const res = await call(
       key,
       `/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'audio/mpeg' }, body: JSON.stringify({ text, model_id: model }) },
+      { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'audio/mpeg' }, body: JSON.stringify({ text, model_id: model, ...(language ? { language_code: language } : {}) }) },
       signal,
     );
     return Buffer.from(await res.arrayBuffer());
   },
 
   // Speech to Text (POST /v1/speech-to-text, multipart): no "(laughter)" tags and no timestamps, just the words.
-  async transcribe(key, { audio, type }, signal) {
+  async transcribe(key, { audio, type, language }, signal) {
     const form = new FormData();
     form.append('model_id', STT_MODEL);
     form.append('tag_audio_events', 'false');
     form.append('timestamps_granularity', 'none');
+    if (language) form.append('language_code', language);
     form.append('file', new Blob([new Uint8Array(audio)], { type }), `speech.${clipExtension(type)}`);
     const res = await call(key, '/v1/speech-to-text', { method: 'POST', body: form }, signal);
     return s(((await res.json()) as { text?: unknown }).text);

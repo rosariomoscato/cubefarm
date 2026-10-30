@@ -1,4 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { T, useT } from '../i18n';
 import { api } from '../api';
 import { OpenCodeModelPicker, OpenCodeVariantSelect } from './OpenCodeModelPicker';
 import { floorPrCounts, isBusy, pendingRequests, unreadMessages, useStore, type PhoneTab } from '../store';
@@ -81,11 +82,11 @@ export function HireSetupFields({ value, onChange, disabled, repo }: { value: Hi
   return (
     <div className="hire-setup">
       <label className="field" htmlFor={`${id}-name`}>
-        <span>Name</span>
+        <span><T>Name</T></span>
         <input id={`${id}-name`} value={value.name} maxLength={24} disabled={disabled} onChange={(e) => set({ name: e.target.value })} />
       </label>
       <label className="field" htmlFor={`${id}-cli`}>
-        <span>Coding agent</span>
+        <span><T>Coding agent</T></span>
         <select
           id={`${id}-cli`}
           value={sdk ? '' : value.cli}
@@ -105,7 +106,7 @@ export function HireSetupFields({ value, onChange, disabled, repo }: { value: Hi
         </select>
       </label>
       <label className="field" htmlFor={`${id}-model`}>
-        <span>Model</span>
+        <span><T>Model</T></span>
         <input
           id={`${id}-model`}
           list={`${id}-models`}
@@ -355,6 +356,7 @@ function Bubble({ m, ceoName }: { m: PhoneMessage; ceoName: string }) {
 
 /** The thread with the CEO; pocket mode shows it as its Chat tab, where the keyboard waits for a tap. */
 export function Chat({ autoFocus = true }: { autoFocus?: boolean }) {
+  const t = useT();
   const messages = useStore((s) => s.messages);
   const readAt = useStore((s) => s.phoneReadAt);
   const ceo = useStore((s) => s.agents[CEO_ID]);
@@ -374,7 +376,7 @@ export function Chat({ autoFocus = true }: { autoFocus?: boolean }) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, info.job?.kind]);
 
-  if (!ceo) return <p className="muted phone-empty">The corner office is empty.</p>;
+  if (!ceo) return <p className="muted phone-empty"><T>The corner office is empty.</T></p>;
   const send = (t: string) => {
     const body = t.trim();
     if (!body) return;
@@ -427,8 +429,8 @@ export function Chat({ autoFocus = true }: { autoFocus?: boolean }) {
       </div>
       <div className="quick">
         {QUICK.map((q) => (
-          <button key={q} className="quick-chip" onClick={() => send(q)}>
-            {q}
+          <button key={q} className="quick-chip" onClick={() => send(t(q))}>
+            {t(q)}
           </button>
         ))}
       </div>
@@ -439,10 +441,10 @@ export function Chat({ autoFocus = true }: { autoFocus?: boolean }) {
           send(text);
         }}
       >
-        <MessageBox value={text} onChange={setText} placeholder={`Message ${ceo.name}…`} aria-label={`Message ${ceo.name}`} title="Enter sends · Shift+Enter adds a new line" autoFocus={autoFocus} />
+        <MessageBox value={text} onChange={setText} placeholder={`${t('Message {name}', { name: ceo.name })}…`} aria-label={t('Message {name}', { name: ceo.name })} title={t('Enter sends · Shift+Enter adds a new line')} autoFocus={autoFocus} />
         <MicButton kind="phone" value={text} onChange={setText} onSend={send} />
         <button className="btn btn-small btn-good" disabled={!text.trim()}>
-          Send
+          <T>Send</T>
         </button>
       </form>
     </div>
@@ -626,6 +628,7 @@ const waitingNow = () => {
 };
 
 export function Phone({ tab: initialTab, requestId }: { tab?: PhoneTab; requestId?: string }) {
+  const t = useT();
   const [tab, setTab] = useState<PhoneTab>(() =>
     resumeGames && !requestId && waitingNow() <= resumeGames.waiting ? 'games' : (initialTab ?? (requestId ? 'hires' : 'chat')),
   );
@@ -682,7 +685,7 @@ export function Phone({ tab: initialTab, requestId }: { tab?: PhoneTab; requestI
   ];
   return (
     <div className="overlay phone-overlay" onMouseDown={(e) => e.target === e.currentTarget && closeOverlay()}>
-      <div className="phone" ref={box} role="dialog" aria-modal="true" aria-label="Your phone" tabIndex={-1}>
+      <div className="phone" ref={box} role="dialog" aria-modal="true" aria-label={t('Your phone')} tabIndex={-1}>
         <div className="phone-status" aria-hidden>
           <span>{clock(now)}</span>
           <span className="phone-notch" />
@@ -703,7 +706,7 @@ export function Phone({ tab: initialTab, requestId }: { tab?: PhoneTab; requestI
               key={k}
               role="tab"
               aria-selected={tab === k}
-              aria-label={badge > 0 ? `${label}, ${badge} new` : label}
+               aria-label={badge > 0 ? `${k === 'chat' ? label : t(label)}, ${badge}` : k === 'chat' ? label : t(label)}
               className={`phone-tab ${tab === k ? 'phone-tab-on' : ''}`}
               onClick={() => (k === 'games' && tab === 'games' ? setGame(null) : setTab(k))}
             >
@@ -711,7 +714,7 @@ export function Phone({ tab: initialTab, requestId }: { tab?: PhoneTab; requestI
                 {icon}
                 {badge > 0 && <span className="badge badge-dot">{badge}</span>}
               </span>
-              <span>{label}</span>
+              <span>{k === 'chat' ? label : t(label)}</span>
             </button>
           ))}
         </nav>

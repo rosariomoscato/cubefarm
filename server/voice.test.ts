@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CLIP_MAX_BYTES, CLIP_MAX_MS } from '../shared/clipLimits.ts';
 import type { ListenSettings, PhoneMessage, VoiceCacheView, VoiceSettings } from '../shared/types.ts';
+import { voiceSample, type Language } from '../shared/i18n.ts';
 import { HttpError } from './httpError.ts';
 import {
   cacheToPrune,
@@ -155,6 +156,9 @@ describe('Voice', () => {
   let release: (() => void) | null;
   let views: VoiceCacheView[];
   let clock: number;
+  let language: Language;
+  let synthesis: { text: string; language?: Language }[];
+  let transcriptionLanguages: (Language | undefined)[];
   const messages: PhoneMessage[] = [
     { id: 1, from: 'ceo', text: 'Floor 2 shipped #12 🎉', at: 0 },
     { id: 2, from: 'manager', text: 'thanks', at: 0 },
@@ -170,13 +174,15 @@ describe('Voice', () => {
       if (failWith) throw new VoiceApiError(failWith, `${failWith}`);
       return [{ id: 'own1', name: 'Mine', category: 'cloned', labels: { accent: '', gender: '', age: '', description: '', use_case: '' }, previewUrl: 'https://x/p.mp3' }];
     },
-    synthesize: async (_key, { text }) => {
+    synthesize: async (_key, { text, language }) => {
+      synthesis.push({ text, ...(language ? { language } : {}) });
       calls.synth++;
       if (release) await new Promise<void>((r) => (release = r));
       if (failWith) throw new VoiceApiError(failWith, `${failWith}: nope`);
       return Buffer.from(`mp3:${text}`);
     },
-    transcribe: async (key, { audio, type }) => {
+    transcribe: async (key, { audio, type, language }) => {
+      transcriptionLanguages.push(language);
       heard.push({ key, type, bytes: audio.length });
       if (failWith) throw new VoiceApiError(failWith, `${failWith}: nope`);
       return '  Ship the login page today.  ';
@@ -190,6 +196,7 @@ describe('Voice', () => {
       cacheDir: path.join(dir, 'voice'),
       settings: () => settings,
       listen: () => listen,
+      language: () => language,
       messages: () => messages,
       officeNote: (t) => notes.push(t),
       keyChanged: () => undefined,
@@ -210,10 +217,47 @@ describe('Voice', () => {
     release = null;
     views = [];
     clock = Date.now();
+    language = 'en';
+    synthesis = [];
+    transcriptionLanguages = [];
   });
   afterEach(() => fs.rm(dir, { recursive: true, force: true, maxRetries: 3 }));
 
   const status = (p: Promise<unknown>) => p.then(() => 200, (e: unknown) => (e instanceof HttpError ? e.status : 500));
+
+  it('uses localized samples and language-specific cache entries without changing English requests', async () => {
+    const v = make();
+    await v.setKey('sk_live_1234');
+    await v.sampleAudio();
+    expect(synthesis[0]).toEqual({ text: voiceSample('en') });
+    language = 'it';
+    await v.sampleAudio();
+    await v.sampleAudio();
+    expect(synthesis).toHaveLength(2);
+    expect(synthesis[1]).toEqual({ text: voiceSample('it'), language: 'it' });
+    language = 'en';
+    await v.sampleAudio();
+    expect(synthesis).toHaveLength(2);
+    await v.transcribe(Buffer.alloc(30_000), 'audio/webm', 2400);
+    language = 'it';
+    await v.transcribe(Buffer.alloc(30_000), 'audio/webm', 2400);
+    expect(transcriptionLanguages).toEqual([undefined, 'it']);
+  });
+
+  it('separates synthesis of identical text by language but retains already-saved message audio', async () => {
+    const v = make();
+    await v.setKey('sk_live_1234');
+    await v.standupAudio(3, 'morning');
+    language = 'it';
+    await v.standupAudio(3, 'morning');
+    expect(synthesis).toHaveLength(2);
+    expect(synthesis[0].text).toBe(synthesis[1].text);
+    expect(synthesis[1].language).toBe('it');
+    await v.messageAudio(1);
+    language = 'en';
+    await v.messageAudio(1);
+    expect(synthesis).toHaveLength(3);
+  });
 
   it('keeps the key in its own file and shows only the last 4 characters', async () => {
     const v = make();

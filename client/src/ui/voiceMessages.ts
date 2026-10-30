@@ -5,6 +5,8 @@
 // A CEO message that ends by itself, with nothing else to read, may open the hands-free phone's mic (mic.ts).
 // With captions on, what's said is written out as it's read (captions.ts), in step with the clip or the browser's voice.
 import { speechText } from '../../../shared/speech';
+import { speechVoice } from '../../../shared/speechLanguage';
+import { languageTag } from '../../../shared/i18n';
 import type { PhoneMessage, VoiceProvider } from '../../../shared/types';
 import { useStore } from '../store';
 import { sliderGain } from './audioPrefs';
@@ -216,7 +218,9 @@ async function speak(text: string, voiceName: string, began: () => void, word: (
   if (!synth || typeof SpeechSynthesisUtterance === 'undefined') throw new Error("this browser can't speak");
   if (!text) return;
   const u = new SpeechSynthesisUtterance(text);
-  const v = (await browserVoices(synth)).find((x) => x.name === voiceName);
+  const language = useStore.getState().settings.language;
+  u.lang = languageTag(language);
+  const v = speechVoice(await browserVoices(synth), voiceName, language);
   if (v) {
     u.voice = v;
     u.lang = v.lang;

@@ -3,6 +3,9 @@
 import { holdMusicDuck } from './music';
 import { getAudioPrefs, subscribeAudio } from './sfx';
 import { playbackVolume } from './voicePicker';
+import { speechVoice } from '../../../shared/speechLanguage';
+import { languageTag } from '../../../shared/i18n';
+import { useStore } from '../store';
 
 let stopCurrent: (() => void) | null = null;
 
@@ -48,7 +51,9 @@ export function speakLine(text: string, voiceName: string): Promise<boolean> {
   const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined;
   if (!synth) return Promise.resolve(false);
   const u = new SpeechSynthesisUtterance(text);
-  const v = synth.getVoices().find((x) => x.name === voiceName);
+  const language = useStore.getState().settings.language;
+  u.lang = languageTag(language);
+  const v = speechVoice(synth.getVoices(), voiceName, language);
   if (v) {
     u.voice = v;
     u.lang = v.lang;

@@ -3,6 +3,7 @@ import { useStore } from '../store';
 import { finishListening, keepListening, listen, micProblem, registerTarget, stopListening, useMic, type MicTarget, type MicView } from './mic';
 import { TAP_MS } from './micKeys';
 import { useKeyName } from './controls';
+import { useT } from '../i18n';
 
 // The 🎙 next to a message box's Send (mic.ts does the listening). Hold it (or V) to talk; a quick tap listens until
 // you stop talking; tap again to finish. The live transcript goes into the box, to edit before sending. Put it in the
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export function MicButton({ kind, value, onChange, onSend, disabled }: Props) {
+  const t = useT();
   const id = useId();
   const ref = useRef<HTMLButtonElement>(null);
   const latest = useRef({ value, onChange, onSend, disabled });
@@ -87,13 +89,13 @@ export function MicButton({ kind, value, onChange, onSend, disabled }: Props) {
   };
 
   const status = statusLine(mic, mine, chiming);
-  const title = why || (on ? 'Listening: Esc stops' : `Hold to talk (or hold ${talkKey}); tap to talk until you stop`);
+  const title = why || (on ? t('Listening: Esc stops') : t('Hold to talk (or hold {key}); tap to talk until you stop', { key: talkKey }));
 
   return (
     <span className="mic">
       {status && (
         <span className="mic-status small" role="status">
-          {status}
+          {t(status)}
           {on && !warming && (
             <>
               {' '}
@@ -106,7 +108,7 @@ export function MicButton({ kind, value, onChange, onSend, disabled }: Props) {
         type="button"
         ref={ref}
         className={`mic-btn ${(on && !warming) || chiming ? 'mic-on' : ''} ${warming || state === 'transcribing' ? 'mic-busy' : ''} ${why ? 'mic-cant' : ''}`}
-        aria-label={on ? 'Stop listening' : 'Talk instead of type'}
+        aria-label={t(on ? 'Stop listening' : 'Talk instead of type')}
         aria-pressed={on}
         title={title}
         disabled={disabled}

@@ -1,4 +1,5 @@
 import { usePhoneBadge, useStore } from '../store';
+import { LanguageSelect, T, useT } from '../i18n';
 import { requestLook } from '../world/Player';
 import { setMode } from '../pocket/mode';
 import { CEO_ID } from '../../../shared/types';
@@ -9,6 +10,7 @@ import { unlockAudio } from './sfx';
 import { announce } from './announce';
 
 export function StartScreen() {
+  const t = useT();
   const started = useStore((s) => s.started);
   const loaded = useStore((s) => s.loaded);
   const connected = useStore((s) => s.connected);
@@ -37,26 +39,27 @@ export function StartScreen() {
   return (
     <div className="start">
       <div className="start-card">
+        {loaded && <LanguageSelect />}
         <div className="start-logo">✻</div>
         <h1>{settings.companyName || 'cubefarm'}</h1>
-        <p className="start-tag">{settings.managerName ? `Welcome back, ${settings.managerName}.` : 'A cartoon office where a team of AI coding agents works through your GitHub issues.'}</p>
+        <p className="start-tag">{settings.managerName ? t('Welcome back, {name}.', { name: settings.managerName }) : t('A cartoon office where a team of AI coding agents works through your GitHub issues.')}</p>
         <ul className="start-list">
           <li>
-            🏢 {repos.length} project{repos.length === 1 ? '' : 's'}, {staff} {staff === 1 ? 'person' : 'people'} on staff{ceo ? `, and ${ceo.name} in the corner office` : ''}.
+            {t('🏢 Projects: {projects} · Team: {staff}', { projects: repos.length, staff })}{ceo ? ` · CEO: ${ceo.name}` : ''}
           </li>
-          <li>{waiting ? `📱 ${waiting} thing${waiting === 1 ? '' : 's'} waiting on your phone. Press ${phoneKey} once you're in.` : `📱 Press ${phoneKey} anywhere for your phone.`}</li>
+          <li>{waiting ? t('📱 Notifications: {count}. Press {key} once you enter.', { count: waiting, key: phoneKey }) : t('📱 Press {key} anywhere for your phone.', { key: phoneKey })}</li>
           <li>
-            💻 Walk up behind anyone to watch their screen, or press <Key action="interact" /> (or click) on things to use them. <Key action="help" /> for help.
+            💻 <T>Walk up behind anyone to watch their screen.</T> <Key action="interact" /> · <T>Interact</T> · <Key action="help" /> · <T>Help</T>
           </li>
         </ul>
         <button className="btn btn-big" onClick={enter} disabled={!loaded}>
-          {loaded ? 'Enter the office' : connected ? 'Loading…' : 'Connecting to the swarm server…'}
+          {t(loaded ? 'Enter the office' : connected ? 'Loading…' : 'Connecting to the swarm server…')}
         </button>
         <div className="start-meta">
           <button className="linkish start-pocket" onClick={() => setMode('pocket')} title="The office without the 3D building: tabs for the company, the CEO chat, the board, the team and approvals">
-            📱 Pocket mode, for phones and touch screens
+            <T>📱 Pocket mode, for phones and touch screens</T>
           </button>
-          {demo && <span className="pill pill-demo">DEMO MODE: fake repos, fake agents</span>}
+          {demo && <span className="pill pill-demo"><T>DEMO MODE: fake repos, fake agents</T></span>}
           {version && <span className="small">cubefarm {version}</span>}
         </div>
       </div>

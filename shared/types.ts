@@ -345,6 +345,8 @@ export interface QaShotView {
 }
 
 export interface SwarmSettings {
+  /** Shared UI, manager-facing replies and speech; older offices fall back to English. */
+  language?: import('./i18n.ts').Language;
   sessionLimit: number; // most agent sessions running at once; 0 = no limit
   defaultModel: string;
   defaultEffort: EffortLevel;

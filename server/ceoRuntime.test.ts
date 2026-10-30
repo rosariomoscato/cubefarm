@@ -21,21 +21,53 @@ afterEach(async () => {
 
 async function office(openCodeInstalled = true, problem?: string) {
   const sessions: { opts: SessionOptions; cb: SessionCallbacks }[] = [];
+  const send = vi.fn();
   const backend = createDemoBackend();
   const detect = backend.detectClis;
   backend.detectClis = async () => (await detect()).map((cli) => cli.id === 'opencode' ? { ...cli, installed: openCodeInstalled, ...(problem ? { problem } : {}) } : cli);
   backend.listMyRepos = async () => [];
   backend.startSession = (opts, cb) => {
     sessions.push({ opts, cb });
-    return { send: () => undefined, stop: () => undefined };
+    return { send, stop: () => undefined };
   };
   swarm = new Swarm(backend);
   vi.spyOn(swarm.journal, 'hasPastDays').mockResolvedValue(true);
   await swarm.init();
-  return { swarm, sessions };
+  return { swarm, sessions, send };
 }
 
 describe('the CEO coding agent', () => {
+  it('restores Italian after restart and migrates older offices without a language', async () => {
+    const first = await office();
+    first.swarm.updateSettings({ language: 'it' });
+    await first.swarm.shutdown();
+    const second = await office();
+    expect(second.swarm.snapshot().settings.language).toBe('it');
+    await second.swarm.shutdown();
+    const saved = JSON.parse(await fs.readFile(`${home}/state.json`, 'utf8'));
+    delete saved.settings.language;
+    await fs.writeFile(`${home}/state.json`, JSON.stringify(saved));
+    const third = await office();
+    expect(third.swarm.snapshot().settings.language).toBe('en');
+  });
+  it('saves the language, rejects invalid changes and updates an active CEO without changing stored user text', async () => {
+    const { swarm, sessions, send } = await office();
+    expect(swarm.snapshot().settings.language).toBe('en');
+    swarm.updateSettings({ language: 'it' });
+    swarm.updateSettings({ language: 'de' as 'it' });
+    expect(swarm.snapshot().settings.language).toBe('it');
+    await swarm.messageCeo('Ciao');
+    await vi.waitFor(() => expect(sessions).toHaveLength(1));
+    expect(sessions[0].opts.systemAppend).toContain('Reply to the manager in Italian');
+    expect(sessions[0].opts.systemAppend).toContain('GitHub issue titles/bodies');
+    swarm.updateSettings({ language: 'en' });
+    await swarm.messageCeo('Hello again');
+    expect(send).toHaveBeenLastCalledWith(expect.stringContaining('Office language: English'));
+    expect(swarm.snapshot().messages.filter((m) => m.from === 'manager').map((m) => m.text)).toEqual(['Ciao', 'Hello again']);
+    await swarm.shutdown();
+    const saved = JSON.parse(await fs.readFile(`${home}/state.json`, 'utf8'));
+    expect(saved.settings.language).toBe('en');
+  });
   it('loads the model inventory in the CEO or repository context and rejects unknown agents', async () => {
     const { swarm } = await office();
     const ceoModels = await swarm.openCodeModels(CEO_ID);
