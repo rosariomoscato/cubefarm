@@ -34,7 +34,7 @@ type Runtime = Pick<SwarmSettings, 'runtime' | 'defaultCli'>;
 
 /** The coding agent someone runs: their own pick in Real terminals; the Agent SDK is Claude Code for everyone. */
 export const workerCli = (a: Pick<Agent, 'cli' | 'role'>, settings: Runtime): AgentCli =>
-  a.role === 'ceo' || settings.runtime !== 'terminal' ? 'claude' : a.cli || settings.defaultCli;
+  settings.runtime !== 'terminal' ? 'claude' : a.cli || (a.role === 'ceo' ? 'claude' : settings.defaultCli);
 
 /** What someone is, in a word or two: the CEO, or the coding agent they run. */
 export function agentLabel(a: Pick<Agent, 'cli' | 'role'>, settings: Runtime, clis: CliView[]): string {
@@ -55,6 +55,7 @@ export function signInFor(a: Pick<Agent, 'cli' | 'role' | 'host' | 'needsSignIn'
 export function doingText(a: Pick<Agent, 'role' | 'status' | 'task' | 'issueNumber' | 'issueTitle' | 'prNumber'>): string {
   if (a.role === 'ceo') return a.status === 'working' ? (a.issueTitle ?? 'Working') : 'Free for a chat';
   if (a.status === 'idle') return 'Nothing assigned';
+  if (a.task === 'analysis') return 'Read-only analysis';
   if (a.task === 'qa') return a.prNumber ? `Testing PR #${a.prNumber}${a.issueTitle ? `: ${a.issueTitle}` : ''}` : 'Testing';
   if (a.task === 'fix' && a.prNumber) return `Fixing PR #${a.prNumber}${a.issueTitle ? `: ${a.issueTitle}` : ''}`;
   if (a.issueNumber) return `Issue #${a.issueNumber}${a.issueTitle ? `: ${a.issueTitle}` : ''}`;

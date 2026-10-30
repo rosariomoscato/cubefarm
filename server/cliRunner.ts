@@ -9,7 +9,7 @@ import { HOME_DIR } from './config.ts';
 import { BOX_CDP, BoxPty, boxHooksReady, finishedTurn, lookAtBoxCli, readFrom, type BoxCliRecord } from './boxCli.ts';
 import { BOX_BIN, BOX_CLI_BIN, BOX_HOME, boxSessionDir, signInCommand, tmuxKill } from './boxScripts.ts';
 import { BOX_ENV } from './cloud.ts';
-import { cliLabel, CLIS, CODEX_HOOK_SOURCE, codexThread, commandFor, hookReviewKey, interruptions, isCli, launchArgs, NOTIFY_SOURCE, OPENCODE_PLUGIN_SOURCE, signedOutScreen, STATUSLINE_SOURCE, trustKey } from './clis.ts';
+import { checkOpenCodeVersion, cliLabel, CLIS, CODEX_HOOK_SOURCE, codexThread, commandFor, hookReviewKey, interruptions, isCli, launchArgs, NOTIFY_SOURCE, OPENCODE_PLUGIN_SOURCE, signedOutScreen, STATUSLINE_SOURCE, trustKey } from './clis.ts';
 import { adoptPty, discardPty, hooksReady as keeperHooksReady, keeperHookUrl, keeperPid, leaveKeeper, spawnPty, startKeeper, terminalsAvailable, type Pty } from './ptyClient.ts';
 import type { BoxApi } from './box.ts';
 import {
@@ -111,7 +111,10 @@ function writeHelpers() {
   fs.writeFileSync(path.join(BIN_DIR, 'statusline.cjs'), STATUSLINE_SOURCE);
   fs.writeFileSync(path.join(BIN_DIR, 'notify.cjs'), NOTIFY_SOURCE);
   fs.writeFileSync(path.join(BIN_DIR, 'codex-hook.cjs'), CODEX_HOOK_SOURCE);
-  fs.writeFileSync(path.join(BIN_DIR, 'opencode-plugin.mjs'), OPENCODE_PLUGIN_SOURCE);
+  const pluginDir = path.join(BIN_DIR, 'opencode-plugin');
+  fs.mkdirSync(pluginDir, { recursive: true });
+  fs.writeFileSync(path.join(pluginDir, 'index.js'), OPENCODE_PLUGIN_SOURCE);
+  fs.writeFileSync(path.join(pluginDir, 'package.json'), JSON.stringify({ name: 'cubefarm-office-plugin', type: 'module', exports: './index.js' }));
   helpersWritten = true;
 }
 
@@ -169,6 +172,8 @@ interface LiveCli {
   dir: string;
   resumeId: string | null; // the session a follow-up resumes
   statusLine: string;
+  /** Inline OpenCode plugin options are fixed for a process; a changed selection needs a fresh CLI. */
+  selectedModel?: string;
   /** Browser screenshots already passed on (Codex and OpenCode: collected from the browser's output folder). */
   shots: Set<string>;
   /** The office session driving it; null while it waits at its prompt. */
@@ -479,7 +484,8 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
   const waiting = !!prev?.proc && !prev.session;
   // A CLI is only picked up where the session is to run: on this computer, or in that same Box.
   const sameHost = (prev?.box?.boxId ?? null) === (opts.box?.boxId ?? null);
-  const adopt = waiting && (!!opts.reattach || (sameHost && prev!.cli === (opts.cli ?? 'claude') && !!opts.resumeSessionId && prev!.resumeId === opts.resumeSessionId));
+  const sameModel = prev?.cli !== 'opencode' || prev.selectedModel === opts.model;
+  const adopt = waiting && (!!opts.reattach || (sameHost && sameModel && prev!.cli === (opts.cli ?? 'claude') && !!opts.resumeSessionId && prev!.resumeId === opts.resumeSessionId));
   if (prev && !adopt) endLive(prev);
   let live: LiveCli | null = adopt ? prev! : null;
   const cli = live?.cli ?? opts.cli ?? 'claude';
@@ -747,6 +753,7 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
       case 'TurnError':
         turnError = `${label}: ${clip(String(b.error ?? 'error'), 200)}`;
         log([{ kind: 'error', text: `✗ ${turnError}` }]);
+        turnEnded(lastText); // OpenCode V2 reports failed idle turns without a later TurnComplete.
         return {};
     }
     return {};
@@ -877,7 +884,8 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
     files,
     notify: box ? { script: `${BOX_BIN}/notify.cjs`, url: events } : { script: path.join(BIN_DIR, 'notify.cjs'), url: hookUrl },
     codexHook: box ? `${BOX_BIN}/codex-hook.cjs` : path.join(BIN_DIR, 'codex-hook.cjs'),
-    plugin: box ? '' : pathToFileURL(path.join(BIN_DIR, 'opencode-plugin.mjs')).href,
+    plugin: box ? '' : pathToFileURL(path.join(BIN_DIR, 'opencode-plugin')).href,
+    ...(opts.office && !box ? { officeUrl: `${officeUrl}/api/mcp/${token}` } : {}),
     browser,
     ...(box ? { node: 'node', posix: true } : {}),
   });
@@ -901,7 +909,7 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
   if (cli === 'claude' && opts.resumeSessionId) cb.sessionId(sessionId);
   term.note(`── ${label}${opts.label ? ` · ${opts.label}` : ''}${box ? ' · ☁ cloud machine' : ''} ──`);
   const resumeId = cli === 'claude' ? sessionId : (opts.resumeSessionId ?? null);
-  const l: LiveCli = { agentId: opts.agentId ?? '', cli, term, proc: null, token, dir, resumeId, statusLine, shots: new Set(), session: { hook, exited }, ...(box ? { box: { api: box.api, boxId: box.boxId } } : {}) };
+  const l: LiveCli = { agentId: opts.agentId ?? '', cli, term, proc: null, token, dir, resumeId, statusLine, selectedModel: opts.model, shots: new Set(), session: { hook, exited }, ...(box ? { box: { api: box.api, boxId: box.boxId } } : {}) };
 
   // Starting up: answer the folder-trust question for the office's own worktrees (the answer that trusts it), and say
   // so when a CLI is waiting on something only the manager can do (signing in).
@@ -977,6 +985,11 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
   if (box) void beginInBox(box);
   // Codex won't resume a thread the office archived (see codexThread): it's unarchived first.
   else if (cli === 'codex' && opts.resumeSessionId) void codexThread('unarchive', opts.resumeSessionId).then(begin);
+  else if (cli === 'opencode') void checkOpenCodeVersion(cmd!).then((problem) => {
+    if (done) return; // the manager may have stopped it while --version was running
+    if (problem) finish({ ok: false, text: '', errors: [problem] });
+    else begin();
+  });
   else begin();
 
   return handle;

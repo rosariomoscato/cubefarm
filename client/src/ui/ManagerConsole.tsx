@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { TeamStats } from './CareerCard';
+import { OpenCodeModelPicker, OpenCodeVariantSelect } from './OpenCodeModelPicker';
 import { api } from '../api';
 import { PreviewPill, PreviewSettings } from './AppViewer';
 import { agentsOnRepo, pendingRequests, useStore, type ManagerTab } from '../store';
@@ -253,6 +254,7 @@ function FloorBrief({ repo }: { repo: RepoView }) {
 }
 
 function CeoTab() {
+  const terminal = useStore((s) => s.settings.runtime === 'terminal');
   const ceo = useStore((s) => s.agents[CEO_ID]);
   const log = useStore((s) => s.logs[CEO_ID]) ?? [];
   const info = useStore((s) => s.ceo);
@@ -278,17 +280,19 @@ function CeoTab() {
     <div className="tab-grid">
       <div>
         <div className="card">
-          <div className="row">
+          <div className="row wrap">
             <span className="avatar" style={{ background: ceo.color }}>
               {ceo.name[0]}
             </span>
-            <NameInput agent={ceo} style={{ maxWidth: 140, fontWeight: 700 }} />
+            <NameInput agent={ceo} style={{ maxWidth: 140, minWidth: 100, fontWeight: 700 }} />
             <span className="muted small">CEO</span>
             <StatusPill status={ceo.status} />
             <span className="spacer" />
-            <ModelInput agent={ceo} style={{ maxWidth: 150 }} />
+            {terminal && <CliSelect agent={ceo} style={{ width: 130 }} />}
+            <ModelInput agent={ceo} style={{ maxWidth: 240, minWidth: 180, flex: '1 1 180px' }} />
             <EffortSelect agent={ceo} style={{ width: 'auto' }} />
           </div>
+          {terminal && ceo.cli === 'opencode' && <p className="muted small">Model: provider/model, or provider/model#variant for reasoning. Empty uses the OpenCode default.</p>}
           <div className="small">
             <b>Now:</b> {working ? info.job?.label : 'free'}
             {info.queue.length > 0 && (
@@ -404,19 +408,20 @@ function AddAgent({ repo, size }: { repo: RepoView; size: number }) {
         </select>
       )}
       <input value={draft.model} onChange={(e) => edit({ model: e.target.value })} list={`new-agent-models-${repo.floor}`} placeholder="default model" aria-label="New agent's model" style={{ maxWidth: 150 }} />
+      {cli === 'opencode' && <OpenCodeModelPicker value={draft.model} repo={repo.id} inherited={settings.defaultCli === 'opencode' ? settings.defaultModel : undefined} onSelect={(model) => edit({ model })} />}
       <datalist id={`new-agent-models-${repo.floor}`}>
         {modelSuggestions(cli).map((m) => (
           <option key={m} value={m} />
         ))}
       </datalist>
-      <select value={draft.effort} onChange={(e) => edit({ effort: e.target.value as EffortLevel | '' })} aria-label="New agent's effort" style={{ width: 'auto' }}>
+      {cli === 'opencode' ? <OpenCodeVariantSelect value={draft.model} repo={repo.id} inherited={settings.defaultCli === 'opencode' ? settings.defaultModel : undefined} onSelect={(model) => edit({ model })} /> : <select value={draft.effort} onChange={(e) => edit({ effort: e.target.value as EffortLevel | '' })} aria-label="New agent's effort" style={{ width: 'auto' }}>
         <option value="">default effort ({settings.defaultEffort})</option>
         {EFFORTS.map((x) => (
           <option key={x} value={x}>
             {x}
           </option>
         ))}
-      </select>
+      </select>}
       <span title={full ? `Floor ${repo.floor} has its most agents (${settings.maxAgents}): change it in Settings → Most agents per floor` : undefined}>
         <button className="btn btn-small btn-good" disabled={busy || full} onClick={add}>
           + Agent
@@ -636,7 +641,7 @@ function SettingsTab() {
             </select>
           </label>
         )}
-        <label className="field">
+        <div className="field">
           <span>Default model{terminal ? ` for ${cliName(clis, settings.defaultCli)}` : ''}</span>
           <input
             key={`${settings.defaultCli}:${settings.defaultModel}`}
@@ -650,20 +655,21 @@ function SettingsTab() {
               <option key={m} value={m} />
             ))}
           </datalist>
-        </label>
+          {defaultCli === 'opencode' && <OpenCodeModelPicker value={settings.defaultModel} onSelect={(model) => set({ defaultModel: model })} />}
+        </div>
         <label className="field">
-          <span>Default effort</span>
-          <select value={settings.defaultEffort} onChange={(e) => set({ defaultEffort: e.target.value as EffortLevel })}>
+          <span>{defaultCli === 'opencode' ? 'Default OpenCode variant' : 'Default effort'}</span>
+          {defaultCli === 'opencode' ? <OpenCodeVariantSelect value={settings.defaultModel} onSelect={(model) => set({ defaultModel: model })} /> : <select value={settings.defaultEffort} onChange={(e) => set({ defaultEffort: e.target.value as EffortLevel })}>
             {EFFORTS.map((x) => (
               <option key={x} value={x}>
                 {x}
               </option>
             ))}
-          </select>
+          </select>}
         </label>
         <p className="muted small">
           {terminal
-            ? 'Each agent can use their own coding agent, model and effort (Team tab); the CEO always runs Claude Code. Claude Code reports every step; Codex and OpenCode are experimental: the office sees their task rather than each step. They can also run a model on this computer: name it ollama/…, lmstudio/…, llamacpp/… or omlx/….'
+            ? 'Each agent can use their own coding agent, model and effort (Team tab); choose Claude Code or OpenCode 2 for the CEO on the CEO tab. Claude Code reports every step; Codex and OpenCode are experimental: the office sees their task rather than each step. For OpenCode, choose reasoning with provider/model#variant. They can also run a model on this computer: name it ollama/…, lmstudio/…, llamacpp/… or omlx/….'
             : 'The Agent SDK runs Claude Code. Each agent can use their own model and effort (Team tab).'}
         </p>
         <label className="field">

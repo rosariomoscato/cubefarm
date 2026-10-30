@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
+import { OpenCodeModelPicker, OpenCodeVariantSelect } from './OpenCodeModelPicker';
 import { floorPrCounts, isBusy, pendingRequests, unreadMessages, useStore, type PhoneTab } from '../store';
 import { CEO_ID, type AgentCli, type CliView, type EffortLevel, type HireRequestView, type MachineHost, type PhoneMessage, type SwarmSettings } from '../../../shared/types';
 import { Markdown } from './Markdown';
@@ -69,7 +70,7 @@ export function setupLine(s: Pick<HireSetup, 'cli' | 'model' | 'effort'>, settin
 }
 
 /** A new agent's settings, edited before they're created: the lobby's card and the phone's both use these. */
-export function HireSetupFields({ value, onChange, disabled }: { value: HireSetup; onChange: (v: HireSetup) => void; disabled?: boolean }) {
+export function HireSetupFields({ value, onChange, disabled, repo }: { value: HireSetup; onChange: (v: HireSetup) => void; disabled?: boolean; repo?: string }) {
   const settings = useStore((s) => s.settings);
   const clis = useStore((s) => s.clis);
   const id = useId();
@@ -96,9 +97,9 @@ export function HireSetupFields({ value, onChange, disabled }: { value: HireSetu
           {[...clis]
             .sort((a, b) => Number(b.installed) - Number(a.installed))
             .map((c) => (
-              <option key={c.id} value={c.id} disabled={!c.installed}>
+              <option key={c.id} value={c.id} disabled={!c.installed || !!c.problem} title={c.problem}>
                 {c.label}
-                {c.installed ? '' : ' (not installed)'}
+                {!c.installed ? ' (not installed)' : c.problem ? ' (incompatible version)' : ''}
               </option>
             ))}
         </select>
@@ -120,16 +121,17 @@ export function HireSetupFields({ value, onChange, disabled }: { value: HireSetu
           ))}
         </datalist>
       </label>
+      {cli === 'opencode' && <OpenCodeModelPicker value={value.model} repo={repo} disabled={disabled} inherited={settings.defaultCli === 'opencode' ? settings.defaultModel : undefined} onSelect={(model) => set({ model })} />}
       <label className="field" htmlFor={`${id}-effort`}>
-        <span>Effort</span>
-        <select id={`${id}-effort`} value={value.effort} disabled={disabled} onChange={(e) => set({ effort: e.target.value as EffortLevel | '' })}>
+        <span>{cli === 'opencode' ? 'Variant' : 'Effort'}</span>
+        {cli === 'opencode' ? <OpenCodeVariantSelect id={`${id}-effort`} value={value.model} repo={repo} disabled={disabled} inherited={settings.defaultCli === 'opencode' ? settings.defaultModel : undefined} onSelect={(model) => set({ model })} /> : <select id={`${id}-effort`} value={value.effort} disabled={disabled} onChange={(e) => set({ effort: e.target.value as EffortLevel | '' })}>
           <option value="">default ({settings.defaultEffort})</option>
           {EFFORTS.map((x) => (
             <option key={x} value={x}>
               {x}
             </option>
           ))}
-        </select>
+        </select>}
       </label>
       {(cloudKey || value.host === 'box') && (
         <label className="field" htmlFor={`${id}-host`}>
@@ -200,7 +202,7 @@ export function Resume({ req, highlight }: { req: HireRequestView; highlight?: b
           )}
         </div>
       )}
-      {hire && pending && editing && <HireSetupFields value={setup} onChange={setSetup} disabled={busy} />}
+      {hire && pending && editing && <HireSetupFields value={setup} onChange={setSetup} disabled={busy} repo={repo?.id} />}
       {!pending && req.note && <div className="muted small">Your note: “{req.note}”</div>}
       {pending && !declining && (
         <div className="row">

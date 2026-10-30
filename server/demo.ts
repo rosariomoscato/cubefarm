@@ -5,7 +5,7 @@ import path from 'node:path';
 import type { Backend } from './backend.ts';
 import type { PreviewBackend } from './previewRunner.ts';
 import { describeOfficeTool, type LogEntry, type SessionCallbacks, type SessionHandle, type SessionOptions } from './agentRunner.ts';
-import { CLIS } from './clis.ts';
+import { CLIS, cliLabel } from './clis.ts';
 import { FLOOR_SEATS, type GhRepoSummary, type IssueInfo, type PullInfo } from '../shared/types.ts';
 import type { LocalFolder } from './workspace.ts';
 import { HOME_DIR, type DemoScale } from './config.ts';
@@ -300,6 +300,15 @@ export function fixPromptPull(prompt: string): { number: number; title?: string 
 }
 
 function fakeSession(opts: SessionOptions, cb: SessionCallbacks, fullName: string): SessionHandle {
+  if (opts.task === 'analysis') {
+    cb.sessionId(opts.resumeSessionId ?? `demo-analysis-${crypto.randomUUID()}`);
+    const timer = setTimeout(() => {
+      const text = `Demo analysis of ${fullName}: no files changed, no issue or PR created. A real agent would read the checkout and answer your request.`;
+      cb.log([{ kind: 'text', text }]);
+      cb.finished({ ok: true, text, costUsd: 0, turns: 1, errors: [] });
+    }, 500);
+    return { send: () => undefined, stop: () => { clearTimeout(timer); cb.finished({ ok: false, text: '', costUsd: 0, turns: 0, errors: ['Stopped by manager'], interrupted: true }); } };
+  }
   const timers: NodeJS.Timeout[] = [];
   let stopped = false;
   let stalled = false; // stuck: no more output, and messages go unanswered
@@ -794,7 +803,7 @@ export function createDemoBackend(scale: DemoScale | null = null): Backend {
     mainDir: (fullName) => `/demo/${fullName}/main`,
     deskDir: (fullName, slug) => `/demo/${fullName}/desks/${slug}`,
     // The fake desks are the ones set up since the demo started: after a restart, every desk is gone.
-    deskExists: (dir) => deskRepo.has(dir),
+    deskExists: (dir) => deskRepo.has(dir) || [...repos.keys()].some((fullName) => dir === `/demo/${fullName}/main`),
     prepareDesk: async (fullName, _base, slug) => {
       await new Promise((r) => setTimeout(r, 900));
       const dir = `/demo/${fullName}/desks/${slug}`;
@@ -841,6 +850,10 @@ export function createDemoBackend(scale: DemoScale | null = null): Backend {
       return inTerminal(opts, cb, (c) => (opts.role === 'ceo' ? ceoSession(opts, c) : fakeSession(opts, c, deskRepo.get(opts.cwd) ?? boxDeskRepo(opts.cwd) ?? [...repos.keys()][0])));
     },
     terminals: true,
+    openCodeModels: async (directory) => ({ directory, defaultModel: 'openai/demo-model', models: [
+      { id: 'openai/demo-model', provider: 'openai', name: 'Demo reasoning model', variants: ['low', 'high'], tools: true },
+      { id: 'anthropic/demo-model', provider: 'anthropic', name: 'Demo assistant', variants: ['high'], tools: true },
+    ] }),
     reconnectClis: async () => [], // fake sessions end with the office
     hooksReady: () => undefined,
     releaseClis: async () => undefined,
@@ -1307,7 +1320,7 @@ function ceoSession(opts: SessionOptions, cb: SessionCallbacks): SessionHandle {
         'SWARM_HOME=/tmp/cubefarm-demo SWARM_PORT=5260 node --import tsx server/index.ts --demo',
         '```',
         '',
-        `> I'm the demo CEO, so I can't act on "${short(text)}", but the real one would. See the [Claude Code docs](https://docs.claude.com/en/docs/claude-code/overview).`,
+        `> I'm the demo CEO, so I can't act on "${short(text)}", but the real one would. See the [coding agent docs](${opts.cli === 'opencode' ? 'https://opencode.ai/v2/docs/' : 'https://docs.claude.com/en/docs/claude-code/overview'}).`,
       ].join('\n');
     },
   };
@@ -1337,7 +1350,7 @@ function ceoSession(opts: SessionOptions, cb: SessionCallbacks): SessionHandle {
   timers.push(
     setTimeout(async () => {
       try {
-        cb.log([{ kind: 'system', text: `✻ Claude Code (demo) · ${opts.model} · ${opts.effort} effort · CEO` }]);
+        cb.log([{ kind: 'system', text: `✻ ${cliLabel(opts.cli ?? 'claude')} (demo) · ${opts.model || 'default model'} · ${opts.effort} effort · CEO` }]);
         const reply = await run();
         cb.log([{ kind: 'text', text: `● ${reply}` }]);
         cb.turn?.(reply);

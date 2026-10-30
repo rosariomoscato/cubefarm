@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { analysisPrompt } from './analysisPrompt.ts';
 import type { WebSocket } from 'ws';
 import type { Backend } from './backend.ts';
 import type { LogEntry, SessionHandle, SessionResult } from './agentRunner.ts';
@@ -193,6 +194,8 @@ const prepKey = (repoId: string, prNumber: number, task: PrepJob['task']) => `${
 interface FloorOptions {
   mission?: string; // brief for the CEO to plan from
   autoAssign?: boolean; // free agents pick up backlog issues as soon as they're filed
+  onboardCeo?: boolean;
+  autoMerge?: boolean;
 }
 
 interface CeoState {
@@ -988,6 +991,10 @@ export class Swarm {
   private recover(agents: PersistedAgent[], preparing: Set<PersistedAgent>, requeue = new Set<PersistedAgent>(), counts: RestartCounts = { cleared: 0, reattached: 0, resumed: 0, requeued: 0 }) {
     for (const a of agents) {
       if (!a.task) continue; // its issue or PR closed while the office was down: the startup sync cleared the desk
+      if (a.task === 'analysis') {
+        this.appendLog(a, [{ kind: 'system', text: 'Analysis stopped by the restart. It will not resume automatically; send a follow-up to continue.' }]);
+        continue;
+      }
       const fix = a.task === 'fix' ? this.state.qa.find((q) => q.devAgentId === a.id && q.status === 'fixing') : undefined;
       if (requeue.has(a) || !resumesAfterRestart(a, preparing.has(a), this.backend.demo)) {
         this.appendLog(a, [{ kind: 'system', text: '↺ The office server restarted. Starting over from the queue.' }]);
@@ -1340,11 +1347,13 @@ export class Swarm {
 
   /** Where an agent works: their machine's worktree, or (from before machines, until their next task) their floor desk. */
   private deskOf(a: PersistedAgent, repo: PersistedRepo) {
+    if (a.task === 'analysis') return this.backend.mainDir(repo.fullName);
     return a.machine ? this.machinesFor(a).deskDir(a.machine, repo.fullName) : this.backend.deskDir(repo.fullName, this.agentSlug(a));
   }
 
   /** Stop what an agent left running at their desk: on their port, or started there. */
   private releaseDesk(a: PersistedAgent, repo: PersistedRepo) {
+    if (a.task === 'analysis') return Promise.resolve(); // This task only reads the floor checkout, not a development desk.
     return a.machine ? this.machinesFor(a).release(a.machine, repo.fullName, this.port(a)) : this.backend.releaseDesk(repo.fullName, this.agentSlug(a), this.port(a));
   }
 
@@ -1399,6 +1408,15 @@ export class Swarm {
     return this.backend.listMyRepos(owner);
   }
 
+  openCodeModels(agentId?: string, repoId?: string, refresh = false) {
+    let directory = process.cwd();
+    if (agentId) {
+      const a = this.agent(agentId);
+      directory = a.role === 'ceo' ? CEO_DIR : this.backend.mainDir(this.repo(a.repoId).fullName);
+    } else if (repoId) directory = this.backend.mainDir(this.repo(repoId).fullName);
+    return this.backend.openCodeModels(directory, refresh);
+  }
+
   /**
    * Give a GitHub repo a floor. Its main checkout is one of your own folders: the one you picked, else the folder in
    * your projects folder that already has it as origin, else a fresh clone into your projects folder.
@@ -1418,7 +1436,7 @@ export class Swarm {
       floor,
       color: FLOOR_COLORS[(floor - 1) % FLOOR_COLORS.length],
       autoAssign: !!opts.autoAssign,
-      autoMerge: true,
+      autoMerge: opts.autoMerge !== false,
       browserTesting: true,
       links: [],
       localPath: folder,
@@ -1438,8 +1456,10 @@ export class Swarm {
     void this.cloneRepo(repo.id);
     void this.syncRepo(repo.id);
     // The CEO studies every new floor and sizes its team; a brief given here is the manager asking for a plan.
-    this.enqueueCeo({ kind: 'onboard', repoId: repo.id, at: Date.now() });
-    if (repo.mission) this.enqueueCeo({ kind: 'plan', repoId: repo.id, at: Date.now() });
+    if (opts.onboardCeo !== false) {
+      this.enqueueCeo({ kind: 'onboard', repoId: repo.id, at: Date.now() });
+      if (repo.mission) this.enqueueCeo({ kind: 'plan', repoId: repo.id, at: Date.now() });
+    }
     return this.repoView(repo);
   }
 
@@ -1461,7 +1481,7 @@ export class Swarm {
     const created = await this.backend.createProject(this.state.settings.projectsDir, name, opts).catch((err: Error) => {
       throw new HttpError(400, err.message);
     });
-    return this.connectRepo(created.fullName, { mission: opts.mission, autoAssign: opts.autoAssign, localPath: created.path });
+    return this.connectRepo(created.fullName, { ...opts, localPath: created.path });
   }
 
   /** The folders in your projects folder (or another folder you point at), and which are floors already. */
@@ -1494,7 +1514,7 @@ export class Swarm {
     const fullName = await this.backend.publishFolder(f.path, { name, visibility: opts.visibility, description: opts.description }).catch((err: Error) => {
       throw new HttpError(400, err.message);
     });
-    return this.connectRepo(fullName, { mission: opts.mission, autoAssign: opts.autoAssign, localPath: f.path });
+    return this.connectRepo(fullName, { ...opts, localPath: f.path });
   }
 
   disconnectRepo(id: string) {
@@ -2150,7 +2170,8 @@ export class Swarm {
     const cli = isCli(opts.cli) ? opts.cli : '';
     const host = this.hostFor(opts.host, cli || this.state.settings.defaultCli, !!opts.strict);
     // A cloud agent's CLI is the one the office installs in their Box, not this computer's.
-    if (cli && host === 'local' && !this.cliReady(cli)) throw new HttpError(400, `${cliLabel(cli)} isn't installed on this computer.`);
+    const localCli = cli || this.state.settings.defaultCli;
+    if (host === 'local' && (cli || localCli === 'opencode') && !this.cliReady(localCli)) throw new HttpError(400, `${cliLabel(localCli)} isn't installed on this computer.`);
     const id = opts.id && !this.state.agents.some((a) => a.id === opts.id) ? opts.id : crypto.randomUUID();
     const agent: PersistedAgent = {
       id,
@@ -2514,18 +2535,28 @@ export class Swarm {
 
   /** The coding agent is installed here (or the office hasn't looked yet: then the session says so if it isn't). */
   private cliReady(cli: AgentCli) {
+    const problem = this.clis.find((c) => c.id === cli)?.problem;
+    if (problem) throw new HttpError(400, problem);
     return !this.clis.length || this.clis.some((c) => c.id === cli && c.installed);
   }
 
   updateAgent(id: string, patch: { name?: string; model?: string; effort?: string; cli?: string; host?: string; look?: string; color?: string; hair?: string; style?: unknown }) {
     const a = this.agent(id);
     if (patch.host !== undefined && a.role !== 'ceo' && (patch.host === 'box' || patch.host === 'local')) this.moveAgent(a, patch.host);
-    if (patch.cli !== undefined && a.role !== 'ceo') {
+    if (patch.cli !== undefined) {
       const cli = isCli(patch.cli) ? patch.cli : '';
+      if (a.role === 'ceo' && cli && cli !== 'claude' && cli !== 'opencode') throw new HttpError(400, 'The CEO can run Claude Code or OpenCode.');
       if (a.host === 'box' && (cli || this.state.settings.defaultCli) === 'opencode') throw new HttpError(400, `${a.name} works in the cloud, where OpenCode can't run yet: move them to this computer first.`);
-      if (cli && a.host !== 'box' && !this.cliReady(cli)) throw new HttpError(400, `${cliLabel(cli)} isn't installed on this computer.`);
+      const localCli = cli || (a.role === 'ceo' ? 'claude' : this.state.settings.defaultCli);
+      if (a.host !== 'box' && (cli || localCli === 'opencode') && !this.cliReady(localCli)) throw new HttpError(400, `${cliLabel(localCli)} isn't installed on this computer.`);
       const changed = cli !== a.cli;
       a.cli = cli;
+      if (changed && a.role === 'ceo') {
+        // A new coding agent cannot resume the previous one's chat or understand its model names.
+        a.sessionId = null;
+        a.sessionCli = null;
+        if (patch.model === undefined) a.model = '';
+      }
       // Another coding agent in their Box has a login of its own (or needs one).
       if (changed && a.host === 'box') void this.checkSignIn(a, true);
     }
@@ -2641,6 +2672,29 @@ export class Swarm {
     }
   }
 
+  /** A manual, local, read-only workflow: no issue, worktree, dependency install or PR pipeline. */
+  analyze(agentId: string, text: string, resume = false) {
+    const a = this.agent(agentId);
+    if (a.role === 'ceo') throw new HttpError(400, 'Give analysis tasks to a team member, not the CEO.');
+    if (a.host === 'box') throw new HttpError(400, 'Analysis is currently available on this computer only.');
+    if (typeof text !== 'string' || !text.trim() || text.length > 4000) throw new HttpError(400, 'An analysis request must contain 1–4000 characters.');
+    if (BUSY.includes(a.status)) throw new HttpError(409, `${a.name} is busy; stop the current task first.`);
+    const repo = this.repo(a.repoId);
+    if (this.repoRt.get(repo.id)?.cloneStatus !== 'ready') throw new HttpError(409, 'Wait until the repository checkout is ready.');
+    if (!this.backend.deskExists(this.backend.mainDir(repo.fullName))) throw new HttpError(409, 'The repository checkout is missing; reconnect it before starting analysis.');
+    this.ensureSlot();
+    const cli = a.cli || this.state.settings.defaultCli;
+    if (this.state.settings.runtime === 'terminal' && !this.cliReady(cli)) throw new HttpError(400, `${cliLabel(cli)} isn't installed on this computer.`);
+    const session = resume && a.task === 'analysis' ? a.sessionId ?? undefined : undefined;
+    Object.assign(a, { task: 'analysis', issueNumber: null, prNumber: null, prUrl: null, branch: null,
+      issueTitle: 'Read-only analysis', sessionId: session ?? null, sessionCli: session ? a.sessionCli : null,
+      startedAt: Date.now(), endedAt: null, costUsd: 0, turns: 0, lastError: null });
+    this.appendLog(a, [{ kind: 'system', text: '━━━ Read-only analysis · no issue or PR workflow ━━━' }, { kind: 'manager', text: `▶ ${text.trim()}` }]);
+    this.startAgentSession(a, repo, this.backend.mainDir(repo.fullName), text.trim(), analysisPrompt(a.name, repo.fullName), session);
+    this.save();
+    return this.agentView(a, false);
+  }
+
   /** `waitForDeps`: refuse an issue that still waits for open ones (a sticky carried to a desk; the console may override). */
   async assign(agentId: string, issueNumber: number, note?: string, waitForDeps = false) {
     const a = this.agent(agentId);
@@ -2679,9 +2733,10 @@ export class Swarm {
   private sessionRuntime(a: PersistedAgent, resume?: string): { terminal?: AgentTerminal; cli?: AgentCli; label?: string; resumeSessionId?: string } {
     // A cloud agent's CLI always runs in a terminal: their Box's, which needs nothing from this computer.
     const inTerminal = a.host === 'box' || (this.state.settings.runtime === 'terminal' && this.backend.terminals);
-    let cli: AgentCli = a.role === 'ceo' ? 'claude' : a.cli || this.state.settings.defaultCli;
+    let cli: AgentCli = !inTerminal ? 'claude' : a.cli || (a.role === 'ceo' ? 'claude' : this.state.settings.defaultCli);
     if (resume && a.sessionCli && a.sessionCli !== cli) {
-      if (inTerminal) cli = a.sessionCli;
+      if (a.role === 'ceo') resume = undefined;
+      else if (inTerminal) cli = a.sessionCli;
       else if (a.sessionCli !== 'claude') resume = undefined;
     }
     if (!inTerminal) return { resumeSessionId: resume };
@@ -2691,6 +2746,7 @@ export class Swarm {
 
   /** The model to ask for (the Agent SDK runs Claude Code). '' lets another coding agent use its own default. */
   private modelFor(a: PersistedAgent, cli: AgentCli | undefined) {
+    if (a.role === 'ceo') return effectiveModel(a.model, cli ?? 'claude', { defaultCli: 'claude', defaultModel: CEO_MODEL }, CEO_MODEL);
     return effectiveModel(a.model, cli ?? 'claude', this.state.settings, DEFAULT_MODEL);
   }
 
@@ -2969,6 +3025,12 @@ export class Swarm {
     // A session started in a folder that's gone dies at once (Windows exit 267): set the desk up again first. (A Box's
     // desk is taken to be there: looking would wake it.)
     if (a.host !== 'box' && sessionStart(this.backend.deskExists(cwd), mode) === 'prepare') {
+      if (a.task === 'analysis') {
+        this.fail(a, { ok: false, text: '', costUsd: 0, turns: 0, errors: ['The analysis checkout is missing. No worktree or dependencies were created.'] }, 'analysis');
+        this.emitAgent(a);
+        this.save();
+        return;
+      }
       const machine = a.machine;
       // An agent who moved to their machine meanwhile can't resume a session from their old desk (machineOf).
       void this.restoreDesk(a, repo).then((dir) => dir && this.startAgentSession(a, repo, dir, prompt, systemAppend, a.machine === machine ? resumeSessionId : undefined, outputSchema, mode));
@@ -2988,16 +3050,16 @@ export class Swarm {
         systemAppend,
         model: this.modelFor(a, how.cli),
         effort: a.effort || this.state.settings.defaultEffort,
-        browserTesting: repo.browserTesting,
+        browserTesting: a.task !== 'analysis' && repo.browserTesting,
         additionalDirectories: linked ?? (a.host === 'box' ? [] : this.linkedRepos(repo).map((r) => this.backend.mainDir(r.fullName))),
         role: a.role,
         task: a.task,
-        env: this.machineEnv(a),
+        env: a.task === 'analysis' ? undefined : this.machineEnv(a),
         outputSchema,
         ...(box ? { box } : {}),
         // An agent's CLI stays at its prompt after building or fixing, for the manager and for follow-ups; after QA it
         // closes, so the next QA run of that PR is a fresh session.
-        keepAlive: a.task !== 'qa',
+        keepAlive: a.task !== 'qa' && a.task !== 'analysis',
         typed: mode === 'typed',
         reattach: mode === 'reattach',
         agentId: a.id,
@@ -3083,6 +3145,15 @@ export class Swarm {
     if (result.interrupted) this.interrupted(a);
 
     if (this.dropping.has(a.id)) this.dropTask(a, '↺ Cleared desk. Ready for new work.'); // stopped: its issue or PR closed
+    else if (a.task === 'analysis') {
+      if (a.status !== 'stopped') {
+        if (!result.ok) this.fail(a, result, 'analysis');
+        else {
+          a.status = 'done';
+          this.appendLog(a, [{ kind: 'done', text: `✔ Analysis finished · ${a.turns} turns · no PR expected` }]);
+        }
+      }
+    }
     else if (a.task === 'qa') await this.onQaFinished(a, repo, result);
     else if (a.task === 'fix') await this.onFixFinished(a, repo, result);
     else await this.onIssueFinished(a, repo, result);
@@ -3690,6 +3761,7 @@ export class Swarm {
       return;
     }
     if (a.status === 'preparing') throw new HttpError(409, `${a.name} is still setting up; try again in a moment`);
+    if (a.task === 'analysis') return this.analyze(id, text, true);
     if (!a.sessionId || !a.branch || a.task === 'qa') throw new HttpError(409, `${a.name} has no session to continue. Give them an issue or a PR to test instead.`);
     this.ensureSlot();
     this.appendLog(a, [{ kind: 'manager', text: `▶ Manager: ${text}` }]);
@@ -3779,6 +3851,7 @@ export class Swarm {
    * else instead of waiting for the manager to reset them.
    */
   private isFree(a: PersistedAgent) {
+    if (a.task === 'analysis') return false; // Reserved for manual follow-ups until Clear desk or an explicit new task.
     if (a.needsSignIn) return false; // a cloud agent waiting to be signed in takes no work (docs/cloud.md)
     return FREE.includes(a.status) || (a.status === 'error' && Date.now() - (a.endedAt ?? 0) >= ERROR_COOLDOWN_MS);
   }
@@ -4310,7 +4383,7 @@ export class Swarm {
 
   private ceoPromptInput(a: PersistedAgent): Parameters<typeof ceoSystemPrompt>[0] {
     const s = this.state.settings;
-    return { name: a.name, company: s.companyName, manager: s.managerName, notesFile: path.join(CEO_DIR, 'NOTES.md'), sessionLimit: s.sessionLimit, maxAgents: s.maxAgents, scaling: s.scaling };
+    return { name: a.name, company: s.companyName, manager: s.managerName, notesFile: path.join(CEO_DIR, 'NOTES.md'), sessionLimit: s.sessionLimit, maxAgents: s.maxAgents, scaling: s.scaling, cli: s.runtime === 'terminal' && this.backend.terminals ? a.cli || 'claude' : 'claude' };
   }
 
   private async runCeoJob(a: PersistedAgent, job: CeoJob) {
@@ -4349,7 +4422,7 @@ export class Swarm {
         cwd: CEO_DIR,
         prompt: ceoJobPrompt(job, floor, triage),
         systemAppend: ceoSystemPrompt(this.ceoPromptInput(a)),
-        model: a.model || CEO_MODEL,
+        model: this.modelFor(a, how.cli),
         effort: a.effort || CEO_EFFORT,
         browserTesting: false,
         additionalDirectories: this.state.repos.filter((r) => this.repoRt.get(r.id)?.cloneStatus === 'ready').map((r) => this.backend.mainDir(r.fullName)),
@@ -4366,7 +4439,7 @@ export class Swarm {
         },
         sessionId: (id) => {
           a.sessionId = id;
-          a.sessionCli = id ? 'claude' : null;
+          a.sessionCli = id ? (how.cli ?? 'claude') : null;
         },
         browserUrl: () => undefined,
         screenshot: () => undefined,
@@ -5339,16 +5412,17 @@ export class Swarm {
   }
 
   private agentDoing(a: PersistedAgent) {
-    return !BUSY.includes(a.status) ? null : a.task === 'qa' ? `testing PR #${a.prNumber}` : a.task === 'fix' ? `fixing PR #${a.prNumber}` : `issue #${a.issueNumber}`;
+    return !BUSY.includes(a.status) ? null : a.task === 'analysis' ? 'read-only analysis' : a.task === 'qa' ? `testing PR #${a.prNumber}` : a.task === 'fix' ? `fixing PR #${a.prNumber}` : `issue #${a.issueNumber}`;
   }
 
   /** What an agent runs, defaults resolved, for the CEO. */
   private agentSetup(a: PersistedAgent) {
     const ceo = a.role === 'ceo';
-    const cli = ceo ? 'claude' : a.cli || this.state.settings.defaultCli;
+    const terminal = a.host === 'box' || (this.state.settings.runtime === 'terminal' && this.backend.terminals);
+    const cli = terminal ? a.cli || (ceo ? 'claude' : this.state.settings.defaultCli) : 'claude';
     return {
       codingAgent: cli,
-      model: ceo ? a.model || CEO_MODEL : this.modelFor(a, cli) || 'the coding agent default',
+      model: this.modelFor(a, cli) || 'the coding agent default',
       effort: a.effort || (ceo ? CEO_EFFORT : this.state.settings.defaultEffort),
     };
   }

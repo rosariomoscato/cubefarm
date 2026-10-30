@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { run } from './exec.ts';
 import { localModel, type LocalProvider } from '../shared/models.ts';
+import { openCodeModelRef } from '../shared/opencodeModels.ts';
 import type { AgentCli, CliView, EffortLevel } from '../shared/types.ts';
 import type { BoxVersions } from './boxScripts.ts';
 
@@ -54,9 +55,20 @@ export function resolveCommand(name: string, env: NodeJS.ProcessEnv = process.en
  * npm installs Windows CLIs as .cmd shims. Running one puts every argument through cmd.exe, which expands %VARS% and
  * trips over quotes in a prompt, so run what the shim runs instead: the package's .exe, or node on its script.
  */
-export function unwrapCmdShim(shimPath: string, text: string): { file: string; args: string[] } | null {
+export function unwrapCmdShim(shimPath: string, text: string, env: NodeJS.ProcessEnv = process.env): { file: string; args: string[] } | null {
   const line = text.split(/\r?\n/).find((l) => /%\*\s*$/.test(l));
   if (!line) return null;
+  // The Windows desktop app also installs a simple %LOCALAPPDATA%-based executable shim.
+  const executable = line.match(/^\s*"([^"]+\.exe)"\s+%\*\s*$/i)?.[1];
+  if (executable && !/%dp0%/i.test(executable)) {
+    let missing = false;
+    const file = executable.replace(/%([^%]+)%/g, (_match, name: string) => {
+      const key = Object.keys(env).find((k) => k.toUpperCase() === name.toUpperCase());
+      if (!key || env[key] === undefined) missing = true;
+      return key ? env[key] ?? '' : '';
+    });
+    return missing ? null : { file, args: [] };
+  }
   const dir = path.dirname(shimPath);
   const targets = [...line.matchAll(/"%dp0%\\([^"]+)"/g)].map((m) => path.join(dir, m[1]));
   const target = targets[targets.length - 1];
@@ -119,13 +131,28 @@ export function commandFor(id: AgentCli): { file: string; args: string[] } | nul
   return { file: found, args: [] };
 }
 
-/** Which CLIs this machine has, with their versions. */
+/** Only V2 implements the session configuration and plugin contract used by this integration. */
+export function openCodeVersionProblem(version: string | null): string | null {
+  const text = version?.split(/\r?\n/)[0].trim() ?? '';
+  const match = text.match(/^(?:opencode\s+)?v?(\d+)\.\d+\.\d+(?:[-+][\w.-]+)?$/i);
+  if (!match) return 'Could not verify the OpenCode version. CubeFarm requires OpenCode 2.x. Check opencode --version before trying again.';
+  return Number(match[1]) === 2 ? null : `OpenCode ${text} is not supported. CubeFarm requires OpenCode 2.x; install V2 before starting this agent.`;
+}
+
+/** Probe the actual executable immediately before spawning a new terminal, not just the startup inventory. */
+export async function checkOpenCodeVersion(cmd: { file: string; args: string[] }): Promise<string | null> {
+  const version = await run(cmd.file, [...cmd.args, '--version'], { timeoutMs: 20_000 }).catch(() => null);
+  return openCodeVersionProblem(version);
+}
+
+/** Which CLIs this machine has, with their versions and any compatibility problem. */
 export async function detectClis(): Promise<CliView[]> {
   return Promise.all(
     CLIS.map(async (c) => {
       const cmd = commandFor(c.id);
       const version = cmd ? await run(cmd.file, [...cmd.args, '--version'], { timeoutMs: 20_000 }).catch(() => null) : null;
-      return { id: c.id, label: c.label, installed: !!cmd, version: version?.split(/\r?\n/)[0].trim().slice(0, 60) || null, integrated: c.integrated };
+      const problem = c.id === 'opencode' && cmd ? openCodeVersionProblem(version) : null;
+      return { id: c.id, label: c.label, installed: !!cmd, version: version?.split(/\r?\n/)[0].trim().slice(0, 60) || null, integrated: c.integrated, ...(problem ? { problem } : {}) };
     }),
   );
 }
@@ -148,7 +175,9 @@ export interface LaunchContext {
   notify: { script: string; url: string };
   /** Codex's hook program: forwards each hook to the office (notify.url). */
   codexHook: string;
-  plugin: string; // file URL of the OpenCode plugin
+  plugin: string; // file URL of the OpenCode V2 plugin directory
+  /** The CEO's session-scoped office tools (not available to workers). */
+  officeUrl?: string;
   /** The Playwright MCP server, when the floor tests in a browser. Claude Code gets it through its MCP config file. */
   browser: { command: string; args: string[] } | null;
   /** The node that runs the office's helper scripts where the CLI runs (default: the office's own). */
@@ -213,8 +242,8 @@ function opencodeLocal(local: ReturnType<typeof localModel>): Record<string, unk
   if (!local) return {};
   const { provider } = local;
   return {
-    provider: {
-      [provider.id]: { npm: '@ai-sdk/openai-compatible', name: provider.label, options: { baseURL: localUrl(provider) }, models: { [local.model]: { name: local.model } } },
+    providers: {
+      [provider.id]: { package: '@opencode/ai/providers/openai-compatible', name: provider.label, settings: { baseURL: localUrl(provider) }, models: { [local.model]: { name: local.model, capabilities: { tools: true } } } },
     },
   };
 }
@@ -287,24 +316,32 @@ export function launchArgs(id: AgentCli, ctx: LaunchContext): Launch {
     }
     case 'opencode': {
       const local = localModel(ctx.model);
+      const sessionID = ctx.resumeId || `ses_cubefarm${ctx.sessionId.replaceAll('-', '')}`;
+      const model = local ? `${local.provider.id}/${local.model}` : ctx.model;
+      const servers = {
+        ...(ctx.browser ? { playwright: { type: 'local', command: [ctx.browser.command, ...ctx.browser.args] } } : {}),
+        ...(ctx.officeUrl ? { office: { type: 'remote', url: ctx.officeUrl, oauth: false, codemode: false } } : {}),
+      };
       const config = {
-        plugin: [ctx.plugin],
+        $schema: 'https://opencode.ai/config.json',
+        plugins: [{ package: ctx.plugin, options: { sessionID, notifyUrl: ctx.notify.url, model: openCodeModelRef(model) } }],
         instructions: [ctx.files.system],
-        autoupdate: false, // several agents starting at once must not each reinstall it
-        permission: { edit: 'allow', bash: 'allow', webfetch: 'allow' }, // it can't stop to ask either
+        // A dedicated primary agent also retains a model's explicit #variant (the root model setting doesn't).
+        default_agent: 'cubefarm',
+        agents: { cubefarm: { description: 'The CubeFarm office session', mode: 'primary', ...(model ? { model } : {}) } },
         ...opencodeLocal(local),
-        ...(ctx.browser ? { mcp: { playwright: { type: 'local', command: [ctx.browser.command, ...ctx.browser.args], enabled: true } } } : {}),
+        ...(Object.keys(servers).length ? { mcp: { servers } } : {}),
       };
       // No project argument: it starts in its terminal's folder, and a desk path in its command line would make the
       // desk clean-up take it for a leftover.
       const args = [
+        '--standalone', // session config and callbacks must not leak into the manager's shared OpenCode service
         '--auto',
-        ...(ctx.model ? ['--model', local ? `${local.provider.id}/${local.model}` : ctx.model] : []),
-        ...(ctx.resumeId ? ['--session', ctx.resumeId] : []),
+        '--session', sessionID,
         '--prompt',
         ctx.prompt,
       ];
-      return { args, env: { OPENCODE_CONFIG_CONTENT: JSON.stringify(config), CUBEFARM_NOTIFY_URL: ctx.notify.url } };
+      return { args, env: { OPENCODE_CONFIG_CONTENT: JSON.stringify(config) } };
     }
   }
 }
@@ -442,33 +479,69 @@ process.stdin.on('end', async () => {
 });
 `;
 
-/** OpenCode plugin: reports its session and when it goes idle (a turn is complete). No imports: loaded from a file. */
-export const OPENCODE_PLUGIN_SOURCE = String.raw`// cubefarm: tells the office when OpenCode's session goes idle.
-export default async function CubefarmPlugin({ client } = {}) {
-  const url = process.env.CUBEFARM_NOTIFY_URL;
-  if (!url) return {};
-  let root;
-  const post = (body) =>
-    fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(3000) }).catch(() => {});
-  const lastReply = async (id) => {
-    try {
-      const res = await client.session.messages({ path: { id } });
-      const reply = (res?.data ?? []).filter((m) => m?.info?.role === 'assistant').pop();
-      return (reply?.parts ?? []).filter((p) => p?.type === 'text').map((p) => p.text).join('\n').trim();
-    } catch {
-      return '';
-    }
-  };
-  return {
-    event: async ({ event }) => {
-      const props = event?.properties ?? {};
-      if (event?.type === 'session.created' && !props.info?.parentID && !root) root = props.info?.id;
-      const sessionID = props.sessionID ?? props.info?.id;
-      if (event?.type === 'session.idle' && (!root || sessionID === root)) {
-        post({ hook_event_name: 'TurnComplete', session_id: sessionID ?? null, last_assistant_message: sessionID ? await lastReply(sessionID) : '' });
+/** OpenCode V2 plugin definition, without imports so the installed CLI can load it without another npm install. */
+export const OPENCODE_PLUGIN_SOURCE = String.raw`// cubefarm: forward only this office session's completed turns.
+export default {
+  id: 'cubefarm.office',
+  async setup(ctx) {
+    const { sessionID, notifyUrl } = ctx.options;
+    if (!sessionID || !notifyUrl) throw new Error('Missing CubeFarm callback configuration');
+    const controller = new AbortController();
+    let lastIdle;
+    const post = async (body) => {
+      const response = await fetch(notifyUrl, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ...body, session_id: sessionID }),
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(5000)]),
+      });
+      if (!response.ok) throw new Error('CubeFarm callback failed: ' + response.status);
+    };
+    await ctx.session.hook('prompt', async (event) => {
+      if (event.sessionID !== sessionID) return;
+      // A resumed session keeps its previous model over agent configuration. Apply the office's next-task choice.
+      let model = ctx.options.model;
+      if (!model) {
+        const selected = await ctx.model.default();
+        if (selected) model = { providerID: selected.providerID, id: selected.id };
       }
-      if (event?.type === 'session.error') post({ hook_event_name: 'TurnError', session_id: sessionID ?? null, error: String(props.error?.data?.message ?? props.error?.name ?? 'error') });
-    },
-  };
-}
+      if (model) await ctx.session.switchModel({ sessionID, model });
+      await post({ hook_event_name: 'UserPromptSubmit', prompt: event.prompt.text });
+    });
+    const listen = async () => {
+      for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+        const props = event.data ?? event.properties ?? event;
+        if ((props.sessionID ?? props.info?.id ?? props.session?.id) !== sessionID) continue;
+        if (!['session.execution.succeeded', 'session.execution.failed', 'session.execution.interrupted', 'session.idle'].includes(event.type)) continue;
+        const [messages, session] = await Promise.all([
+          ctx.session.context({ sessionID }), ctx.session.get({ sessionID }),
+        ]);
+        const idle = messages.at(-1);
+        if (idle?.id && idle.id === lastIdle) continue;
+        const outcome = event.type === 'session.execution.failed' ? 'failed'
+          : event.type === 'session.execution.interrupted' ? 'interrupted'
+          : event.type === 'session.execution.succeeded' ? 'succeeded'
+          : idle?.type === 'idle' ? idle.outcome : session.outcome;
+        if (outcome === 'interrupted') {
+          await post({ hook_event_name: 'Interrupt' });
+        } else if (outcome === 'failed') {
+          await post({ hook_event_name: 'TurnError', error: JSON.stringify(props.error ?? idle?.error ?? 'OpenCode session failed') });
+        } else {
+          const user = messages.findLastIndex((m) => m.type === 'user');
+          const reply = messages.slice(user + 1).findLast((m) => m.type === 'assistant');
+          const text = (reply?.content ?? []).filter((p) => p.type === 'text').map((p) => p.text).join('\n').trim();
+          if (!text) await post({ hook_event_name: 'TurnError', error: 'OpenCode finished without a final reply' });
+          else await post({ hook_event_name: 'TurnComplete', last_assistant_message: text });
+        }
+        lastIdle = idle?.id;
+      }
+    };
+    void listen().catch((err) => {
+      if (!controller.signal.aborted) {
+        console.error('CubeFarm OpenCode integration:', err);
+        void post({ hook_event_name: 'TurnError', error: String(err) }).catch(console.error);
+      }
+    });
+    return () => controller.abort();
+  },
+};
 `;

@@ -97,7 +97,7 @@ export function Interview({ requestId }: { requestId: string }) {
         {hire && <h3 className="doc-h">Their setup</h3>}
         {hire && pending && (
           <>
-            <HireSetupFields value={setup} onChange={setSetup} disabled={busy} />
+            <HireSetupFields value={setup} onChange={setSetup} disabled={busy} repo={req.repoId} />
             <p className="muted small doc-tip">Hiring creates {name} and their own machine. You can change these later in their ⚙️ Setup.</p>
           </>
         )}

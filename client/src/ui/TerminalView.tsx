@@ -43,6 +43,7 @@ export function TerminalView({ agentId }: { agentId: string }) {
   const settings = useStore((s) => s.settings);
   const clis = useStore((s) => s.clis);
   const [text, setText] = useState('');
+  const [analysis, setAnalysis] = useState('');
   const [pick, setPick] = useState('');
   const [busy, setBusy] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
@@ -103,7 +104,7 @@ export function TerminalView({ agentId }: { agentId: string }) {
   const working = isBusy(agent);
   const cli = workerCli(agent, settings);
   const issueUrl = agent.issueNumber ? `https://github.com/${repo.fullName}/issues/${agent.issueNumber}` : null;
-  const canMessage = working || (agent.task !== 'qa' && !!agent.branch && agent.status !== 'idle');
+  const canMessage = working || (agent.task === 'analysis' && agent.status !== 'idle') || (agent.task !== 'qa' && !!agent.branch && agent.status !== 'idle');
   const qaRec = agent.prNumber ? qaRecords[`${repo.id}#${agent.prNumber}`] : undefined;
   const signIn = signInFor(agent, settings);
   const send = (t: string) => {
@@ -155,7 +156,7 @@ export function TerminalView({ agentId }: { agentId: string }) {
       }
     >
       <div className="term-meta">
-        {agent.task === 'qa' && agent.status !== 'idle' ? (
+        {agent.task === 'analysis' ? <span className="chip">🔎 Read-only analysis · no PR expected</span> : agent.task === 'qa' && agent.status !== 'idle' ? (
           <a href={agent.prUrl ?? '#'} target="_blank" rel="noreferrer">
             Testing PR #{agent.prNumber}: {agent.issueTitle}
           </a>
@@ -189,7 +190,7 @@ export function TerminalView({ agentId }: { agentId: string }) {
         {agent.branch && <code>{agent.branch}</code>}
         <span className="muted">
           {(agent.role === 'ceo' ? agent.model : effectiveModel(agent.model, cli, settings, 'claude-opus-5-5')) || 'default model'} ·{' '}
-          {agent.effort || settings.defaultEffort} effort
+          {cli === 'opencode' ? 'model variant' : `${agent.effort || settings.defaultEffort} effort`}
         </span>
         {agent.startedAt && <span className="muted">⏱ {elapsed(agent.startedAt, working ? null : agent.endedAt)}</span>}
         {agent.turns > 0 && <span className="muted">{agent.turns} turns</span>}
@@ -277,6 +278,15 @@ export function TerminalView({ agentId }: { agentId: string }) {
           Send
         </button>
       </form>
+
+      {!working && agent.role !== 'ceo' && agent.host !== 'box' && <details className="card">
+        <summary>🔎 Start read-only analysis</summary>
+        <p className="muted small">Reads the repository checkout without an issue, dependency installation or PR workflow. No automatic follow-up or new assignment until Clear desk. These are agent instructions, not a filesystem sandbox.</p>
+        <form onSubmit={(e) => { e.preventDefault(); if (analysis.trim()) void run(async () => { await api.analyze(agent.id, analysis); setAnalysis(''); }); }}>
+          <textarea aria-label="Analysis request" value={analysis} onChange={(e) => setAnalysis(e.target.value)} maxLength={4000} rows={3} placeholder="What should this agent read and explain? No code changes, shell commands, commits or PRs." />
+          <button className="btn" disabled={busy || !analysis.trim() || repo.cloneStatus !== 'ready'}>Start analysis</button>
+        </form>
+      </details>}
 
       <div className="term-actions">
         {working ? (

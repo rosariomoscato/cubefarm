@@ -7,6 +7,8 @@ import { upstashBoxes, type BoxApi } from './box.ts';
 import { run } from './exec.ts';
 import { localMachines, type MachineProvider } from './machines.ts';
 import { detectClis } from './clis.ts';
+import { openCodeModels } from './opencodeModels.ts';
+import type { OpenCodeCatalog } from '../shared/opencodeModels.ts';
 import { installDesk, type DepsCallbacks, type DepsOutcome } from './deps.ts';
 import { realPreviews, type PreviewBackend } from './previewRunner.ts';
 import { realOffice, type OfficeHost } from './officeUpdate.ts';
@@ -86,6 +88,7 @@ export interface Backend {
   releaseClis(restart: boolean): Promise<void>;
   /** The coding-agent CLIs installed on this machine. */
   detectClis(): Promise<CliView[]>;
+  openCodeModels(directory: string, refresh?: boolean): Promise<OpenCodeCatalog>;
   /** Run a floor's app for the preview monitor (its own worktree, its own port). */
   previews: PreviewBackend;
   /** The running office's own folder and its launcher, for the office's self-update. */
@@ -198,6 +201,7 @@ export const realBackend: Backend = {
   hooksReady,
   releaseClis,
   detectClis,
+  openCodeModels,
   previews: realPreviews,
   office: realOffice,
   voice: elevenLabs,

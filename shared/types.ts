@@ -166,7 +166,7 @@ export const INSTALL_STEP = 'Installing dependencies';
 export type AgentLook = 'feminine' | 'masculine';
 
 /** What an agent is currently doing: implementing an issue, testing a PR, or fixing a PR after QA. */
-export type AgentTask = 'issue' | 'qa' | 'fix';
+export type AgentTask = 'issue' | 'qa' | 'fix' | 'analysis';
 
 /**
  * How agents run. terminal: each agent is the real coding-agent CLI in its own terminal, shown live in the office.
@@ -220,6 +220,8 @@ export interface CliView {
   label: string;
   installed: boolean;
   version: string | null;
+  /** Installed, but not compatible (or its version could not be verified). */
+  problem?: string;
   /** Hooks report every tool call and enforce the guard rails; the others report only when a turn ends. */
   integrated: boolean;
 }

@@ -1,4 +1,5 @@
 import { useStore } from './store';
+import type { OpenCodeCatalog } from '../../shared/opencodeModels';
 import type { PongResult } from '../../shared/pong';
 import type { AgentStyle } from '../../shared/looks';
 import type { AgentCli, AgentPromptView, AgentView, CloudView, DoctorFinding, DoctorFix, EffortLevel, GhRepoSummary, NotifyChannel, NotifyChannelsView, NotifyWebhook, OfficeUpdateView, PreviewView, ProjectFolderView, PrPreviewView, RepoView, SwarmSettings, UsageView, VoiceCacheView, VoiceOption, MachineHost } from '../../shared/types';
@@ -51,9 +52,13 @@ export interface AgentSetupPatch {
 export interface FloorOptions {
   mission?: string;
   autoAssign?: boolean;
+  onboardCeo?: boolean;
+  autoMerge?: boolean;
 }
 
 export const api = {
+  analyze: (id: string, text: string) => call('POST', `/api/agents/${id}/analyze`, { text }),
+  openCodeModels: (context: { agent?: string; repo?: string } = {}, refresh = false) => call<OpenCodeCatalog>('GET', `/api/opencode/models?${new URLSearchParams({ ...context, ...(refresh ? { refresh: '1' } : {}) })}`, undefined, false),
   githubRepos: (owner?: string) => call<GhRepoSummary[]>('GET', `/api/github/repos${owner ? `?owner=${encodeURIComponent(owner)}` : ''}`),
   connectRepo: (fullName: string, floor: FloorOptions = {}) => call<RepoView>('POST', '/api/repos', { fullName, ...floor }),
   createRepo: (body: FloorOptions & { name: string; description: string; visibility: 'private' | 'public'; owner?: string }) =>

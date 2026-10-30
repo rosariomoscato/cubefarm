@@ -59,11 +59,12 @@ const str = (v: unknown) => (typeof v === 'string' ? v : '');
 const repoId = (req: Request) => decodeURIComponent(String(req.params.repo));
 
 app.get('/api/state', route(() => swarm.snapshot()));
+app.get('/api/opencode/models', route((req) => swarm.openCodeModels(str(req.query.agent) || undefined, str(req.query.repo) || undefined, req.query.refresh === '1')));
 
 app.get('/api/github/repos', route((req) => swarm.listGithubRepos(str(req.query.owner) || undefined)));
 
 // What happens once a project moves in: the CEO's brief, and whether work starts on its own.
-const floorOptions = (req: Request) => ({ mission: str(req.body.mission), autoAssign: req.body.autoAssign === true });
+const floorOptions = (req: Request) => ({ mission: str(req.body.mission), autoAssign: req.body.autoAssign === true, onboardCeo: req.body.onboardCeo !== false, autoMerge: req.body.autoMerge !== false });
 
 app.post('/api/repos', route((req) => swarm.connectRepo(str(req.body.fullName).trim(), floorOptions(req))));
 
@@ -181,6 +182,7 @@ app.patch('/api/agents/:id', route((req) => swarm.updateAgent(String(req.params.
 app.delete('/api/agents/:id', route((req) => swarm.fireAgent(String(req.params.id))));
 app.post('/api/agents/:id/assign', route((req) => swarm.assign(String(req.params.id), num(req.body.issueNumber), str(req.body.note) || undefined, req.body?.waitForDeps === true)));
 app.post('/api/agents/:id/stop', route((req) => swarm.stopAgent(String(req.params.id))));
+app.post('/api/agents/:id/analyze', route((req) => swarm.analyze(String(req.params.id), str(req.body.text))));
 app.post('/api/agents/:id/reset', route((req) => swarm.resetAgent(String(req.params.id))));
 app.post('/api/agents/:id/message', route((req) => swarm.message(String(req.params.id), str(req.body.text))));
 app.post('/api/agents/:id/sign-in', route((req) => swarm.signIn(String(req.params.id))));

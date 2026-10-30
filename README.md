@@ -17,8 +17,8 @@ That's it. cubefarm checks your machine, starts the office and opens it in your 
 - **Node.js 22 or newer**: [nodejs.org](https://nodejs.org)
 - **git**
 - **The GitHub CLI**, signed in: install it from [cli.github.com](https://cli.github.com), then run `gh auth login`
-- **Claude Code, signed in**: it comes with cubefarm, so there's nothing to install. Run `npx cubefarm login` once to sign in with your Claude subscription. It's the default coding agent, and the CEO always runs on it.
-- **Codex or OpenCode** (optional): if you have them installed and signed in, any agent can run them instead (see [Coding agents](#coding-agents)).
+- **Claude Code, signed in**: it comes with cubefarm, so there's nothing to install. Run `npx cubefarm login` once to sign in with your Claude subscription. It's the default coding agent. In Real terminals, the CEO can use OpenCode 2 instead (CEO tab → Coding agent).
+- **Codex or OpenCode 2** (optional): if you have them installed and signed in, agents can run them instead (see [Coding agents](#coding-agents)). The CEO can also use OpenCode 2 in Real terminals.
 - **Google Chrome**, for agents that test your app in a browser.
 
 It runs on Windows, macOS and Linux. Not sure you're ready? `npx cubefarm doctor` checks all of it.
@@ -46,7 +46,7 @@ Every agent, the CEO included, is the actual coding-agent CLI in a terminal on y
 | --- | --- | --- | --- |
 | Install | comes with cubefarm: `npx cubefarm login` | your own, signed in | your own, signed in |
 | What the office sees | every step, plus cost and usage | every step, once you trust its hooks | each finished turn |
-| Status | the default; the CEO runs it | experimental | experimental |
+| Status | the default; available for the CEO | experimental | experimental; V2, available for the CEO |
 
 - **One for everyone, or one each.** The manager's console → Settings sets the default coding agent, its model and the reasoning effort (out of the box: Claude Code with Claude Opus 5.5 at medium effort). An agent's ⚙️ Setup, the Team tab, or a new agent's chair in the lobby changes them for one agent. One subscription is all you need; mixing them (say, Codex agents testing what Claude Code agents wrote) is up to you.
 - **Local models.** Codex and OpenCode agents can run a model on your own computer instead of a subscription: give them a model named after its server, `ollama/qwen3-coder`, `lmstudio/<model>`, `llamacpp/<model>` or `omlx/<model>` (see [Local models](docs/agents.md#local-models)).
