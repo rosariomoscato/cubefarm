@@ -60,14 +60,14 @@ describe('the Playwright MCP server', () => {
       files: { settings: 's', mcp: null, system: 'i' },
       notify: { script: 'n.cjs', url: 'http://127.0.0.1:1/x' },
       codexHook: 'h.cjs',
-      plugin: 'file:///p.mjs',
+      plugin: 'file:///cubefarm-plugin',
       browser,
     };
     const codex = launchArgs('codex', ctx).args.find((a) => a.startsWith('mcp_servers.playwright='))!;
     expect(codex).toBe(`mcp_servers.playwright={command=${JSON.stringify(browser.command)},args=[${browser.args.map((a) => JSON.stringify(a)).join(',')}]}`);
     expect(codex).not.toContain('npx');
     const opencode = JSON.parse(launchArgs('opencode', ctx).env.OPENCODE_CONFIG_CONTENT);
-    expect(opencode.mcp.playwright.command).toEqual([browser.command, ...browser.args]);
+    expect(opencode.mcp.servers.playwright.command).toEqual([browser.command, ...browser.args]);
   });
 });
 

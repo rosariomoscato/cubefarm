@@ -18,6 +18,32 @@ An agent has a name and a look, for personality, and three settings: its **provi
 
 Most people have one subscription, so the default is every agent on the same provider. Mixing providers (Codex reviewing what Claude wrote, say) is an option for those who have more than one, never a requirement.
 
+## The CEO on OpenCode
+
+In Settings, select **Real terminals**, then open the manager's console → **CEO** and choose **OpenCode** under **Coding agent**. The same selector is available in the CEO's desk → **Setup**. OpenCode **2.x** must be installed and signed in on this computer. The Agent SDK runtime still uses Claude Code.
+
+CubeFarm checks `opencode --version` during detection and immediately before starting a new OpenCode terminal, for both the CEO and team members. V1, other unsupported major versions, and versions that cannot be verified are refused with a compatibility message; the office never upgrades OpenCode for you. Incompatible installed versions are disabled in the coding-agent selector.
+
+Choose a model as `provider/model`, optionally with `#variant` (for example your provider's supported reasoning variant), or leave it empty for OpenCode's default. For OpenCode, the effort control selects the model's supported variants and saves `#variant` in the model; it never shows or uses Claude's separate effort value. Model and variant changes apply to the next task, including resumed chats. Changing the coding agent clears the previous model and starts a fresh conversation on the next task; a running task finishes on its current coding agent. The CEO's default remains Claude Code and does not follow the workers' default.
+
+The CEO receives the office's management tools through a session-scoped MCP connection. Each OpenCode terminal uses a private server (`--standalone`) and the V2 callback plugin, keeping its instructions, model and callbacks separate from your shared OpenCode service. The CEO's workflow rules remain in its instructions, just as for other agents; this is not a sandbox. OpenCode cloud agents are not supported.
+
+### Browse available OpenCode models
+
+Use **Browse OpenCode models** beside the model field, for the CEO, existing team members, new hires, hiring approvals, or the office default. Search by name/ID, filter by provider, choose a model and its supported variant, then press **Use model**. Models without tool support are shown but cannot be selected for an agent. Manual entry remains available.
+
+The inventory is read from OpenCode V2 without AI generation. Only selection metadata is sent to the browser, never provider settings or credentials. Results are cached for 30 seconds; **Refresh** reloads them. The project directory is shown: the CEO uses its office directory and team selectors use the repository checkout; availability in a particular worktree can differ. The office default uses the directory from which CubeFarm was started.
+
+**OpenCode default** clears the model override. For a worker inheriting a non-empty OpenCode office default, this action instead explicitly reads **Office default** and retains that existing inheritance behavior.
+
+## Manual read-only analysis
+
+Open a team member's terminal panel, expand **Start read-only analysis**, enter a question, then press **Start analysis**. The checkout must be ready. This local-only task needs no GitHub issue, creates no development worktree, installs no dependencies, and has no missing-PR retry, QA handoff or automatic follow-up. The agent's instructions require file-reading/search tools only: no file changes, shell commands, tests, commits, pushes, issues or PRs. As with other workflows, these are instructions, not an enforced sandbox.
+
+After completion, the agent remains reserved for manual analysis follow-ups; **Send** resumes the analysis conversation. **Clear desk** returns them to the regular scheduler, and an explicit issue assignment starts normal development. A stopped analysis does not restart itself after an office restart; an already-running terminal can be reattached without a new prompt. Analysis is not available on cloud machines yet.
+
+When connecting a project, turn off **Let the CEO study this repository and plan from the brief** to skip both onboarding and the initial planning request. The brief field is then disabled. This does not disable the CEO's periodic reviews; set their interval to zero separately if desired. Automatic issue assignment and automatic merge can both be disabled before connection. Existing callers retain onboarding and automatic merge unless they explicitly send `onboardCeo: false` and `autoMerge: false`.
+
 ## Local models
 
 Codex and OpenCode agents can run on a model server on your computer instead of a subscription. Start the server, load a coding model, and give the agent (or the office default) a model named `<server>/<model>`:
@@ -29,7 +55,7 @@ Codex and OpenCode agents can run on a model server on your computer instead of 
 | [llama.cpp](https://github.com/ggml-org/llama.cpp) (`llama-server`) | `llamacpp/<model>` | `http://127.0.0.1:8080/v1` (`CUBEFARM_LLAMACPP_URL`) | Responses API | ✓ |
 | oMLX | `omlx/<model>` | `http://127.0.0.1:8000/v1` (`CUBEFARM_OMLX_URL`) | Responses API | ✓ |
 
-Everything after the first `/` is the server's own name for the model. OpenCode gets the server as an OpenAI-compatible provider; Codex uses its built-in Ollama and LM Studio support, or, for the others (or an address you changed), a provider pointed at the server's Responses API. Set the `CUBEFARM_*_URL` variables in the office's environment before starting it. Claude Code and the CEO stay on Claude, and cloud agents can't reach a server on your computer. Agents need a model that's good at tool calls and a long context (Ollama's default context is too short for agent work: raise `num_ctx` / `OLLAMA_CONTEXT_LENGTH`).
+Everything after the first `/` is the server's own name for the model. OpenCode gets the server as an OpenAI-compatible provider; Codex uses its built-in Ollama and LM Studio support, or, for the others (or an address you changed), a provider pointed at the server's Responses API. Set the `CUBEFARM_*_URL` variables in the office's environment before starting it. Claude Code stays on Claude; the CEO can use a local model through OpenCode. Cloud agents can't reach a server on your computer. Agents need a model that's good at tool calls and a long context (Ollama's default context is too short for agent work: raise `num_ctx` / `OLLAMA_CONTEXT_LENGTH`).
 
 ## A floor's team
 

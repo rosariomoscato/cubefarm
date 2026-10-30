@@ -20,6 +20,7 @@ function elapsed(ms: number) {
 function onWhat(a: Agent): string | null {
   const title = a.issueTitle ? ` · ${a.issueTitle}` : '';
   if (a.role === 'ceo') return a.issueTitle;
+  if (a.task === 'analysis') return 'Read-only analysis';
   if (a.task === 'qa' && a.prNumber) return `testing PR #${a.prNumber}${title}`;
   if (a.task === 'fix' && a.prNumber) return `fixing PR #${a.prNumber}${title}`;
   if (a.issueNumber) return `#${a.issueNumber}${a.issueTitle ? ` ${a.issueTitle}` : ''}${a.prNumber ? ` · PR #${a.prNumber}` : ''}`;

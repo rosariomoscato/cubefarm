@@ -229,7 +229,9 @@ export function ProjectPicker({ onConnected, initial = 'folder' }: { onConnected
   const [mode, setMode] = useState<Mode>(initial);
   const [mission, setMission] = useState('');
   const [autoAssign, setAutoAssign] = useState(true);
-  const floor: FloorOptions = { mission, autoAssign };
+  const [onboardCeo, setOnboardCeo] = useState(true);
+  const [autoMerge, setAutoMerge] = useState(true);
+  const floor: FloorOptions = { mission: onboardCeo ? mission : '', autoAssign, onboardCeo, autoMerge };
   const done = (repo: RepoView) => {
     setMission('');
     onConnected?.(repo);
@@ -250,6 +252,7 @@ export function ProjectPicker({ onConnected, initial = 'folder' }: { onConnected
       </div>
       <textarea
         value={mission}
+        disabled={!onboardCeo}
         onChange={(e) => setMission(e.target.value)}
         rows={2}
         placeholder={mode === 'new' ? 'What should the team build? e.g. A cozy 3D browser game where you run a tiny island bakery.' : 'Brief for the CEO (optional): what should the team work on next?'}
@@ -257,6 +260,14 @@ export function ProjectPicker({ onConnected, initial = 'folder' }: { onConnected
       <label className="toggle small">
         <input type="checkbox" checked={autoAssign} onChange={(e) => setAutoAssign(e.target.checked)} />
         ⚡ Start work automatically: free agents pick up issues as soon as they're filed (you can switch this off per floor)
+      </label>
+      <label className="toggle small">
+        <input type="checkbox" checked={onboardCeo} onChange={(e) => setOnboardCeo(e.target.checked)} />
+        Let the CEO study this repository and plan from the brief (turn off to skip onboarding and its AI request)
+      </label>
+      <label className="toggle small">
+        <input type="checkbox" checked={autoMerge} onChange={(e) => setAutoMerge(e.target.checked)} />
+        Merge automatically after QA and GitHub checks pass
       </label>
       {mode === 'folder' && <FolderMode floor={floor} onDone={done} />}
       {mode === 'github' && <GithubMode floor={floor} onDone={done} />}

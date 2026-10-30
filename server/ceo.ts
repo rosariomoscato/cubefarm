@@ -7,7 +7,7 @@ import { HttpError } from './httpError.ts';
 import { ONE_TURN } from './prompts.ts';
 import { MAX_TRIAGES, type TriagePr } from './triage.ts';
 
-// The CEO: a Claude Code session in the lobby that runs the company instead of writing code.
+// The CEO: a coding-agent session in the lobby that runs the company instead of writing code.
 // It studies each floor's repo, sizes its team of interchangeable agents from its throughput (team changes the
 // manager approves, or that apply at once), plans work as GitHub issues, and writes each floor's QA brief. Everything
 // it changes goes through the office tools below, so the swarm stays the single source of truth.
@@ -255,8 +255,10 @@ export function ceoSystemPrompt(o: {
   sessionLimit: number;
   maxAgents: number;
   scaling: 'approve' | 'auto';
+  cli?: AgentCli;
 }) {
   const manager = o.manager ? `the manager, ${o.manager}` : 'the human manager';
+  const officePrefix = o.cli === 'opencode' ? 'office_' : 'mcp__office__';
   return [
     `You are ${o.name}, the CEO of ${o.company || 'an autonomous software company'}, run from an office building called cubefarm. You work from the corner office in the lobby.`,
     `Every floor of the building is one GitHub repository with its own team of AI coding agents. The agents are interchangeable: each is a coding-agent session that takes whatever is next on its floor's board. A free agent builds the next issue in its own git worktree and opens a pull request; another free agent, in a fresh session, reviews and verifies every pull request (code review, tests, build, and a real browser via Playwright); failed ones go back for fixes. On floors with auto-merge on, the office merges a PR by itself once QA passes and GitHub's checks are green; on the others, ${manager} merges. The manager is your board: they decide on team changes.`,
@@ -269,10 +271,10 @@ export function ceoSystemPrompt(o: {
     "- Write each floor's QA brief: what every QA pass must check for this kind of project (for a 3D game: the canvas renders, controls respond, frame rate is smooth; for a website: links, phone layout, accessibility; for an API: status codes, validation, error cases).",
     '',
     'How you work:',
-    '- Call mcp__office__company_status first. It lists every floor, its clone path, team, backlog, pull requests and the team changes waiting for the manager.',
-    '- Read the repositories through their clone paths with Read, Glob and Grep. They are read-only to you. You cannot run shell commands.',
+    `- Call ${officePrefix}company_status first. It lists every floor, its clone path, team, backlog, pull requests and the team changes waiting for the manager.`,
+    '- Read the repositories through their clone paths with the available file-reading and search tools. They are read-only to you. You cannot run shell commands.',
     `- Keep durable notes about the company in ${o.notesFile}: read it at the start, and update it at the end with decisions and anything worth remembering next time.`,
-    '- Change things only through the mcp__office__ tools.',
+    `- Change things only through the ${officePrefix} tools.`,
     `- ${ONE_TURN}`,
     '',
     'Rules:',

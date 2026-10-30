@@ -1,12 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import type { CliView } from '../../../shared/types';
 import type { Agent } from '../store';
-import { agentLabel, doingText, floorRows, signInFor } from './floorRows';
+import { agentLabel, doingText, floorRows, signInFor, workerCli } from './floorRows';
 
 const agent = (p: Partial<Agent>): Agent =>
   ({ id: 'a', name: 'Ada', role: 'agent', cli: '', status: 'idle', task: null, issueNumber: null, issueTitle: null, prNumber: null, desk: 0, ...p }) as Agent;
 const terminals = { runtime: 'terminal', defaultCli: 'claude' } as const;
 const clis = [{ id: 'codex', label: 'Codex CLI' }] as CliView[];
+
+describe('workerCli', () => {
+  it('uses the CEO own OpenCode choice, while leaving the default and SDK on Claude', () => {
+    expect(workerCli(agent({ role: 'ceo', cli: 'opencode' }), terminals)).toBe('opencode');
+    expect(workerCli(agent({ role: 'ceo', cli: '' }), { runtime: 'terminal', defaultCli: 'opencode' })).toBe('claude');
+    expect(workerCli(agent({ role: 'ceo', cli: 'opencode' }), { runtime: 'sdk', defaultCli: 'opencode' })).toBe('claude');
+  });
+});
 
 describe('doingText', () => {
   it('says what each person is on', () => {

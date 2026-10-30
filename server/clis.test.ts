@@ -2,13 +2,32 @@ import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { boxVersions, CODEX_HOOK_EVENTS, codexHookCommand, CROSS_TURN_TOOLS, hookReviewKey, interruptions, launchArgs, localUrl, oneAtATime, signedOutScreen, trustKey, unwrapCmdShim, type LaunchContext } from './clis.ts';
+import { boxVersions, CODEX_HOOK_EVENTS, codexHookCommand, CROSS_TURN_TOOLS, hookReviewKey, interruptions, launchArgs, localUrl, oneAtATime, openCodeVersionProblem, signedOutScreen, trustKey, unwrapCmdShim, type LaunchContext } from './clis.ts';
 import { LOCAL_PROVIDERS } from '../shared/models.ts';
 import { describeOfficeTool, describeTool, newScreenshots, screenshotFile, summariseResult } from './agentRunner.ts';
 
 const dir = path.join(os.tmpdir(), 'npm-global');
 
+describe('OpenCode version compatibility', () => {
+  it.each(['2.2.1', 'v2.2.1', 'opencode v2.2.1', 'opencode 2.3.0-beta.1', '2.2.1+build.123'])('accepts V2: %s', (version) => {
+    expect(openCodeVersionProblem(version)).toBeNull();
+  });
+  it.each(['1.18.29', 'opencode v1.9.0', '3.0.0'])('rejects unsupported versions: %s', (version) => {
+    expect(openCodeVersionProblem(version)).toMatch(/not supported.*requires OpenCode 2\.x/);
+  });
+  it.each([null, '', 'unknown', '2.2', 'warning: could not run', '2.2.1oops'])('rejects an unverifiable version: %s', (version) => {
+    expect(openCodeVersionProblem(version)).toMatch(/Could not verify.*requires OpenCode 2\.x/);
+  });
+});
+
 describe('unwrapCmdShim', () => {
+  it('unwraps the OpenCode desktop executable shim without invoking cmd.exe', () => {
+    const shim = '@echo off\n"%LOCALAPPDATA%\\Programs\\@opencode-aidesktop\\resources\\opencode-cli.exe" %*';
+    expect(unwrapCmdShim('opencode.cmd', shim, { LocalAppData: 'C:\\Users\\A B\\AppData\\Local' })).toEqual({
+      file: 'C:\\Users\\A B\\AppData\\Local\\Programs\\@opencode-aidesktop\\resources\\opencode-cli.exe', args: [],
+    });
+    expect(unwrapCmdShim('opencode.cmd', shim, {})).toBeNull();
+  });
   it('runs node on the script a node shim points at, keeping its node flags', () => {
     const shim = [
       '@ECHO off',
@@ -104,7 +123,7 @@ describe('launchArgs', () => {
     files: { settings: 'settings.json', mcp: null, system: 'instructions.md' },
     notify: { script: 'notify.cjs', url: 'http://127.0.0.1:1/api/hooks/t' },
     codexHook: 'codex-hook.cjs',
-    plugin: 'file:///plugin.mjs',
+    plugin: 'file:///cubefarm-plugin',
     browser: null,
     ...patch,
   });
@@ -156,10 +175,31 @@ describe('launchArgs', () => {
     expect(codexHookCommand('/usr/bin/node', "/home/o'neil/.cubefarm/bin/codex-hook.cjs", false)).toBe(`'/usr/bin/node' '/home/o'"'"'neil/.cubefarm/bin/codex-hook.cjs'`);
   });
 
-  it("lets OpenCode run without stopping to ask, and without updating itself", () => {
-    const config = (patch: Partial<LaunchContext>) => JSON.parse(launchArgs('opencode', ctx(patch)).env.OPENCODE_CONFIG_CONTENT);
-    for (const role of ['agent'] as const) expect(config({ role }).permission).toEqual({ edit: 'allow', bash: 'allow', webfetch: 'allow' });
-    expect(config({}).autoupdate).toBe(false);
+  it('runs OpenCode V2 with private session config, auto approval and a session-scoped plugin', () => {
+    const launch = launchArgs('opencode', ctx());
+    expect(launch.args).toContain('--standalone');
+    expect(launch.args).toContain('--auto');
+    expect(launch.args).not.toContain('--model');
+    expect(launch.args.slice(-2)).toEqual(['--prompt', '--looks like a flag']);
+    const config = JSON.parse(launch.env.OPENCODE_CONFIG_CONTENT);
+    expect(config.plugins).toEqual([{ package: 'file:///cubefarm-plugin', options: { sessionID: 'ses_cubefarm11111111111111111111111111111111', notifyUrl: ctx().notify.url, model: null } }]);
+    for (const deprecated of ['plugin', 'permission', 'provider', 'autoupdate']) expect(config).not.toHaveProperty(deprecated);
+  });
+
+  it("gives only the CEO the office MCP endpoint, and preserves OpenCode's session on resume", () => {
+    const launch = launchArgs('opencode', ctx({ role: 'ceo', resumeId: 'ses_existing', officeUrl: 'http://127.0.0.1:4417/api/mcp/token', model: 'openai/test-model#high' }));
+    const config = JSON.parse(launch.env.OPENCODE_CONFIG_CONTENT);
+    expect(config.mcp.servers.office).toEqual({ type: 'remote', url: 'http://127.0.0.1:4417/api/mcp/token', oauth: false, codemode: false });
+    expect(config.agents.cubefarm.model).toBe('openai/test-model#high');
+    expect(config.plugins[0].options.model).toEqual({ providerID: 'openai', id: 'test-model', variant: 'high' });
+    expect(launch.args.slice(launch.args.indexOf('--session'), launch.args.indexOf('--session') + 2)).toEqual(['--session', 'ses_existing']);
+    expect(config.plugins[0].options.sessionID).toBe('ses_existing');
+    expect(JSON.parse(launchArgs('opencode', ctx()).env.OPENCODE_CONFIG_CONTENT).mcp).toBeUndefined();
+  });
+
+  it('connects the existing browser through native OpenCode V2 MCP configuration', () => {
+    const config = JSON.parse(launchArgs('opencode', ctx({ browser: { command: 'node', args: ['browser.js'] } })).env.OPENCODE_CONFIG_CONTENT);
+    expect(config.mcp.servers.playwright).toEqual({ type: 'local', command: ['node', 'browser.js'] });
   });
 
   it('runs Codex on a local model through its own --oss, or a provider of the office\'s', () => {
@@ -176,11 +216,11 @@ describe('launchArgs', () => {
 
   it('gives OpenCode the local server a model runs on', () => {
     const launch = launchArgs('opencode', ctx({ model: 'llama.cpp/qwen/coder' }));
-    expect(launch.args.slice(launch.args.indexOf('--model'), launch.args.indexOf('--model') + 2)).toEqual(['--model', 'llamacpp/qwen/coder']);
-    expect(JSON.parse(launch.env.OPENCODE_CONFIG_CONTENT).provider).toEqual({
-      llamacpp: { npm: '@ai-sdk/openai-compatible', name: 'llama.cpp', options: { baseURL: 'http://127.0.0.1:8080/v1' }, models: { 'qwen/coder': { name: 'qwen/coder' } } },
+    expect(JSON.parse(launch.env.OPENCODE_CONFIG_CONTENT).agents.cubefarm.model).toBe('llamacpp/qwen/coder');
+    expect(JSON.parse(launch.env.OPENCODE_CONFIG_CONTENT).providers).toEqual({
+      llamacpp: { package: '@opencode/ai/providers/openai-compatible', name: 'llama.cpp', settings: { baseURL: 'http://127.0.0.1:8080/v1' }, models: { 'qwen/coder': { name: 'qwen/coder', capabilities: { tools: true } } } },
     });
-    expect(JSON.parse(launchArgs('opencode', ctx({ model: 'anthropic/claude-opus-5-5' })).env.OPENCODE_CONFIG_CONTENT).provider).toBeUndefined();
+    expect(JSON.parse(launchArgs('opencode', ctx({ model: 'anthropic/claude-opus-5-5' })).env.OPENCODE_CONFIG_CONTENT).providers).toBeUndefined();
   });
 });
 

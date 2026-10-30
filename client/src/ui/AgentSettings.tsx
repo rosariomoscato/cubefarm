@@ -8,6 +8,7 @@ import { TALL_HAIR, appearanceFor, randomStyle } from '../world/appearance';
 import { LookPreview } from '../world/LookPreview';
 import { workerCli } from './floorRows';
 import { confirmDialog } from './Confirm';
+import { OpenCodeModelPicker, OpenCodeVariantSelect } from './OpenCodeModelPicker';
 
 // One agent's setup (name, look, coding agent, model, effort), edited in place: the Team tab's row cells and the
 // ⚙️ Setup section of their panel share these. Every change is a PATCH; the `agent` event updates all views.
@@ -31,9 +32,9 @@ export function CliOptions({ clis }: { clis: CliView[] }) {
   return (
     <>
       {[...clis].sort((a, b) => Number(b.installed) - Number(a.installed)).map((c) => (
-        <option key={c.id} value={c.id} disabled={!c.installed}>
+        <option key={c.id} value={c.id} disabled={!c.installed || !!c.problem} title={c.problem}>
           {c.label}
-          {c.installed ? '' : ' (not installed)'}
+          {!c.installed ? ' (not installed)' : c.problem ? ' (incompatible version)' : ''}
         </option>
       ))}
     </>
@@ -65,10 +66,11 @@ export function NameInput({ agent, id, className = 'inline', style }: FieldProps
 export function CliSelect({ agent, id, style }: FieldProps) {
   const settings = useStore((s) => s.settings);
   const clis = useStore((s) => s.clis);
+  const ceo = agent.role === 'ceo';
   return (
     <select id={id} value={agent.cli} title="Their coding agent" aria-label={id ? undefined : 'Coding agent'} style={style} onChange={(e) => void save(agent.id, { cli: e.target.value as AgentCli | '' })}>
-      <option value="">{cliName(clis, settings.defaultCli)} (default)</option>
-      <CliOptions clis={clis} />
+      <option value="">{cliName(clis, ceo ? 'claude' : settings.defaultCli)} (default)</option>
+      <CliOptions clis={ceo ? clis.filter((c) => c.id === 'claude' || c.id === 'opencode') : clis} />
     </select>
   );
 }
@@ -122,11 +124,12 @@ export function ModelInput({ agent, id, className = 'inline', style }: FieldProp
         style={style}
         list={listId}
         defaultValue={agent.model}
-        placeholder={(agent.role === 'ceo' ? CLAUDE_MODELS[0] : effectiveModel('', cli, settings, CLAUDE_MODELS[0])) || 'agent default'}
-        title={agent.role === 'ceo' ? "The CEO's model" : "Their model ('' = the default for their coding agent)"}
+        placeholder={(agent.role === 'ceo' ? (cli === 'claude' ? CLAUDE_MODELS[0] : '') : effectiveModel('', cli, settings, CLAUDE_MODELS[0])) || 'agent default'}
+        title={cli === 'opencode' ? 'OpenCode model: provider/model#variant (empty = OpenCode default)' : agent.role === 'ceo' ? "The CEO's model" : "Their model ('' = the default for their coding agent)"}
         aria-label={id ? undefined : 'Model'}
         onBlur={(e) => e.target.value !== agent.model && void save(agent.id, { model: e.target.value })}
       />
+      {cli === 'opencode' && <OpenCodeModelPicker value={agent.model} agent={agent.id} inherited={agent.role !== 'ceo' && settings.defaultCli === 'opencode' ? settings.defaultModel : undefined} onSelect={(model) => void save(agent.id, { model })} />}
       <datalist id={listId}>
         {modelSuggestions(cli).map((m) => (
           <option key={m} value={m} />
@@ -137,7 +140,12 @@ export function ModelInput({ agent, id, className = 'inline', style }: FieldProp
 }
 
 export function EffortSelect({ agent, id, style }: FieldProps) {
-  const defaultEffort = useStore((s) => s.settings.defaultEffort);
+  const settings = useStore((s) => s.settings);
+  const defaultEffort = settings.defaultEffort;
+  const opencode = workerCli(agent, settings) === 'opencode';
+  if (opencode) return <OpenCodeVariantSelect value={agent.model} agent={agent.id} id={id} style={style}
+    inherited={agent.role !== 'ceo' && settings.defaultCli === 'opencode' ? settings.defaultModel : undefined}
+    onSelect={(model) => void save(agent.id, { model })} />;
   return (
     <select id={id} value={agent.effort} title={agent.role === 'ceo' ? "The CEO's effort" : 'Their effort'} aria-label={id ? undefined : 'Effort'} style={style} onChange={(e) => void save(agent.id, { effort: e.target.value as EffortLevel | '' })}>
       {(agent.role !== 'ceo' || !agent.effort) && <option value="">default ({defaultEffort})</option>}
@@ -271,7 +279,7 @@ export function PromptPreview({ agent }: { agent: Agent }) {
   const context = useStore((s) => {
     const r = s.repos.find((x) => x.id === agent.repoId);
     const o = s.settings;
-    return JSON.stringify(r ? [r.fullName, r.defaultBranch, r.autoMerge, r.browserTesting, r.links, r.mission, r.summary, r.qaBrief] : [o.companyName, o.managerName, o.sessionLimit, o.maxAgents, o.scaling]);
+    return JSON.stringify(r ? [r.fullName, r.defaultBranch, r.autoMerge, r.browserTesting, r.links, r.mission, r.summary, r.qaBrief] : [o.companyName, o.managerName, o.sessionLimit, o.maxAgents, o.scaling, o.runtime]);
   });
   useEffect(() => {
     if (!open) return;
@@ -287,7 +295,7 @@ export function PromptPreview({ agent }: { agent: Agent }) {
     return () => {
       live = false;
     };
-  }, [open, agent.id, agent.name, context]);
+  }, [open, agent.id, agent.name, agent.cli, context]);
   return (
     <details className="prompt-preview" onToggle={(e) => setOpen(e.currentTarget.open)}>
       <summary>What they're told</summary>
@@ -316,7 +324,7 @@ export function PromptPreview({ agent }: { agent: Agent }) {
   );
 }
 
-/** The ⚙️ Setup section of an agent's panel. The CEO always runs Claude Code, so they only get model and effort. */
+/** The ⚙️ Setup section of an agent's panel, including the CEO's own coding agent. */
 export function AgentSetup({ agent }: { agent: Agent }) {
   const terminal = useStore((s) => s.settings.runtime === 'terminal');
   const id = useId();
@@ -344,7 +352,7 @@ export function AgentSetup({ agent }: { agent: Agent }) {
             <LookSelect agent={agent} id={`${id}-look`} />
           </label>
         )}
-        {!ceo && (terminal || agent.host === 'box') && (
+        {(terminal || agent.host === 'box') && (
           <label className="field" htmlFor={`${id}-cli`}>
             <span>Coding agent</span>
             <CliSelect agent={agent} id={`${id}-cli`} />
