@@ -41,6 +41,19 @@ async function office(onboardCeo = false) {
 const finished = { ok: true, text: 'The integration lives in server/clis.ts.', costUsd: 0, turns: 1, errors: [] };
 
 describe('manual analysis workflow', () => {
+  it('persists the full final Markdown separately from the shortened technical preview', async () => {
+    const o = await office();
+    const text = '# Analisi\n\n' + Array.from({ length: 60 }, (_, i) => `- Riga ${i}`).join('\n');
+    o.swarm.analyze(o.agent.id, 'Leggi soltanto');
+    o.sessions[0].cb.finished({ ...finished, text });
+    await vi.waitFor(() => expect(o.swarm.snapshot().agents.find((a) => a.id === o.agent.id)?.status).toBe('done'));
+    await o.swarm.shutdown();
+    const state = JSON.parse(await fs.readFile(`${home}/state.json`, 'utf8'));
+    expect(state.agents.find((a: { id: string }) => a.id === o.agent.id).logTail)
+      .toContainEqual(expect.objectContaining({ kind: 'reply', text }));
+    expect(o.sessions).toHaveLength(1);
+    expect(o.swarm.snapshot().agents.find((a) => a.id === o.agent.id)?.log).toEqual([]);
+  });
   it('uses the saved language in analysis and manually resumed follow-ups', async () => {
     const o = await office();
     o.swarm.updateSettings({ language: 'it' });

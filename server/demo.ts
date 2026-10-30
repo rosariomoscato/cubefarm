@@ -487,6 +487,7 @@ function fakeSession(opts: SessionOptions, cb: SessionCallbacks, fullName: strin
 
 const ANSI: Record<LogEntry['kind'], (text: string) => string> = {
   text: (t) => t.replace(/^● /, '\x1b[97m●\x1b[0m '),
+  reply: (t) => t,
   tool: (t) => `\x1b[32m●\x1b[0m \x1b[1m${t.replace(/^⏺ /, '')}\x1b[0m`,
   result: (t) => `\x1b[2m${t}\x1b[0m`,
   thinking: (t) => `\x1b[35m${t}\x1b[0m`,

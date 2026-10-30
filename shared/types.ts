@@ -14,7 +14,7 @@ export type AgentStatus =
   | 'error' // session failed
   | 'stopped'; // manager stopped it
 
-export type LogKind = 'text' | 'tool' | 'result' | 'system' | 'error' | 'manager' | 'done' | 'thinking';
+export type LogKind = 'text' | 'reply' | 'tool' | 'result' | 'system' | 'error' | 'manager' | 'done' | 'thinking';
 
 export interface LogLine {
   id: number;

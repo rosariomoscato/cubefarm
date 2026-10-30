@@ -48,6 +48,7 @@ const TERM = {
   bg: '#1b1b29',
   bar: '#2a2a3d',
   text: '#e8e8f2',
+  reply: '#e8e8f2',
   tool: '#8be9fd',
   result: '#8d8da8',
   system: '#bd93f9',

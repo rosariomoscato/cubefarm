@@ -23,6 +23,20 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-30
 
+### Analisi reale verificata e risultato Markdown separato dal terminale
+
+**Stato:** seguito locale sul branch `fix/opencode-first-run-terminal`, dopo il commit `fa4e3fa`; nessun push, PR o merge di queste correzioni. Il manager ha verificato manualmente il catalogo OpenCode dopo il riavvio e la permanenza della risposta del CEO dopo il completamento e il cambio scheda. La prova successiva di analisi è stata autorizzata separatamente.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Prima analisi manuale reale | Verifica | Risposta italiana su un repository del manager con OpenCode e GPT-6.1 Terra. Al controllo successivo: checkout Git pulito; agente in stato `done`, senza errori, branch, issue o PR associati; nessuna issue/PR restituita dalla ricerca GitHub, su tutti gli stati, degli elementi aggiornati nell’intervallo della prova. Assegnazione e merge automatici ancora disattivati, revisioni del CEO a zero e coda vuota. |
+| Risultato leggibile | Interfaccia | Le analisi concluse mostrano la risposta in un riquadro Markdown, usando il renderer sicuro già presente (HTML non eseguito, protocolli pericolosi disabilitati, immagini remote non caricate). Terminale e log tecnico restano disponibili in una sezione richiudibile, montata solo quando viene aperta. Nuove etichette EN/IT. Nessuna modifica al layout dei terminali durante il lavoro o degli altri task. |
+| Risposta integrale delle nuove analisi | Persistenza | Al completamento riuscito, il Markdown completo è conservato come voce `reply` nel log persistente e distribuito tramite il watch esistente, non nei normali snapshot. Non è limitato all’anteprima tecnica di 30 righe; resta soggetto alla normale conservazione del log. La vista seleziona solo la risposta dell’ultima richiesta, senza confondere risultati degli strumenti o follow-up precedenti. |
+| Compatibilità con analisi precedenti | Interfaccia | Quando esiste solo la vecchia anteprima tecnica, questa è resa come Markdown e indicata esplicitamente come **estratto**, senza ricostruire o inventare le righe mancanti. L’output originale resta nel terminale. Nessuna nuova richiesta AI o modifica dello stato dell’ufficio per recuperarlo. |
+| Regressioni e browser | Verifica | 148 test passati in 12 file (nuova presentazione/estrazione, analisi, CEO, catalogo, terminale, runner, plugin, i18n e journal); build e TypeScript superati. Nel browser dell’ufficio esistente verificati l’estratto salvato, quattro intestazioni, una tabella, etichette italiane, terminale tecnico inizialmente smontato e successivamente apribile senza perdere il risultato. Nessuna nuova generazione AI durante sviluppo o verifica della vista. |
+
+**Limiti della verifica di sola lettura:** non era stato registrato un confronto prima/dopo della prova, quindi il checkout pulito e le tracce disponibili non escludono modifiche temporanee poi annullate o operazioni non registrate. Le regole dell’analisi sono istruzioni, non una sandbox. Il salvataggio integrale è stato verificato con sessioni simulate e lettura dello stato isolato su disco, non ripetendo l’analisi reale. Le nuove modifiche server richiedono un riavvio dell’ufficio per le analisi future; la vista client è stata verificata riutilizzando i log già disponibili. I primi tentativi paralleli di test/typecheck hanno raggiunto il timeout del comando; le verifiche successive, eseguite separatamente, sono passate. Restano gli avvisi preesistenti di build su bundle e import Rapier.
+
 ### Correzioni locali: primo catalogo OpenCode e risposta del CEO nel terminale
 
 **Stato:** modifiche sul branch locale `fix/opencode-first-run-terminal`, non integrate nel `main`, non pubblicate su npm. Merge rinviato alla conclusione dei test e alla conferma del manager.

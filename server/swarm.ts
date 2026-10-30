@@ -3158,7 +3158,10 @@ export class Swarm {
         if (!result.ok) this.fail(a, result, 'analysis');
         else {
           a.status = 'done';
-          this.appendLog(a, [{ kind: 'done', text: `✔ Analysis finished · ${a.turns} turns · no PR expected` }]);
+          this.appendLog(a, [
+            ...(result.text.trim() ? [{ kind: 'reply' as const, text: result.text }] : []),
+            { kind: 'done', text: `✔ Analysis finished · ${a.turns} turns · no PR expected` },
+          ]);
         }
       }
     }
