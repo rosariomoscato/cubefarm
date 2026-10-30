@@ -141,6 +141,12 @@ const toRow = (z: number, rows: number) => Math.min(rows - 1, Math.max(0, Math.f
 
 /** Whether the roomba can drive the straight line a → b without touching anything. */
 export function segmentClear(rects: Rect[], a: Pt, b: Pt, r = NAV_R + 0.04) {
+  // Most furniture is nowhere near this leg; don't revisit it at every sample.
+  const minX = Math.min(a.x, b.x) - r;
+  const maxX = Math.max(a.x, b.x) + r;
+  const minZ = Math.min(a.z, b.z) - r;
+  const maxZ = Math.max(a.z, b.z) + r;
+  const nearby = rects.filter((rect) => rect.maxX > minX && rect.minX < maxX && rect.maxZ > minZ && rect.minZ < maxZ);
   const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.08));
   // every sample k = 1..n once, coarse to fine, so a blocked line is usually found in a few checks
   let top = 1;
@@ -148,7 +154,7 @@ export function segmentClear(rects: Rect[], a: Pt, b: Pt, r = NAV_R + 0.04) {
   for (let stride = top; stride >= 1; stride >>= 1) {
     for (let k = stride; k <= n; k += stride) {
       if (stride !== top && k % (stride * 2) === 0) continue;
-      if (!clear(rects, a.x + ((b.x - a.x) * k) / n, a.z + ((b.z - a.z) * k) / n, r)) return false;
+      if (!clear(nearby, a.x + ((b.x - a.x) * k) / n, a.z + ((b.z - a.z) * k) / n, r)) return false;
     }
   }
   return true;
@@ -206,31 +212,32 @@ export function planPath(nav: Nav, from: Pt, to: Pt, avoid: (Pt & { r: number })
   // binary heap of [f, cell]
   const heap: [number, number][] = [];
   const push = (f: number, c: number) => {
-    heap.push([f, c]);
-    let k = heap.length - 1;
+    const entry: [number, number] = [f, c];
+    let k = heap.length;
+    heap.push(entry);
     while (k > 0) {
       const p = (k - 1) >> 1;
-      if (heap[p][0] <= heap[k][0]) break;
-      [heap[p], heap[k]] = [heap[k], heap[p]];
+      if (heap[p][0] <= f) break;
+      heap[k] = heap[p];
       k = p;
     }
+    heap[k] = entry;
   };
   const pop = () => {
     const top = heap[0];
     const last = heap.pop()!;
     if (heap.length) {
-      heap[0] = last;
       let k = 0;
       for (;;) {
         const l = 2 * k + 1;
         const r = l + 1;
-        let m = k;
-        if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
-        if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
-        if (m === k) break;
-        [heap[m], heap[k]] = [heap[k], heap[m]];
+        if (l >= heap.length) break;
+        const m = r < heap.length && heap[r][0] < heap[l][0] ? r : l;
+        if (heap[m][0] >= last[0]) break;
+        heap[k] = heap[m];
         k = m;
       }
+      heap[k] = last;
     }
     return top[1];
   };

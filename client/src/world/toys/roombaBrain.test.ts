@@ -58,6 +58,37 @@ describe('the balconies', () => {
   });
 });
 
+describe('segmentClear', () => {
+  it.each(FLOORS)('matches checking every sample against all %s obstacles', (floor) => {
+    const rects = roombaRects(floor);
+    for (let i = 0; i < 120; i++) {
+      const a = { x: Math.sin(i * 3.7) * HALF_W, z: Math.cos(i * 2.3) * HALF_D };
+      const b = { x: Math.sin(i * 1.3) * HALF_W, z: Math.cos(i * 5.1) * HALF_D };
+      const r = i % 2 ? NAV_R : PLAYER_RADIUS;
+      const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.08));
+      let expected = true;
+      for (let k = 1; k <= n; k++) {
+        if (!clear(rects, a.x + ((b.x - a.x) * k) / n, a.z + ((b.z - a.z) * k) / n, r)) {
+          expected = false;
+          break;
+        }
+      }
+      expect(segmentClear(rects, a, b, r), `segment ${i}`).toBe(expected);
+    }
+  });
+
+  it('keeps tangencies clear, detects crossings and checks the room boundary without nearby furniture', () => {
+    const rects: Rect[] = [{ minX: -1, maxX: 1, minZ: -1, maxZ: 1 }];
+    expect(segmentClear(rects, { x: -3, z: 1.5 }, { x: 3, z: 1.5 }, 0.5)).toBe(true);
+    expect(segmentClear(rects, { x: 3, z: 1.5 }, { x: -3, z: 1.5 }, 0.5)).toBe(true);
+    expect(segmentClear(rects, { x: -3, z: 1.49 }, { x: 3, z: 1.49 }, 0.5)).toBe(false);
+    expect(segmentClear(rects, { x: 0, z: 0 }, { x: 0, z: 0 }, 0.5)).toBe(false);
+    expect(segmentClear([], { x: 0, z: 0 }, { x: HALF_W, z: 0 }, 0.5)).toBe(false);
+    expect(segmentClear([], { x: HALF_W, z: 0 }, { x: 0, z: 0 }, 0.5)).toBe(false);
+    expect(segmentClear([], { x: 0, z: 0 }, { x: 0, z: 0 }, 0.5)).toBe(true);
+  });
+});
+
 describe('planPath', () => {
   const walls: Rect[] = [{ minX: -2, maxX: 2, minZ: -0.2, maxZ: 0.2 }];
   it('goes round an obstacle instead of through it', () => {
