@@ -2928,7 +2928,11 @@ export class Swarm {
   private async installDeps(a: PersistedAgent, cwd: string, repo: PersistedRepo): Promise<DepsOutcome> {
     const rt = this.agentRt.get(a.id);
     const cb = {
-      log: (lines: string[]) => this.appendLog(a, lines.map((text) => ({ kind: text.startsWith('⚠') ? 'error' : 'system', text }) as LogEntry)),
+      log: (lines: string[]) => {
+        this.appendLog(a, lines.map((text) => ({ kind: text.startsWith('⚠') ? 'error' : 'system', text }) as LogEntry));
+        // A previous task may already have given this desk a real terminal. Show setup notes there too.
+        if (a.status === 'preparing') for (const text of lines) rt?.terminal?.note(text);
+      },
       installing: () => {
         if (!rt) return;
         rt.currentTool = INSTALL_STEP;
@@ -4826,6 +4830,7 @@ export class Swarm {
       prNumber: a.prNumber,
       startedAt: a.startedAt,
       activeAt: this.activeAt(a),
+      dependenciesPending: this.agentRt.get(a.id)?.currentTool === INSTALL_STEP,
       work: this.workOf(a),
     }));
     const unclosed = this.state.repos.flatMap((r) => {

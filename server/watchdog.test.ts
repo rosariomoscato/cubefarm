@@ -48,6 +48,13 @@ describe('diagnose', () => {
     expect(diagnose([agent({ status: 'preparing', startedAt: NOW - PREPARING_MS })], [], [], NOW)).toMatchObject([{ kind: 'preparing' }]);
   });
 
+  it('leaves queued/running dependencies to their own timeout without disabling other checks', () => {
+    const installing = agent({ status: 'preparing', startedAt: NOW - 16 * MIN, dependenciesPending: true });
+    expect(diagnose([installing], [], [], NOW)).toEqual([]);
+    expect(diagnose([{ ...installing, dependenciesPending: false }], [], [], NOW)).toMatchObject([{ kind: 'preparing' }]);
+    expect(diagnose([agent({ dependenciesPending: true, activeAt: NOW - QUIET_MS })], [], [], NOW)).toMatchObject([{ kind: 'quiet' }]);
+  });
+
   it('finds a failed or stopped agent still holding finished work', () => {
     expect(diagnose([agent({ status: 'error', work: 'merged' })], [], [], NOW)).toMatchObject([{ kind: 'stale' }]);
     expect(diagnose([agent({ status: 'stopped', work: 'closed' })], [], [], NOW)).toMatchObject([{ kind: 'stale' }]);

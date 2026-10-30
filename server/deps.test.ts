@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
-import { createLimiter, depsCurrent, depsHash, depsPromptLine, deskDepsPlan, installDesk, MAX_DESK_INSTALLS, readDeps, writeMarker, type DepsState } from './deps.ts';
+import { createLimiter, depsCurrent, depsHash, depsPromptLine, deskDepsPlan, installDesk, INSTALL_PROGRESS_MS, MAX_DESK_INSTALLS, readDeps, writeMarker, type DepsState } from './deps.ts';
 
 const PKG = '{"name":"app","dependencies":{"left-pad":"^1.3.0"}}';
 const LOCK = '{"lockfileVersion":3}';
@@ -83,6 +83,31 @@ describe('readDeps (the preview and desks)', () => {
 });
 
 describe('installDesk', () => {
+  it.each([false, true])('reports a quiet install and clears progress after settling (failure: %s)', async (fail) => {
+    const dir = await checkout({});
+    const log = vi.fn();
+    let settle!: () => void;
+    let begin!: () => void;
+    const started = new Promise<void>((resolve) => { begin = resolve; });
+    vi.useFakeTimers();
+    try {
+      const pending = installDesk(dir, { log, installing: () => undefined }, () => {
+        begin();
+        return new Promise<void>((resolve, reject) => { settle = () => fail ? reject(new Error('network timeout')) : resolve(); });
+      });
+      await started;
+      await vi.advanceTimersByTimeAsync(INSTALL_PROGRESS_MS);
+      expect(log).toHaveBeenCalledWith(['npm ci is still running (1 min elapsed; install timeout 15 min).']);
+      settle();
+      expect(await pending).toBe(fail ? 'failed' : 'installed');
+      const count = log.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(INSTALL_PROGRESS_MS * 2);
+      expect(log).toHaveBeenCalledTimes(count);
+      if (fail) expect((await readDeps(dir)).marker).toBe('');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   it('installs, writes the marker, and skips the next time', async () => {
     const dir = await checkout({});
     const runs: string[] = [];

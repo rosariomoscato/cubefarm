@@ -32,6 +32,8 @@ export interface WatchAgent {
   startedAt: number | null;
   /** The latest output or tool activity of their session. */
   activeAt: number;
+  /** A dependency install is queued/running under the installer's own timeout, not a stuck git setup. */
+  dependenciesPending?: boolean;
   /** Their task's state as the office knows it. */
   work: WorkState;
 }
@@ -84,7 +86,7 @@ export function diagnose(agents: readonly WatchAgent[], qa: readonly WatchQa[], 
   for (const a of agents) {
     if (a.role === 'ceo' || !a.task || a.task === 'analysis') continue; // Manual analysis never receives automatic follow-up prompts.
     if (a.status === 'working' && now - a.activeAt >= QUIET_MS) out.push(of(a, 'quiet', a.activeAt));
-    else if (a.status === 'preparing' && a.startedAt != null && now - a.startedAt >= PREPARING_MS) out.push(of(a, 'preparing', a.startedAt));
+    else if (a.status === 'preparing' && !a.dependenciesPending && a.startedAt != null && now - a.startedAt >= PREPARING_MS) out.push(of(a, 'preparing', a.startedAt));
     else if ((a.status === 'error' || a.status === 'stopped') && (a.work === 'closed' || a.work === 'merged')) out.push(of(a, 'stale', a.startedAt ?? now));
   }
   const on = (id: string | null, q: WatchQa, task: 'qa' | 'fix') =>

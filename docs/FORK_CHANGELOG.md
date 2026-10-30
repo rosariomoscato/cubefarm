@@ -23,6 +23,20 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-30
 
+### Preparazione dipendenze: watchdog coordinato e attesa visibile
+
+**Stato:** correzione sul nuovo branch locale `fix/dependency-install-watchdog`, non integrata nel `main` e non pubblicata. Indagine e sviluppo autorizzati dal manager senza nuove richieste AI, riavvio dell’ufficio o riassegnazione automatica dell’issue di prova.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Timeout coordinati per fase | Correzione | Il watchdog distingue una preparazione Git bloccata dall’installazione dipendenze in attesa o in esecuzione. Quando il runtime segnala `Installing dependencies`, l’installatore mantiene la responsabilità del proprio timeout; il watchdog non rimette il lavoro in coda dopo i primi 10 minuti. Invariati il timeout locale npm di 15 minuti, il limite delle installazioni simultanee e i controlli sugli altri stati. Il segnale è del runtime, non persistito nello stato dell’agente. |
+| Installazione meno silenziosa | Diagnostica | Ogni minuto di esecuzione locale di npm, il log riceve un avviso con il tempo trascorso e il timeout. Il messaggio è generato dall’ufficio, non inoltra output npm potenzialmente sensibile e non pretende di attestare progresso dei download. Il timer viene rimosso sia al successo sia al fallimento; l’attesa in coda non è conteggiata come esecuzione npm. Le note di preparazione sono riportate anche nel terminale già esistente dell’agente. |
+| Regressioni isolate | Verifica | 71 test passati su otto file: watchdog, dipendenze, nuova integrazione installazione/watchdog, analisi, CEO, terminale, OpenCode runner e macchine cloud. Le sessioni simulate dimostrano che il lavoro resta in preparazione oltre 10 minuti durante l’installazione e parte una sola volta dopo la sua conclusione, sia in caso di successo sia di fallimento. Confermati gli invariati controlli sulle preparazioni senza installazione e sulle sessioni silenziose, e la pulizia dei timer di avanzamento. Build e TypeScript superati; nessuna modifica alle soglie dei test. |
+
+**Causa osservata nella prima issue reale:** preparazione rimessa in coda dal watchdog a 10 minuti; successivo timeout di npm a 15 minuti, senza marker di installazione completata. Nel log npm sono presenti numerosi fetch mancanti dalla cache con tempi da circa due minuti fino a oltre 14 minuti e un tentativo `ECONNRESET`. Non risultavano nuove esecuzioni della precedente factory; l’issue era priva dell’etichetta `ready` che ne attivava il dispatch. Il workflow di collegamento è stato poi disabilitato su autorizzazione esplicita, senza eliminare repository o segreti.
+
+**Limiti:** un successivo `npm ping` al registry ufficiale è riuscito in circa un secondo, ma non dimostra che i download siano tornati veloci né separa gli effetti di rete, cache, disco o carico locale. Nessuna nuova installazione reale, cambio di registry/proxy, pulizia cache o modifica antivirus effettuati. Il problema ambientale dei download lenti non è dichiarato risolto. La nuova correzione server richiede un riavvio prima della prova manuale; l’issue resta da riassegnare soltanto con il manager. Restano gli avvisi preesistenti di build su bundle e import Rapier. La prima versione del nuovo test d’integrazione non isolava il ritardo simulato della preparazione macchina: corretto il mock, poi superato il gruppo completo riportato sopra.
+
 ### PR #4 integrata: correzioni OpenCode e risultati Markdown
 
 **Riferimenti e stato:** [PR #4 del fork](https://github.com/rosariomoscato/cubefarm/pull/4) integrata con conferma esplicita del manager; merge commit `acf7c0ba022ef8fcd4fd8cc50eddd3cd258b972b`. Checkout locale riportato sul `main` e aggiornato in fast-forward. I branch di lavoro sono conservati; nessuna pubblicazione npm, nessuna modifica al progetto di prova e nessuna nuova richiesta AI.
