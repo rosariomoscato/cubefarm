@@ -23,6 +23,14 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### PR #5 integrata: consolidamento dipendenze e rifiniture del manager
+
+**Riferimenti e stato:** [PR #5 del fork](https://github.com/rosariomoscato/cubefarm/pull/5), integrata con conferma esplicita del manager; merge commit `7b93a118bdbc24d071e4f48d892efa3bbe8a4e6c`. Checkout locale riportato su `main` e aggiornato in fast-forward, branch di lavoro conservati. Nessun incarico AI, modifica al progetto di prova o rilascio npm in questa operazione.
+
+**Verifiche:** revisione mirata finale senza blocchi individuati (autovalutazione, non approvazione indipendente). [CI della PR, run 41146304695](https://github.com/rosariomoscato/cubefarm/actions/runs/41146304695), superata su Ubuntu, Windows e macOS per TypeScript, test, build e smoke test del pacchetto. Gli alberi Git del merge e della revisione verificata `cdee7b1` hanno lo stesso hash: `453c17f323f39f964bcc0fd479bc0bdfb497f60f`. Nessuna nuova esecuzione completa locale dei test viene implicata da questo confronto. La CI successiva su `main` è distinta e monitorata separatamente.
+
+**Limiti storici conservati:** le instabilità locali, i limiti della diagnosi npm e il riuso della coda sviluppatore non vengono nascosti dal merge. I riferimenti sottostanti a modifiche solo locali, pubblicazione/merge non autorizzati e verifica remota in attesa descrivono le fasi precedenti, ora superate dalla conferma e dalla CI riportate qui.
+
 ### Consolidamento autorizzato e prova completa su un progetto reale
 
 **Decisione del manager:** autorizzati push del branch `fix/manager-requested-refinements` e apertura di un’unica PR verso il `main` di `rosariomoscato/cubefarm`, comprendente `962ce11` (dipendenze/watchdog) e `4ac28f4` (richieste esplicite dopo QA positivo). Nessun merge o rilascio npm autorizzato. Le restrizioni di pubblicazione nelle sezioni sottostanti descrivono lo stato precedente.
