@@ -12,9 +12,9 @@ This is [Rosario Moscato's fork](https://github.com/rosariomoscato/cubefarm) of 
 - **Live model and reasoning-variant selection**, with searchable models from your OpenCode setup and changes applied to resumed chats.
 - **Manual read-only analysis**, without an issue or PR workflow, and **optional CEO onboarding** when connecting a project.
 - **Roomba pathfinding optimizations**, reducing collision checks and temporary heap allocations.
-- **English/Italian office language** (local `feat/english-italian` branch): a saved language selector, primary interface labels, CEO/analysis reply instructions and language-aware speech. See [language coverage and limitations](docs/languages.md).
+- **English/Italian office language** (`feat/english-italian` branch): a saved language selector, primary interface labels, CEO/analysis reply instructions and language-aware speech. See [language coverage and limitations](docs/languages.md).
 
-Dates, descriptions, validation results and integration status are tracked in the [fork changelog](docs/FORK_CHANGELOG.md) (in Italian). OpenCode/analysis and the original fork documentation were merged into the fork's `main` through [PR #2](https://github.com/rosariomoscato/cubefarm/pull/2). The bilingual work is local on `feat/english-italian`, not merged or published on npm.
+Dates, descriptions, validation results and integration status are tracked in the [fork changelog](docs/FORK_CHANGELOG.md) (in Italian). OpenCode/analysis and the original fork documentation were merged into the fork's `main` through [PR #2](https://github.com/rosariomoscato/cubefarm/pull/2). The bilingual work on `feat/english-italian` is being proposed as a **draft PR** for independent CI verification, not merged or published on npm. Local validation has one unresolved, baseline-reproducible pathfinding performance failure; see the [validation report](docs/validation-english-italian.md) and [investigation](docs/pathfinding-investigation.md).
 
 ## Get started
 

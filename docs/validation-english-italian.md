@@ -2,6 +2,8 @@
 
 Date: 2026-10-30. Product commit: `3d438ce`, branch `feat/english-italian`, based on fork `main` at `7c9c148`.
 
+Publication update: after the investigation and unsuccessful low-load readiness checks, the manager authorized a **draft PR on the fork for CI verification**. This changes the publication decision, not the measured local result below. No merge is authorized and no fully green local suite is claimed.
+
 ## Complete execution in groups
 
 All **230 tracked test files** matched by the Vitest configuration were executed, with no omitted or duplicate files across these groups. JSON report file lists were compared with the tracked `client`, `server`, `shared` and `scripts` test inventory. No test threshold, test timeout or application code was changed for validation.
@@ -44,4 +46,4 @@ That baseline also failed the same assertion, measuring **8.913 ms** against the
 - The manager confirmed normal Italian dictation, draft preservation and cancellation with Esc in Chrome. Their Brave installation did not transcribe. Browser automation separately verified startup timeout feedback, preserved drafts and successful retry using fake recognition only.
 - No real AI/ElevenLabs requests, microphone capture by the coding agent, global installation changes or changes to the manager's demo were needed.
 - The earlier monolithic final attempt hit the external 20-minute command limit; the grouped execution above resolves the coverage uncertainty, but not the remaining performance failure.
-- Push and PR creation were held back because validation is **not fully green**. Nothing was merged or published to npm.
+- At the time of this grouped local validation, push and PR creation were held back because validation was **not fully green**. The subsequent draft-PR authorization is recorded above; nothing was merged or published to npm.
