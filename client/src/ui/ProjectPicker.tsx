@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { T, useT } from '../i18n';
 import { api, type FloorOptions } from '../api';
 import { useStore } from '../store';
 import type { GhRepoSummary, ProjectFolderView, RepoView } from '../../../shared/types';
@@ -72,7 +73,7 @@ function FolderMode({ floor, onDone }: { floor: FloorOptions; onDone: (r: RepoVi
         }}
       >
         <input value={dir} onChange={(e) => setDir(e.target.value)} placeholder="C:\Projects" title="Your projects folder" aria-label="Your projects folder" />
-        <button className="btn btn-small">Look here</button>
+        <button className="btn btn-small"><T>Look here</T></button>
       </form>
       {root && root !== projectsDir && (
         <div className="row small">
@@ -173,7 +174,7 @@ function GithubMode({ floor, onDone }: { floor: FloorOptions; onDone: (r: RepoVi
       >
         <input value={manual} onChange={(e) => setManual(e.target.value)} placeholder="…or type owner/name" />
         <button className="btn btn-small" disabled={!manual.trim() || !!busy}>
-          Add floor
+          <T>Add floor</T>
         </button>
       </form>
       <p className="muted small">
@@ -226,6 +227,7 @@ function NewMode({ floor, onDone }: { floor: FloorOptions; onDone: (r: RepoView)
 }
 
 export function ProjectPicker({ onConnected, initial = 'folder' }: { onConnected?: (repo: RepoView) => void; initial?: Mode }) {
+  const t = useT();
   const [mode, setMode] = useState<Mode>(initial);
   const [mission, setMission] = useState('');
   const [autoAssign, setAutoAssign] = useState(true);
@@ -246,7 +248,7 @@ export function ProjectPicker({ onConnected, initial = 'folder' }: { onConnected
       <div className="picker-tabs">
         {modes.map(([k, label]) => (
           <button key={k} className={`picker-tab ${mode === k ? 'picker-tab-on' : ''}`} onClick={() => setMode(k)}>
-            {label}
+            {t(label)}
           </button>
         ))}
       </div>
@@ -255,19 +257,19 @@ export function ProjectPicker({ onConnected, initial = 'folder' }: { onConnected
         disabled={!onboardCeo}
         onChange={(e) => setMission(e.target.value)}
         rows={2}
-        placeholder={mode === 'new' ? 'What should the team build? e.g. A cozy 3D browser game where you run a tiny island bakery.' : 'Brief for the CEO (optional): what should the team work on next?'}
+        placeholder={t(mode === 'new' ? 'What should the team build? e.g. A cozy 3D browser game where you run a tiny island bakery.' : 'Brief for the CEO (optional): what should the team work on next?')}
       />
       <label className="toggle small">
         <input type="checkbox" checked={autoAssign} onChange={(e) => setAutoAssign(e.target.checked)} />
-        ⚡ Start work automatically: free agents pick up issues as soon as they're filed (you can switch this off per floor)
+        <T>⚡ Start work automatically: free agents pick up issues as soon as they're filed (you can switch this off per floor)</T>
       </label>
       <label className="toggle small">
         <input type="checkbox" checked={onboardCeo} onChange={(e) => setOnboardCeo(e.target.checked)} />
-        Let the CEO study this repository and plan from the brief (turn off to skip onboarding and its AI request)
+        <T>Let the CEO study this repository and plan from the brief (turn off to skip onboarding and its AI request)</T>
       </label>
       <label className="toggle small">
         <input type="checkbox" checked={autoMerge} onChange={(e) => setAutoMerge(e.target.checked)} />
-        Merge automatically after QA and GitHub checks pass
+        <T>Merge automatically after QA and GitHub checks pass</T>
       </label>
       {mode === 'folder' && <FolderMode floor={floor} onDone={done} />}
       {mode === 'github' && <GithubMode floor={floor} onDone={done} />}

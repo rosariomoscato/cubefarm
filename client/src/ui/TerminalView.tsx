@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { T, useT } from '../i18n';
 import { CareerCard } from './CareerCard';
 import { api } from '../api';
 import { isBusy, kanbanFor, agentsOnRepo, useStore } from '../store';
@@ -25,7 +26,8 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export function StatusPill({ status }: { status: string }) {
-  return <span className={`status status-${status}`}>{STATUS_LABEL[status] ?? status}</span>;
+  const t = useT();
+  return <span className={`status status-${status}`}>{t(STATUS_LABEL[status] ?? status)}</span>;
 }
 
 function elapsed(from: number | null, to: number | null) {
@@ -35,6 +37,7 @@ function elapsed(from: number | null, to: number | null) {
 }
 
 export function TerminalView({ agentId }: { agentId: string }) {
+  const t = useT();
   const agent = useStore((s) => s.agents[agentId]);
   const log = useStore((s) => s.logs[agentId]) ?? [];
   const shotAt = useStore((s) => s.screens[agentId]);
@@ -136,11 +139,11 @@ export function TerminalView({ agentId }: { agentId: string }) {
           {working && agent.currentTool && <span className="muted small">{toolVerb(agent.currentTool)}…</span>}
           <span className="spacer" />
           <button className="btn btn-small" title={`Trail ${agent.name} with the camera wherever they go (a movement key or Esc gives you the controls back)`} onClick={() => followAgent(agent.id)}>
-            🎥 Follow
+            <T>🎥 Follow</T>
           </button>
           {agent.career && (
             <button className={`btn btn-small setup-toggle ${showCareer ? 'setup-toggle-on' : ''}`} aria-expanded={showCareer} title={`${agent.name}'s career on the team`} onClick={() => setShowCareer((v) => !v)}>
-              🏅 Career
+              <T>🏅 Career</T>
             </button>
           )}
           <button
@@ -150,13 +153,13 @@ export function TerminalView({ agentId }: { agentId: string }) {
             title={`${agent.name}'s name, look, coding agent, model and effort`}
             onClick={() => setShowSetup((v) => !v)}
           >
-            ⚙️ Setup
+            <T>⚙️ Setup</T>
           </button>
         </div>
       }
     >
       <div className="term-meta">
-        {agent.task === 'analysis' ? <span className="chip">🔎 Read-only analysis · no PR expected</span> : agent.task === 'qa' && agent.status !== 'idle' ? (
+        {agent.task === 'analysis' ? <span className="chip"><T>🔎 Read-only analysis · no PR expected</T></span> : agent.task === 'qa' && agent.status !== 'idle' ? (
           <a href={agent.prUrl ?? '#'} target="_blank" rel="noreferrer">
             Testing PR #{agent.prNumber}: {agent.issueTitle}
           </a>
@@ -169,7 +172,7 @@ export function TerminalView({ agentId }: { agentId: string }) {
             Issue #{agent.issueNumber}: {agent.issueTitle}
           </a>
         ) : (
-          <span className="muted">Nothing assigned</span>
+          <span className="muted"><T>Nothing assigned</T></span>
         )}
         {agent.prUrl && agent.task === 'issue' && (
           <a href={agent.prUrl} target="_blank" rel="noreferrer" className="chip chip-good">
@@ -275,23 +278,23 @@ export function TerminalView({ agentId }: { agentId: string }) {
         />
         <MicButton kind="agent" value={text} onChange={setText} onSend={send} disabled={!canMessage} />
         <button className="btn" disabled={busy || !canMessage || !text.trim()}>
-          Send
+          <T>Send</T>
         </button>
       </form>
 
       {!working && agent.role !== 'ceo' && agent.host !== 'box' && <details className="card">
-        <summary>🔎 Start read-only analysis</summary>
-        <p className="muted small">Reads the repository checkout without an issue, dependency installation or PR workflow. No automatic follow-up or new assignment until Clear desk. These are agent instructions, not a filesystem sandbox.</p>
+        <summary><T>🔎 Start read-only analysis</T></summary>
+        <p className="muted small"><T>Reads the repository checkout without an issue, dependency installation or PR workflow. No automatic follow-up or new assignment until Clear desk. These are agent instructions, not a filesystem sandbox.</T></p>
         <form onSubmit={(e) => { e.preventDefault(); if (analysis.trim()) void run(async () => { await api.analyze(agent.id, analysis); setAnalysis(''); }); }}>
-          <textarea aria-label="Analysis request" value={analysis} onChange={(e) => setAnalysis(e.target.value)} maxLength={4000} rows={3} placeholder="What should this agent read and explain? No code changes, shell commands, commits or PRs." />
-          <button className="btn" disabled={busy || !analysis.trim() || repo.cloneStatus !== 'ready'}>Start analysis</button>
+          <textarea aria-label={t('Analysis request')} value={analysis} onChange={(e) => setAnalysis(e.target.value)} maxLength={4000} rows={3} placeholder={t('What should this agent read and explain? No code changes, shell commands, commits or PRs.')} />
+          <button className="btn" disabled={busy || !analysis.trim() || repo.cloneStatus !== 'ready'}><T>Start analysis</T></button>
         </form>
       </details>}
 
       <div className="term-actions">
         {working ? (
           <button className="btn btn-bad" disabled={busy} onClick={() => run(() => api.stop(agent.id))}>
-            ■ Stop
+            <T>■ Stop</T>
           </button>
         ) : (
           <>
@@ -328,7 +331,7 @@ export function TerminalView({ agentId }: { agentId: string }) {
             </button>
             {agent.status !== 'idle' && (
               <button className="btn" disabled={busy} onClick={() => run(() => api.reset(agent.id))}>
-                ↺ Clear desk
+                <T>↺ Clear desk</T>
               </button>
             )}
           </>
@@ -352,7 +355,7 @@ export function TerminalView({ agentId }: { agentId: string }) {
             });
           }}
         >
-          Let go
+          <T>Let go</T>
         </button>
       </div>
     </Panel>

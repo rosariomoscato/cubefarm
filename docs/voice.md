@@ -125,6 +125,14 @@ Settings → Voice → **Talk instead of type** picks who turns speech into text
   it never reaches the browser, the logs or the snapshot.
 - **Off**: no 🎙️ anywhere.
 
+### Browser compatibility and a yellow microphone
+
+Italian dictation has been verified by the manager in **Chrome**. Their **Brave** installation exposed the recognition API but remained yellow and did not transcribe. API availability alone does not guarantee a working speech service; support can vary by browser, version and environment. No browser is blocked by name.
+
+**Yellow means starting, not listening.** Wait for “Listening…” before speaking. A startup that never completes fails visibly after approximately 10 seconds, rather than silently returning to idle. The office releases audio ducking and leaves the draft unchanged. Try allowing microphone access from the site controls beside the address, checking the selected input device, and opening the same office URL in Chrome. Recognition may require Internet access and may send audio to the browser vendor's service. Turning off browser security protections is not required.
+
+The microphone's states, tooltips and error messages follow the saved English/Italian office language. An error does not automatically select ElevenLabs or send recorded audio to another service. For dictation while remaining in Brave on Windows, click the message field and press **Windows + H**, then review the text and send it manually. Speech input is separate from the voice that reads replies; a missing sound cue alone does not indicate whether recognition started.
+
 **Send automatically when I stop talking** (off by default) sends what you said after about 1.2 s of quiet, instead of
 leaving it in the box; letting go of a hold sends it too.
 

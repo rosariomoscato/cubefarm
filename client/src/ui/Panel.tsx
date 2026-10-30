@@ -4,6 +4,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { useStore } from '../store';
 import { useDialogFocus } from './dialogFocus';
+import { useT } from '../i18n';
 
 // Closing a panel grabs the mouse again right away (world/lookLock.ts; "Grab the mouse when panels
 // close" in help turns that off), and mouse presses are swallowed for a moment so a double click on
@@ -29,6 +30,7 @@ export function Panel({
 }) {
   const box = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const t = useT();
   useDialogFocus(box);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -53,9 +55,9 @@ export function Panel({
       >
         <div className="panel-head">
           <h2 className="panel-title" id={titleId}>
-            {title}
+            {typeof title === 'string' ? t(title) : title}
           </h2>
-          <button className="panel-x" onClick={() => (onClose ? onClose() : closeOverlay())} aria-label="Close">
+          <button className="panel-x" onClick={() => (onClose ? onClose() : closeOverlay())} aria-label={t('Close')}>
             ✕
           </button>
         </div>

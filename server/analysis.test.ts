@@ -41,6 +41,18 @@ async function office(onboardCeo = false) {
 const finished = { ok: true, text: 'The integration lives in server/clis.ts.', costUsd: 0, turns: 1, errors: [] };
 
 describe('manual analysis workflow', () => {
+  it('uses the saved language in analysis and manually resumed follow-ups', async () => {
+    const o = await office();
+    o.swarm.updateSettings({ language: 'it' });
+    o.swarm.analyze(o.agent.id, 'Leggi il progetto');
+    expect(o.sessions[0].opts.systemAppend).toContain('Reply to the manager in Italian');
+    expect(o.sessions[0].opts.prompt).toBe('Leggi il progetto');
+    o.sessions[0].cb.sessionId('ses_it');
+    o.sessions[0].cb.finished(finished);
+    o.swarm.updateSettings({ language: 'en' });
+    await o.swarm.message(o.agent.id, 'Explain it');
+    expect(o.sessions[1].opts.systemAppend).toContain('Reply to the manager in English');
+  });
   it('connects without CEO onboarding, planning, automatic assignment or automatic merge', async () => {
     const o = await office();
     expect(o.swarm.snapshot().ceo.queue).toEqual([]);

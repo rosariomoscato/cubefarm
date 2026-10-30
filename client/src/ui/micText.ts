@@ -1,6 +1,7 @@
 // The words around the 🎙 (mic.ts): tidying a transcript, putting it in the message box, and one friendly line for
 // each way listening can fail. Pure, so it's tested without a browser.
 import type { ListenProvider } from '../../../shared/types';
+import { translate } from '../../../shared/i18n';
 
 /** A transcript tidied for the message box: single spaces, no "(laughter)" or "[music]" tags, a capital first letter. */
 export function cleanTranscript(raw: string, capital = true): string {
@@ -34,7 +35,12 @@ export function phrasesText(phrases: readonly Phrase[]): { text: string; speakin
  * A recognition or microphone error in one friendly line, or null when it needs none (stopped on purpose, nothing
  * said). Codes are SpeechRecognition's `error` or getUserMedia's DOMException names.
  */
-export function micErrorLine(code: string): string | null {
+export function micErrorLine(code: string, language?: unknown): string | null {
+  const text = errorText(code);
+  return text === null ? null : translate(language, text, { code });
+}
+
+function errorText(code: string): string | null {
   switch (code) {
     case 'aborted':
     case 'no-speech':
@@ -54,8 +60,12 @@ export function micErrorLine(code: string): string | null {
       return "🎙️ The browser's speech service couldn't be reached. Try again, or pick ElevenLabs in Settings → Voice.";
     case 'language-not-supported':
       return "🎙️ The browser can't recognise your language. Pick ElevenLabs in Settings → Voice.";
+    case 'startup-timeout':
+      return '🎙️ Speech recognition did not start. Check microphone permissions and try Chrome (verified). Some browsers, including Brave, may expose speech recognition without a working service. You can also type or use Windows + H on Windows.';
+    case 'recording-startup-timeout':
+      return '🎙️ The microphone did not start. Check microphone permissions and the selected input device, then try again.';
     default:
-      return `🎙️ Listening stopped (${code}).`;
+      return '🎙️ Listening stopped ({code}).';
   }
 }
 
@@ -66,7 +76,11 @@ export interface MicCaps {
 }
 
 /** Why the 🎙 can't listen here, in one line, or '' when it can. */
-export function cantListen(provider: ListenProvider, caps: MicCaps, keySet: boolean): string {
+export function cantListen(provider: ListenProvider, caps: MicCaps, keySet: boolean, language?: unknown): string {
+  return translate(language, cantListenText(provider, caps, keySet));
+}
+
+function cantListenText(provider: ListenProvider, caps: MicCaps, keySet: boolean): string {
   if (provider === 'browser' && !caps.recognition) return "🎙️ This browser can't turn speech into text. Use Chrome, Edge or Safari, or pick ElevenLabs in Settings → Voice.";
   if (provider === 'elevenlabs' && !caps.recorder) return "🎙️ This browser can't record from a microphone, so ElevenLabs can't hear you. Use a current Chrome, Edge, Firefox or Safari.";
   if (provider === 'elevenlabs' && !keySet) return '🎙️ Add your ElevenLabs API key in Settings → Voice to talk instead of type.';

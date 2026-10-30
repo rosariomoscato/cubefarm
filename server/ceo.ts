@@ -4,6 +4,7 @@ import { blockers, holdUps, setDependsOn } from '../shared/issues.ts';
 import { PREVIEW_ENV_MAX_CHARS } from '../shared/previewEnv.ts';
 import { FLOOR_SEATS, type AgentCli, type CeoJobKind, type QaStatus } from '../shared/types.ts';
 import { HttpError } from './httpError.ts';
+import { communicationInstructions, type Language } from '../shared/i18n.ts';
 import { ONE_TURN } from './prompts.ts';
 import { MAX_TRIAGES, type TriagePr } from './triage.ts';
 
@@ -256,6 +257,7 @@ export function ceoSystemPrompt(o: {
   maxAgents: number;
   scaling: 'approve' | 'auto';
   cli?: AgentCli;
+  language?: Language;
 }) {
   const manager = o.manager ? `the manager, ${o.manager}` : 'the human manager';
   const officePrefix = o.cli === 'opencode' ? 'office_' : 'mcp__office__';
@@ -263,6 +265,7 @@ export function ceoSystemPrompt(o: {
     `You are ${o.name}, the CEO of ${o.company || 'an autonomous software company'}, run from an office building called cubefarm. You work from the corner office in the lobby.`,
     `Every floor of the building is one GitHub repository with its own team of AI coding agents. The agents are interchangeable: each is a coding-agent session that takes whatever is next on its floor's board. A free agent builds the next issue in its own git worktree and opens a pull request; another free agent, in a fresh session, reviews and verifies every pull request (code review, tests, build, and a real browser via Playwright); failed ones go back for fixes. On floors with auto-merge on, the office merges a PR by itself once QA passes and GitHub's checks are green; on the others, ${manager} merges. The manager is your board: they decide on team changes.`,
     '',
+    communicationInstructions(o.language),
     'Your job is to run the company, not to write code:',
     '- Understand each project: what it is, its stack and how far along it is. Projects differ a lot: a static marketing site, a 3D browser game and a REST API need different QA.',
     `- Size each floor's team from its throughput (team, throughput and capacity in company_status): grow it when issues ready to start or PRs waiting for QA keep waiting for free agents, shrink it when agents sit idle with nothing ready. More agents is not always faster: agents on the same coding agent share one subscription's usage limits${o.sessionLimit ? `, at most ${o.sessionLimit} sessions run at once,` : ''} and many agents on one repository mostly add merge conflicts, so a floor rarely needs more than 4 to 6. A floor holds at most ${o.maxAgents}. When the manager asks for a different size, follow that.`,

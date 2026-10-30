@@ -64,6 +64,17 @@ describe('micErrorLine', () => {
     expect(micErrorLine('network')).toMatch(/ElevenLabs/);
     expect(micErrorLine('weird')).toBe('🎙️ Listening stopped (weird).');
   });
+  it('explains startup stalls without attributing every failure to Brave', () => {
+    expect(micErrorLine('startup-timeout')).toMatch(/permissions.*Chrome.*Brave/);
+    expect(micErrorLine('recording-startup-timeout')).not.toContain('Brave');
+    expect(micErrorLine('startup-timeout', 'it')).toContain('non si è avviato');
+  });
+  it('localizes errors and interpolates unknown error codes without changing them', () => {
+    expect(micErrorLine('not-allowed', 'it')).toContain('microfono è bloccato');
+    expect(micErrorLine('weird', 'it')).toBe('🎙️ Ascolto interrotto (weird).');
+    expect(micErrorLine('no-speech', 'it')).toBeNull();
+    expect(cantListen('browser', { recognition: false, recorder: true }, false, 'it')).toContain('non supporta la dettatura');
+  });
 });
 
 describe('cantListen', () => {

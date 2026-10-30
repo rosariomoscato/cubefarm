@@ -2,6 +2,7 @@
 // and REST as the 3D office. Five tabs: Company (each floor's pipeline), Chat (the CEO), Kanban, Team and Approvals.
 // Nothing 3D loads here until "Open the 3D office".
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { LanguageSelect, T, useT } from '../i18n';
 import { agentsOnRepo, kanbanFor, unreadMessages, useStore } from '../store';
 import { CEO_ID } from '../../../shared/types';
 import { officeUpdateChip } from '../officeUpdate';
@@ -100,7 +101,7 @@ function Company({ go }: { go: (tab: PocketTab, repoId?: string) => void }) {
             <div className="small">{ceo.status === 'working' ? (ceoInfo.job?.label ?? 'Working') : ceoInfo.queue.length ? `Next: ${ceoInfo.queue[0].label}` : 'Free'}</div>
           </div>
           <button className="btn btn-small" onClick={() => go('chat')}>
-            💬 Chat
+            <T>💬 Chat</T>
           </button>
         </div>
       )}
@@ -136,13 +137,13 @@ function Company({ go }: { go: (tab: PocketTab, repoId?: string) => void }) {
               Board
             </button>
             <button className="btn btn-small" onClick={() => go('team', repo.id)}>
-              Team
+              <T>Team</T>
             </button>
           </div>
         </div>
       ))}
       <button className="btn pk-wide" onClick={openOffice}>
-        🏢 Open the 3D office
+        <T>🏢 Open the 3D office</T>
       </button>
       {demo && <div className="pk-center small muted">DEMO MODE: fake repos, fake agents</div>}
       {version && <div className="pk-center small muted">cubefarm {version}</div>}
@@ -199,6 +200,7 @@ function PocketOverlay() {
 function Settings({ onClose }: { onClose: () => void }) {
   return (
     <Panel title="⚙️ This device and notifications" onClose={onClose} className="pk-settings">
+      <div className="card"><LanguageSelect /></div>
       <NotifySettings />
       <AccessibilitySettings pocket />
       <div className="card">
@@ -208,7 +210,7 @@ function Settings({ onClose }: { onClose: () => void }) {
           safely, see <a href="https://github.com/leonvanzyl/cubefarm/blob/main/docs/pocket.md">docs/pocket.md</a>.
         </p>
         <button className="btn" onClick={openOffice}>
-          🏢 Open the 3D office
+          <T>🏢 Open the 3D office</T>
         </button>
       </div>
     </Panel>
@@ -216,6 +218,7 @@ function Settings({ onClose }: { onClose: () => void }) {
 }
 
 export default function Pocket() {
+  const t = useT();
   const [tab, setTab] = useState<PocketTab>(() => tabFrom(location.href) ?? 'company');
   const [repoId, setRepoId] = useState<string | null>(null);
   const [settings, setSettings] = useState(false);
@@ -269,7 +272,7 @@ export default function Pocket() {
         <span className={`pk-dot ${connected ? 'pk-dot-on' : ''}`} title={connected ? 'Connected' : 'Not connected'} />
         <span className="spacer" />
         {usage !== 'normal' && <span className="chip chip-warn">{usage === 'paused' ? '⏸ paused' : '🐢 pacing'}</span>}
-        <button className="pk-icon-btn" onClick={() => setSettings(true)} aria-label="Settings and notifications" title="Settings and notifications">
+        <button className="pk-icon-btn" onClick={() => setSettings(true)} aria-label={t('Settings and notifications')} title={t('Settings and notifications')}>
           ⚙️
         </button>
       </header>
@@ -278,7 +281,7 @@ export default function Pocket() {
           <div className="pk-page">
             <p>The office isn't set up yet. Finish the setup in the 3D office (on a computer is easiest), then come back.</p>
             <button className="btn" onClick={openOffice}>
-              🏢 Open the 3D office
+              <T>🏢 Open the 3D office</T>
             </button>
           </div>
         ) : (
@@ -298,7 +301,7 @@ export default function Pocket() {
               {icon}
               {badge > 0 && <span className="badge badge-dot">{badge}</span>}
             </span>
-            <span className="pk-tab-label">{label}</span>
+            <span className="pk-tab-label">{k === 'chat' ? label : t(label)}</span>
           </button>
         ))}
       </nav>
