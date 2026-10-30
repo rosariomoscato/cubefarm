@@ -6,6 +6,11 @@ export const languageOf = (value: unknown): Language => value === 'it' ? 'it' : 
 export const languageTag = (value: unknown) => languageOf(value) === 'it' ? 'it-IT' : 'en-US';
 
 export const italian: Readonly<Record<string, string>> = {
+  'Request changes': 'Richiedi modifiche',
+  'Manager-requested changes': 'Modifiche richieste dal manager',
+  'Request changes on PR #{number}?': 'Richiedere modifiche alla PR #{number}?',
+  'Required: describe the requested changes': 'Obbligatorio: descrivi le modifiche richieste',
+  'QA passed. Describe the additional changes you want. The previous report is preserved and the changes must pass a new QA round. This starts agent work and may consume AI quota.': 'Il QA è superato. Descrivi le ulteriori modifiche desiderate. Il rapporto precedente viene conservato e le modifiche dovranno superare un nuovo QA. Questa azione avvia il lavoro di un agente e può consumare quota AI.',
   'Analysis result': 'Risultato dell’analisi',
   'Terminal and technical log': 'Terminale e log tecnico',
   'Saved log excerpt: older analyses did not store the full Markdown. The original output remains in the terminal.': 'Estratto del log salvato: le analisi precedenti non conservavano il Markdown completo. L’output originale resta nel terminale.',

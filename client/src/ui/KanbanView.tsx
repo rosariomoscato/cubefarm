@@ -3,6 +3,7 @@ import { api } from '../api';
 import { agentsOnRepo, kanbanFor, useStore, type Agent, type KanbanCard } from '../store';
 import { confirmDialog } from './Confirm';
 import { Panel } from './Panel';
+import { useT } from '../i18n';
 
 /** Who has the card; "QA" while they're testing it. */
 function AgentChip({ agent, card }: { agent?: Agent; card: KanbanCard }) {
@@ -82,6 +83,7 @@ function QaLink({ card }: { card: KanbanCard }) {
 }
 
 export function KanbanView({ repoId, embedded }: { repoId: string; embedded?: boolean }) {
+  const t = useT();
   const repo = useStore((s) => s.repos.find((r) => r.id === repoId));
   const allAgents = useStore((s) => s.agents);
   const qaRecords = useStore((s) => s.qa);
@@ -128,22 +130,24 @@ export function KanbanView({ repoId, embedded }: { repoId: string; embedded?: bo
   };
   const sendBack = async (c: KanbanCard) => {
     let note = '';
+    const requested = c.qa?.status === 'passed';
     const ok = await confirmDialog({
       icon: '🔧',
-      title: `Send PR #${c.number} back for a fix?`,
+      title: requested ? t('Request changes on PR #{number}?', { number: c.number }) : `Send PR #${c.number} back for a fix?`,
       body: (
         <>
-          <p>Its author, or any free agent, fixes it with QA's findings, then it's tested once more.</p>
+          <p>{requested ? t('QA passed. Describe the additional changes you want. The previous report is preserved and the changes must pass a new QA round. This starts agent work and may consume AI quota.') : "Its author, or any free agent, fixes it with QA's findings, then it's tested once more."}</p>
           <input
             maxLength={1000}
-            placeholder="Optional note, e.g. merge main and keep both e2e tests"
-            aria-label="Note for whoever fixes it"
+            placeholder={requested ? t('Required: describe the requested changes') : 'Optional note, e.g. merge main and keep both e2e tests'}
+            aria-label={requested ? t('Required: describe the requested changes') : 'Note for whoever fixes it'}
+            aria-required={requested}
             ref={(el) => void (el && setTimeout(() => el.focus(), 0))}
             onChange={(e) => (note = e.target.value)}
           />
         </>
       ),
-      confirm: 'Send back',
+      confirm: requested ? t('Request changes') : 'Send back',
     });
     if (ok) void act(c.key, () => api.sendBack(repo.id, c.number, note.trim() || undefined));
   };
@@ -329,6 +333,9 @@ export function KanbanView({ repoId, embedded }: { repoId: string; embedded?: bo
                 {previewButton(c)}
                 <button className="btn btn-small btn-good" disabled={pending === c.key || pr?.isDraft} onClick={() => merge(c)}>
                   Merge
+                </button>
+                <button className="btn btn-small" disabled={pending === c.key} onClick={() => sendBack(c)}>
+                  {t('Request changes')}
                 </button>
                 {closeButton(c)}
               </div>

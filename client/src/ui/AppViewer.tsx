@@ -5,6 +5,7 @@ import { PREVIEW_ENV_MAX_CHARS, previewEnvChars, previewEnvTooBig } from '../../
 import type { PreviewStatus, PreviewView, PullInfo, QaView, RepoView } from '../../../shared/types';
 import { atPath, channelLabel, channelLed, channelPulls, comparePath, newPathSync, onOfficeComputer, prAsPreview, QA_BADGE, qaShotUrl, reachable, relayPath, type Channel, type Side } from './channels';
 import { Markdown } from './Markdown';
+import { T } from '../i18n';
 import { Panel } from './Panel';
 import { tuneChannel, useChannel, useWatch } from './theatre';
 
@@ -349,7 +350,7 @@ function QaPanel({ repo, pull, qa }: { repo: RepoView; pull: PullInfo; qa?: QaVi
       {qa ? (
         <>
           <div className="qa-side-status">
-            <span className={`qa-badge qa-badge-${qa.status}`}>{QA_BADGE[qa.status]}</span>
+            <span className={`qa-badge qa-badge-${qa.status}`}><T>{qa.managerRequested && (qa.status === 'failed' || qa.status === 'fixing') ? 'Manager-requested changes' : QA_BADGE[qa.status]}</T></span>
             <span className="muted small">round {qa.round}</span>
             {qa.commentUrl && (
               <a className="small" href={qa.commentUrl} target="_blank" rel="noreferrer">

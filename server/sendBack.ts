@@ -24,15 +24,17 @@ export interface SendBackRecord {
   fixInstructions: string | null;
   retests: number;
   passedSha: string | null;
+  fixReason?: 'qa' | 'checks' | 'conflict' | 'manager' | null;
 }
 
 export interface SendBackPatch {
   status: 'failed';
-  fixReason: 'qa' | 'conflict';
+  fixReason: 'qa' | 'conflict' | 'manager';
   fixInstructions: string | null;
   sessionFailures: number;
   retests: number;
   mergeNote: null;
+  requestedSha?: string | null;
 }
 
 /**
@@ -43,20 +45,27 @@ export interface SendBackPatch {
  */
 export function sendBackPatch(
   prNumber: number,
-  pr: Pick<PullInfo, 'state' | 'mergeable' | 'mergeState'> | undefined,
+  pr: (Pick<PullInfo, 'state' | 'mergeable' | 'mergeState'> & { headSha?: string }) | undefined,
   rec: SendBackRecord | undefined,
   base: string,
   note?: string,
   from = 'the manager', // who wrote the note
+  allowPassed = false, // only an explicit manager action may reopen a successful review
 ): SendBackPatch {
   if (!pr || pr.state !== 'OPEN') throw new HttpError(404, `PR #${prNumber} is not open`);
   if (rec?.status === 'testing' || rec?.status === 'fixing') throw new HttpError(409, `PR #${prNumber} is already ${rec.status}`);
-  if (!rec || (rec.status !== 'needs-human' && rec.status !== 'failed')) {
+  const requested = allowPassed && rec?.status === 'passed';
+  const manager = requested || rec?.fixReason === 'manager';
+  if (requested && !note?.trim()) throw new HttpError(400, 'A note is required to request changes after QA passed');
+  if (!rec || (rec.status !== 'needs-human' && rec.status !== 'failed' && !requested)) {
     throw new HttpError(409, `PR #${prNumber} isn't waiting on you: only a PR that failed QA or needs a human can go back to a developer`);
   }
   const conflict = pr.mergeable === 'CONFLICTING' || pr.mergeState === 'DIRTY';
-  const findings = [rec.fixInstructions?.trim(), note?.trim() && `From ${from}: ${note.trim()}`].filter(Boolean).join('\n\n');
+  const findings = [!requested && rec.fixInstructions?.trim(), note?.trim() && `From ${from}: ${note.trim()}`].filter(Boolean).join('\n\n');
   const addMerge = conflict && !rec.passedSha && !findings.includes(`conflicts with ${base}`);
-  const fixInstructions = (addMerge ? conflictFixInstructions(findings, base) : findings) || null;
-  return { status: 'failed', fixReason: conflict ? 'conflict' : 'qa', fixInstructions, sessionFailures: 0, retests: rec.retests + 1, mergeNote: null };
+  const fixInstructions = (addMerge || (manager && conflict && !findings.includes(`conflicts with ${base}`)) ? conflictFixInstructions(findings, base) : findings) || null;
+  // 'failed' is the existing developer queue, not a new QA verdict. The prior report and passed SHA are untouched.
+  return { status: 'failed', fixReason: manager ? 'manager' : conflict ? 'conflict' : 'qa', fixInstructions, sessionFailures: 0, retests: rec.retests + 1, mergeNote: null,
+    ...(requested ? { requestedSha: pr.headSha ?? null } : {}),
+  };
 }

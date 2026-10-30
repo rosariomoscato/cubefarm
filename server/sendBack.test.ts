@@ -37,6 +37,37 @@ describe('sendBackPatch', () => {
     expect(sendBackPatch(108, open, record({ status: 'failed' }), 'main', 'Check the README too').status).toBe('failed');
   });
 
+  it('requires an explicit manager action and a nonblank note to reopen a passed PR', () => {
+    const passed = Object.freeze(record({ status: 'passed', passedSha: 'old-pass' }));
+    expect(status(() => sendBackPatch(108, open, passed, 'main', 'Refine layout'))).toBe(409);
+    expect(status(() => sendBackPatch(108, open, passed, 'main', ' ', undefined, true))).toBe(400);
+    const patch = sendBackPatch(108, { ...open, headSha: 'current-head' }, passed, 'main', 'Use three cells', undefined, true);
+    expect(patch).toMatchObject({ status: 'failed', fixReason: 'manager', requestedSha: 'current-head', fixInstructions: 'From the manager: Use three cells', retests: 2 });
+    expect(patch).not.toHaveProperty('passedSha');
+    expect(patch).not.toHaveProperty('testedSha');
+    expect(patch).not.toHaveProperty('summary');
+    expect(passed.passedSha).toBe('old-pass');
+    expect(passed.status).toBe('passed');
+  });
+
+  it('keeps busy/closed/untested PR guards for manager refinements and handles conflicts without bypassing QA', () => {
+    for (const s of ['testing', 'fixing', 'queued'] as const) {
+      expect(status(() => sendBackPatch(108, open, record({ status: s }), 'main', 'Refine', undefined, true))).toBe(409);
+    }
+    expect(status(() => sendBackPatch(108, { ...open, state: 'MERGED' }, record({ status: 'passed' }), 'main', 'Refine', undefined, true))).toBe(404);
+    const patch = sendBackPatch(108, { ...open, mergeable: 'CONFLICTING' }, record({ status: 'passed', passedSha: 'ok' }), 'main', 'Refine', undefined, true);
+    expect(patch.fixReason).toBe('manager');
+    expect(patch.fixInstructions).toContain('conflicts with main');
+    expect(patch.fixInstructions).not.toContain('Make the toolbar');
+  });
+
+  it('retains the manager-request reason when a pending request is sent back again', () => {
+    const patch = sendBackPatch(108, open, record({ status: 'failed', fixReason: 'manager', fixInstructions: 'From the manager: Use three cells' }), 'main', 'Keep the borders');
+    expect(patch.fixReason).toBe('manager');
+    expect(patch.fixInstructions).toContain('Use three cells');
+    expect(patch.fixInstructions).toContain('Keep the borders');
+  });
+
   it('says conflict when the PR conflicts now, and qa otherwise', () => {
     expect(sendBackPatch(108, { ...open, mergeable: 'CONFLICTING' }, record(), 'main').fixReason).toBe('conflict');
     expect(sendBackPatch(108, { ...open, mergeState: 'DIRTY' }, record(), 'main').fixReason).toBe('conflict');

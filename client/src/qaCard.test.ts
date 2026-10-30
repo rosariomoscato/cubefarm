@@ -7,6 +7,11 @@ const rec = (status: QaStatus, mergeNote: string | null = null, round = 2, ceoLo
 const STALE = 'the fix was never pushed';
 
 describe('qaCardNote', () => {
+  it('distinguishes a manager refinement from a failed review', () => {
+    expect(qaCardNote({ ...rec('failed'), managerRequested: true }, pr, false)).toEqual({ note: '✏️ manager-requested changes', tone: 'warn' });
+    expect(qaCardNote({ ...rec('fixing'), managerRequested: true }, pr, false).note).toBe('✏️ manager-requested changes');
+    expect(qaCardNote({ ...rec('testing'), managerRequested: true }, pr, false).note).toContain('testing');
+  });
   it.each([
     ['queued', 'waiting for QA · round 2', undefined],
     ['testing', '🔍 testing · round 2', undefined],

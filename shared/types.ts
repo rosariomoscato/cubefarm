@@ -325,6 +325,7 @@ export interface QaView {
   repoId: string;
   prNumber: number;
   status: QaStatus;
+  managerRequested?: boolean; // pending work was explicitly requested after a successful review, not a failed QA verdict
   round: number; // 1-based QA round
   devAgentId: string | null; // the agent who wrote it, or took over its fixes (null for PRs opened outside the swarm)
   qaAgentId: string | null; // the agent testing it, or who last did

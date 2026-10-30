@@ -171,7 +171,8 @@ interface QaRecord extends Omit<QaView, 'ceoLooking'> {
   sessionFailures: number;
   testedSha: string | null; // the head commit QA is testing
   passedSha: string | null; // the head commit QA signed off on: auto-merge merges exactly that
-  fixReason: 'qa' | 'checks' | 'conflict' | null; // why it was last sent back to a developer
+  fixReason: 'qa' | 'checks' | 'conflict' | 'manager' | null; // why it was last sent back to a developer
+  requestedSha?: string | null; // head on which the manager requested changes; never overwrites QA's tested/passed SHA
   mergeFixes: number; // times it went back for failing checks or conflicts
   retests: number; // QA rounds caused by merge fixes or new commits rather than by QA failing it
   preQa: PreQa | null; // a conflict found before QA tested the head is being fixed
@@ -1117,6 +1118,7 @@ export class Swarm {
       repoId: q.repoId,
       prNumber: q.prNumber,
       status: q.status,
+      ...(q.fixReason === 'manager' ? { managerRequested: true } : {}),
       round: q.round,
       devAgentId: q.devAgentId,
       qaAgentId: q.qaAgentId,
@@ -3331,12 +3333,13 @@ export class Swarm {
     const repo = this.repo(repoId);
     const find = () => this.state.qa.find((q) => q.repoId === repo.id && q.prNumber === prNumber);
     const listed = this.repoRt.get(repo.id)?.pulls.find((p) => p.number === prNumber);
-    sendBackPatch(prNumber, listed, find(), repo.defaultBranch, note, from); // refuse before asking GitHub
+    const allowPassed = from === undefined; // CEO triage is not permission to reopen a passed PR.
+    sendBackPatch(prNumber, listed, find(), repo.defaultBranch, note, from, allowPassed); // refuse before asking GitHub
     // The last sync's mergeability may be stale or UNKNOWN: ask about the PR itself whether it conflicts now.
     const details = await this.backend.prDetails(repo.fullName, prNumber).catch(() => null);
-    const pr = details && listed ? { ...listed, state: details.state, mergeable: details.mergeable, mergeState: details.mergeState } : listed;
+    const pr = details && listed ? { ...listed, headSha: details.headSha, state: details.state, mergeable: details.mergeable, mergeState: details.mergeState } : listed;
     const rec = find();
-    const patch = sendBackPatch(prNumber, pr, rec, repo.defaultBranch, note, from);
+    const patch = sendBackPatch(prNumber, pr, rec, repo.defaultBranch, note, from, allowPassed);
     this.clearPrepStrikes(repo.id, prNumber);
     this.setQa(rec!, { ...patch, preQa: null });
     setTimeout(() => this.schedule(), 200);
@@ -3603,7 +3606,7 @@ export class Swarm {
       dev,
       // The session they held was another task's (QA, say); the author's own is resumed below, from rec.devSessionId.
       { task: 'fix', issueNumber: rec.issueNumber, issueTitle: pull?.title ?? `PR #${rec.prNumber}`, branch: headRef, prNumber: rec.prNumber, prUrl: pull?.url ?? null, sessionId: null },
-      rec.fixReason === 'conflict' ? `Resolving conflicts on PR #${rec.prNumber}` : rec.fixReason === 'checks' ? `Fixing checks on PR #${rec.prNumber}` : `Fixing PR #${rec.prNumber} after QA round ${rec.round}`,
+      rec.fixReason === 'manager' ? `Manager-requested changes on PR #${rec.prNumber}` : rec.fixReason === 'conflict' ? `Resolving conflicts on PR #${rec.prNumber}` : rec.fixReason === 'checks' ? `Fixing checks on PR #${rec.prNumber}` : `Fixing PR #${rec.prNumber} after QA round ${rec.round}`,
       `Checking out PR #${rec.prNumber}…`,
     );
     // GitHub's word, not the last sync's: a PR closed or merged since then gets no fix.
@@ -3668,7 +3671,14 @@ export class Swarm {
       'Then reply with a short summary of what you changed. Do not open a new pull request; QA will re-test automatically.',
     ];
     const mergeEnd = 'Then reply with a short summary of what you did. Do not open a new pull request; the office merges it once the checks pass, after another QA round if the code changed.';
-    const prompt = (mergeFix ? [...mergeFix, ownPrLine(repo.defaultBranch), mergeEnd] : qaFix).filter((l) => l !== '').join('\n');
+    const managerFix = rec.fixReason === 'manager' ? [
+      `QA passed pull request #${rec.prNumber} (${pull?.url ?? ''}). The manager explicitly requested additional changes; this is not a failed QA review.${takeover}`,
+      rec.fixInstructions ?? '',
+      `Apply only the requested changes, run the relevant checks, and ${push}.`,
+      ownPrLine(repo.defaultBranch),
+      'Do not open a new pull request, merge or deploy. Summarize the changes; a fresh QA round must review them.',
+    ] : null;
+    const prompt = (managerFix ?? (mergeFix ? [...mergeFix, ownPrLine(repo.defaultBranch), mergeEnd] : qaFix)).filter((l) => l !== '').join('\n');
     const resume = original && rec.devSessionId ? rec.devSessionId : undefined;
     this.startAgentSession(dev, repo, cwd, prompt, this.buildSystemAppend(dev, repo, cwd, headRef, { pr: rec.prNumber, headRef }, desk.deps), resume);
   }

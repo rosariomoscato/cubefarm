@@ -6,7 +6,7 @@ import type { PrDetails } from './github.ts';
 
 export interface QaPromptInput extends Pick<PrDetails, 'headSha' | 'checks' | 'checkNames' | 'failedChecks' | 'pendingChecks'> {
   round: number;
-  fixReason: 'qa' | 'checks' | 'conflict' | null;
+  fixReason: 'qa' | 'checks' | 'conflict' | 'manager' | null;
   /** The commit the previous round tested (null on a first round or for records from before commits were tracked). */
   lastTestedSha: string | null;
   summary: string | null; // last round's findings
@@ -53,6 +53,9 @@ function retest(i: QaPromptInput): string {
     ? `(git diff ${since}..HEAD), plus a quick smoke test of the main flow. Don't repeat the full test plan for parts the change didn't touch.`
     : null;
   // A conflict fix only merged the base: the resolution, CI and the places where the two meet are what can break.
+  if (i.fixReason === 'manager') {
+    return `\nQA passed it before. The manager requested additional changes:\n${i.fixInstructions ?? ''}\nVerify the request and ${diff ? `test what changed since the last review ${diff}` : 're-check the feature and run a smoke test.'} The previous successful review is not a failure report.`;
+  }
   if (i.fixReason === 'conflict') {
     const merges = since ? ` (git log --merges ${since}..HEAD)` : '';
     return `\nQA passed it before, but since then the branch was updated with ${i.defaultBranch} to resolve merge conflicts. Review the resolution with git show --remerge-diff on the merge commit(s)${merges}, confirm GitHub's checks are green on the new head, and smoke-test this PR's feature plus whatever the conflicting files touch. Don't repeat the full test plan.`;

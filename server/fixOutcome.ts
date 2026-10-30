@@ -19,7 +19,8 @@ export interface FixRecord {
   sessionFailures: number;
   testedSha: string | null;
   passedSha: string | null;
-  fixReason: 'qa' | 'checks' | 'conflict' | null;
+  fixReason: 'qa' | 'checks' | 'conflict' | 'manager' | null;
+  requestedSha?: string | null;
   preQa: PreQa | null;
   qaChecks: PullInfo['checks'] | null; // GitHub's checks on the PR when QA reported (null: not recorded)
 }
@@ -48,9 +49,9 @@ export interface FixOutcome {
 export function fixOutcome(rec: FixRecord, head: string | null, minutes: number, counts = true, checks: PullInfo['checks'] | null = null): FixOutcome {
   const pr = rec.prNumber;
   // The commit the fix started from: the one QA failed, or the one QA passed (and auto-merge kept) for a conflict.
-  const before = rec.preQa ? rec.preQa.sha : rec.fixReason === 'conflict' ? (rec.passedSha ?? rec.testedSha) : rec.testedSha;
+  const before = rec.preQa ? rec.preQa.sha : rec.fixReason === 'manager' ? (rec.requestedSha ?? rec.passedSha ?? rec.testedSha) : rec.fixReason === 'conflict' ? (rec.passedSha ?? rec.testedSha) : rec.testedSha;
   const unpushed = rec.fixReason !== 'checks' && head && before && head === before;
-  if (unpushed && rec.fixReason !== 'conflict' && rec.qaChecks === 'failing' && (checks === 'passing' || checks === 'pending')) {
+  if (unpushed && rec.fixReason !== 'conflict' && rec.fixReason !== 'manager' && rec.qaChecks === 'failing' && (checks === 'passing' || checks === 'pending')) {
     // A re-run of a red check: QA re-tests the same commit, which costs neither a QA round nor a failed session.
     return {
       set: { status: 'queued', round: rec.round + 1, retests: rec.retests + 1, sessionFailures: 0 },

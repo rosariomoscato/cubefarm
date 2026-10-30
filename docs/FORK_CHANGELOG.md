@@ -21,6 +21,25 @@ Questo documento raccoglie le personalizzazioni di [rosariomoscato/cubefarm](htt
 
 La data della prima modifica è ricavata dalla cronologia Git; non viene usata come attestazione della data di creazione del fork su GitHub.
 
+## 2026-10-31
+
+### Richieste esplicite del manager dopo un QA positivo
+
+**Stato:** modifiche sul branch locale `fix/manager-requested-refinements`, che include anche la correzione dipendenze/watchdog `962ce11` ancora non integrata nel main. Nessun push o merge autorizzato per questo seguito. Preparazione della correzione autorizzata dal manager; nessun nuovo incarico AI avviato per applicare la rifinitura.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Richiedi modifiche dopo QA | Flusso | Nel Kanban, una PR pronta al merge offre il comando EN/IT «Request changes / Richiedi modifiche». Il dialogo richiede una nota (massimo 1.000 caratteri) e avverte dell’avvio di lavoro AI. Il percorso manager può rinviare una PR con stato `passed`; i tool di triage del CEO mantengono le restrizioni precedenti. Restano i rifiuti per PR chiuse/mergeate, sconosciute, in QA o già in correzione. |
+| Richiesta distinta da un fallimento QA | Tracciamento | Il motivo `manager` identifica il lavoro aggiuntivo senza sostituire riepilogo, controlli, link al rapporto o SHA del precedente QA. Lo stato interno `failed` è riutilizzato esclusivamente come coda sviluppatore, non come nuovo verdetto; scheda e badge distinguono le modifiche richieste dal manager. Le istruzioni al developer, al QA successivo e alla ripresa dopo riavvio non dichiarano che il precedente QA sia fallito. |
+| Nuovi commit e nuovo QA | Verifica | La richiesta conserva separatamente l’head corrente (`requestedSha`). Un semplice rerun di controlli o l’assenza di nuovi commit non soddisfa una richiesta di rifinitura. Dopo il push il lavoro torna al QA, non direttamente al merge, anche se il vecchio commit aveva superato tutti i controlli. Il retest esplicito non consuma il budget dei round richiesti dal QA. Anche il recupero dei vecchi budget non considera sufficiente un pass storico per una richiesta ancora pendente. |
+| Test e build | Verifica | Gruppo finale: **207 test passati su 14 file**, incluse convalida del rinvio, conservazione del motivo manager nei successivi rinvii, esiti delle correzioni, prompt QA, recupero al riavvio, proprietà delle PR, merge gate, watchdog, dipendenze, schede, i18n, analisi e CEO. Build e TypeScript superati, soglie invariate. Verifica manuale del nuovo comando e del ciclo completo manager → developer → nuovo QA ancora da eseguire dopo il riavvio. |
+
+**Contesto della richiesta:** la PR di prova aveva superato QA, ma il manager preferisce tre celle di punteggio allineate all’HUD anziché una riga discorsiva. I criteri completi sono stati pubblicati sulla stessa PR. I tentativi di rinvio con il server precedente sono stati rifiutati dalla convalida (nota troppo lunga, poi stato `passed` non ammesso), senza nuovi incarichi. Nessuna manipolazione manuale dello stato dell’ufficio per aggirare la regola.
+
+**Limiti delle verifiche:** il primo gruppo esteso ha avuto timeout ed errori `ENOENT` nello stato temporaneo dei test. Un successivo run analisi/CEO ha rilevato un salvataggio lingua inatteso; il test isolato è passato. Un checkout temporaneo del precedente main e il branch corrente hanno poi entrambi superato i due file, e il gruppo finale completo è passato. Non è dimostrata la causa dell’instabilità; gli esiti iniziali non vengono cancellati dal risultato finale. Il checkout diagnostico temporaneo e il suo collegamento alle dipendenze sono stati rimossi senza toccare le dipendenze originali. Restano i consueti avvisi di build sui bundle e su Rapier.
+
+**Prova installazione precedente:** l’installazione reale isolata, senza avvio di Ada, è infine riuscita in 408 secondi e ha scritto il marker coerente con package e lockfile. Il successivo incarico sulla prima issue è partito; questo non garantisce prestazioni future del registry. Il workflow della vecchia factory resta disabilitato e il merge automatico del progetto resta spento.
+
 ## 2026-10-30
 
 ### Preparazione dipendenze: watchdog coordinato e attesa visibile

@@ -6,6 +6,21 @@ const NEW = 'b'.repeat(40);
 
 const record = (r: Partial<FixRecord> = {}): FixRecord => ({ prNumber: 45, round: 2, retests: 0, sessionFailures: 0, testedSha: OLD, passedSha: null, fixReason: 'qa', preQa: null, qaChecks: null, ...r });
 
+describe('manager-requested changes after successful QA', () => {
+  it('requires a fresh QA round even when the old pass and checks are green', () => {
+    const step = fixOutcome(record({ fixReason: 'manager', passedSha: OLD, requestedSha: OLD }), NEW, 1, true, 'passing');
+    expect(step.pushed).toBe(true);
+    expect(step.set.status).toBe('queued');
+    expect(step.set.round).toBe(3);
+    expect(step.set).not.toHaveProperty('passedSha');
+  });
+  it('checks for a new commit against the requested head, not an older QA SHA or a re-run check', () => {
+    const step = fixOutcome(record({ fixReason: 'manager', passedSha: OLD, requestedSha: NEW, qaChecks: 'failing' }), NEW, 1, true, 'passing');
+    expect(step.pushed).toBe(false);
+    expect(step.set.status).toBe('failed');
+  });
+});
+
 describe('fixOutcome', () => {
   for (const fixReason of ['qa', null] as const) {
     describe(`a QA fix (fixReason ${fixReason})`, () => {

@@ -21,6 +21,16 @@ const input = (i: Partial<QaPromptInput> = {}): QaPromptInput => ({
 
 const TODAYS_STEP = "3. Install dependencies if needed (e.g. npm install when node_modules is missing), then run the project's test suite, linters, type checks and build (whichever exist).";
 
+describe('manager-requested refinement QA', () => {
+  it('reviews the new request without calling the old successful review a failure', () => {
+    const prompt = qaInstructions(input({ round: 2, fixReason: 'manager', lastTestedSha: OLD, summary: 'Everything passed.', fixInstructions: 'Use three cells.' })).retest;
+    expect(prompt).toContain('QA passed it before');
+    expect(prompt).toContain('Use three cells.');
+    expect(prompt).toContain(`git diff ${OLD}..HEAD`);
+    expect(prompt).not.toContain("Last round's findings:");
+  });
+});
+
 describe('qaInstructions: GitHub checks', () => {
   it('passing: names them and says not to re-run what they cover', () => {
     const qa = qaInstructions(input());

@@ -33,11 +33,13 @@ export function resumesAfterRestart(a: RestartAgent, preparing: boolean, demo: b
 }
 
 /** What a resumed agent is told: the job it was on, not just "carry on". */
-export function resumeNote(a: RestartAgent, fix?: { round: number; fixReason: 'qa' | 'checks' | 'conflict' | null } | null): string {
+export function resumeNote(a: RestartAgent, fix?: { round: number; fixReason: 'qa' | 'checks' | 'conflict' | 'manager' | null } | null): string {
   const yours = 'Uncommitted changes in your worktree are yours to finish.';
   if (a.task === 'fix' && a.prNumber && a.branch) {
     const job =
-      fix?.fixReason === 'conflict'
+      fix?.fixReason === 'manager'
+        ? `applying the manager's requested changes to PR #${a.prNumber}`
+        : fix?.fixReason === 'conflict'
         ? `resolving the merge conflicts on PR #${a.prNumber}`
         : fix?.fixReason === 'checks'
           ? `fixing the failing checks on PR #${a.prNumber}`

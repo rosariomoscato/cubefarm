@@ -14,10 +14,13 @@ export type CardTone = 'warn' | 'bad' | 'good';
  * PR is queued, testing or being fixed.
  */
 export function qaCardNote(
-  rec: Pick<QaView, 'status' | 'round' | 'mergeNote' | 'ceoLooking'> | null | undefined,
+  rec: Pick<QaView, 'status' | 'round' | 'mergeNote' | 'ceoLooking' | 'managerRequested'> | null | undefined,
   pr: Pick<PullInfo, 'isDraft' | 'mergeable' | 'checks'>,
   autoMerge: boolean,
 ): { note: string; tone?: CardTone } {
+  if (rec?.managerRequested && (rec.status === 'failed' || rec.status === 'fixing')) {
+    return { note: '✏️ manager-requested changes', tone: 'warn' };
+  }
   switch (rec?.status) {
     case 'passed':
       return {

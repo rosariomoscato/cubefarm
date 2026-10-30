@@ -55,7 +55,7 @@ export interface CatchUpRecord {
   mergeFixes: number;
   sessionFailures: number;
   passedSha: string | null;
-  fixReason: 'qa' | 'checks' | 'conflict' | null;
+  fixReason: 'qa' | 'checks' | 'conflict' | 'manager' | null;
 }
 
 /**
@@ -67,6 +67,7 @@ export interface CatchUpRecord {
 export function catchUp(rec: CatchUpRecord): 'failed' | 'passed' | null {
   if (rec.status !== 'needs-human' || rec.summary === QA_STOPPED) return null;
   if (rec.sessionFailures > 0) return rec.fixReason && rec.sessionFailures < MAX_FIX_FAILURES ? 'failed' : null;
+  if (rec.fixReason === 'manager') return 'failed'; // a historical QA pass does not satisfy a pending manager request
   if (rec.passedSha) return rec.mergeFixes < MAX_MERGE_FIXES ? 'passed' : null;
   return rec.fixReason === 'qa' && rec.round - rec.retests < MAX_QA_ROUNDS ? 'failed' : null;
 }

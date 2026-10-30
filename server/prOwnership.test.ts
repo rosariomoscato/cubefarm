@@ -88,6 +88,11 @@ describe('catchUp: PRs the manager got under the old budgets', () => {
     expect(catchUp(rec({ passedSha: HEAD, mergeFixes: MAX_MERGE_FIXES }))).toBeNull();
   });
 
+  it('does not treat a pending manager refinement as satisfied by the historical QA pass', () => {
+    expect(catchUp(rec({ passedSha: HEAD, fixReason: 'manager' }))).toBe('failed');
+    expect(catchUp(rec({ passedSha: HEAD, fixReason: 'manager', sessionFailures: MAX_FIX_FAILURES }))).toBeNull();
+  });
+
   it("leaves the manager's own calls and everything else alone", () => {
     expect(catchUp(rec({ summary: QA_STOPPED, sessionFailures: 1 }))).toBeNull();
     expect(catchUp(rec({ fixReason: null }))).toBeNull(); // QA never failed it
