@@ -23,6 +23,21 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### Ufficio cartoon futuristico: restyling esclusivamente estetico
+
+**Stato:** modifiche locali su `feat/robot-agents`, successive al commit `96b3881` di agenti e cane robot. Ispirazione all’Identity Book approvata dal manager; nessun push, PR, merge o aggiornamento dell’ufficio reale.
+
+- **Finiture:** palette avorio/grafite, pavimento a pannelli ceramici con giunti discreti, infissi scuri, cornici superiori con luce ambra e inserti ciano. Scrivanie, sedute, reception, postazione manager, tavolini, scaffali e banconi coordinati; divani arancio con cuscini avorio/grafite e vasi chiari. Conservati i colori identificativi dei progetti nei dettagli delle postazioni e nelle corsie.
+- **Solo presentazione:** dimensioni e posizioni degli arredi esistenti, aperture, collisioni, percorsi, bersagli e azioni di interazione conservati. Nessuna modifica a server, store, workflow, animazioni degli agenti/cane, impostazioni o dati. Gli inserti luminosi condividono geometria e materiali, non hanno collider né raycast e non aggiungono luci reali, animazioni o timer. Il ciclo giorno/notte e il sistema di illuminazione esistente restano quelli precedenti; cambiano le finiture visibili delle lampade. Nessun nuovo testo o marchio applicato.
+- **Verifiche:** 77 test passati su sei file (`layout`, `doors`, `batch`, `whiteboard`, `robotParts`, `robotDogParts`); TypeScript e build client/server superati con i consueti avvisi bundle/Rapier. Diff revisionato per limitare le modifiche a colori, texture e decorazioni. Suite globale non ripetuta: i quattro fallimenti storici non sono dichiarati risolti.
+- **Demo isolata:** Chrome/Playwright con soli agenti fittizi, automazioni disabilitate, nessuna sessione AI. Verificate viste ufficio/lobby, giorno/sera, apertura Kanban e console manager con E, movimento WASD, disponibilità di un percorso, apertura ascensore e viaggio alla lobby, modalità tascabile a 390 px senza overflow. Impostazioni identiche prima/dopo e nessun errore console nel percorso finale. Corretti nello script di prova l’attesa del pulsante di ingresso e la mira sul telaio dell’ascensore aperto; nessuna correzione alla logica dell’app per far passare il collaudo.
+
+**Evidenze:** [ufficio diurno](screenshots/office-finish/office-day.png), [postazioni](screenshots/office-finish/office-workstations.png), [zona relax](screenshots/office-finish/office-lounge.png), [ufficio serale](screenshots/office-finish/office-evening.png), [lobby](screenshots/office-finish/lobby-day.png), [interazione Kanban](screenshots/office-finish/kanban-interaction.png), [console manager](screenshots/office-finish/manager-interaction.png). Solo dati della demo. Questi controlli mirati non certificano ogni interazione né l’assenza di un costo di rendering delle decorazioni aggiuntive; non è stato eseguito un benchmark prestazionale.
+
+**Chiusura del restyling:** demo fermata, `git diff --check` superato e checkout dell’app reale verificato su `main` con working tree pulito. Restyling e rifinitura del soffitto approvati dal manager e salvati in un commit locale dedicato sullo stesso branch; nessun push o aggiornamento dell’app reale.
+
+**Rifinitura del soffitto su richiesta del manager:** quattro fasce longitudinali grafite, linee ciano/ambra alternate e piccoli segmenti luminosi interrompono l’uniformità del soffitto in ufficio e lobby. Elementi statici aderenti alla superficie, distanziati dalle lampade esistenti; nessuna modifica a logiche o illuminazione dinamica. Build TypeScript/client/server superata e controllo visivo diurno/serale nella demo riuscito senza errori console; screenshot aggiornati. I 77 test sopra precedono questa rifinitura puramente decorativa.
+
 ### Cane robot: implementazione del disegno approvato
 
 **Stato:** implementazione salvata in un commit locale sul medesimo branch `feat/robot-agents`, insieme agli agenti robot, su approvazione del manager. Nessun push, PR, merge o aggiornamento dell’app reale.

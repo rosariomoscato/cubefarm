@@ -29,6 +29,7 @@ import { OfficeRituals } from './Rituals';
 import { PongTable } from './PongTable';
 import { Shell } from './Shell';
 import { Toys } from './toys';
+import { OFFICE } from './officeAppearance';
 
 export function WallSign({
   position,
@@ -71,13 +72,13 @@ export const OfficeFloor = memo(function OfficeFloor({ repo }: { repo: RepoView 
   const ops = useStore((s) => signLine(s.ops.floors.find((f) => f.repoId === repo.id) ?? EMPTY_NUMBERS));
   const { alarm, ref: signRef } = useFloorAlarm(repo.id);
   const name = repo.fullName.split('/')[1] ?? repo.fullName;
-  const rugColor = shade(repo.color, 0.24);
+  const rugColor = shade(repo.color, -0.22);
   // whose lunch the tupperware in the fridge might be
   const lunchNames = agents.filter((a) => a.role !== 'ceo').map((a) => a.name).join('\n');
 
   return (
     <group>
-      <Shell kind="office" accent={repo.color} floorColor="#d9b48a" />
+      <Shell kind="office" accent={repo.color} floorColor={OFFICE.floor} />
       {DESK_RUGS.map((r) => (
         <Rug key={r.minZ} position={[(r.minX + r.maxX) / 2, 0.004, (r.minZ + r.maxZ) / 2]} size={[r.maxX - r.minX, r.maxZ - r.minZ]} color={rugColor} />
       ))}
@@ -166,7 +167,7 @@ export const OfficeFloor = memo(function OfficeFloor({ repo }: { repo: RepoView 
       <Plant position={[-HALF_W + 0.7, 0, HALF_D - 0.8]} scale={1.2} />
       <Plant position={[-11, 0, -HALF_D + 0.7]} scale={1.1} />
       <Plant position={[HALF_W - 0.7, 0, HALF_D - 0.7]} scale={0.9} pot="#8338ec" />
-      <Couch position={[-HALF_W + 0.9, 0, 6.5]} rotationY={-Math.PI / 2} color={shade(repo.color, -0.05)} />
+      <Couch position={[-HALF_W + 0.9, 0, 6.5]} rotationY={-Math.PI / 2} color={OFFICE.orange} />
       <CoffeeTable position={[-HALF_W + 2.6, 0, 6.5]} rotationY={Math.PI / 2} />
       <Kitchenette position={[HALF_W - 0.45, 0, 7]} floor={repo.floor} who={lunchNames} />
       <HeldSnack />

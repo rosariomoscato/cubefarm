@@ -22,9 +22,11 @@ import { deskMug, subscribeMugs } from './people';
 import { MUG_SIZE, MugLook, mugColor } from './toys/mugLook';
 import { useKeyName } from '../ui/controls';
 import { signInFor } from '../ui/floorRows';
+import { OFFICE } from './officeAppearance';
+import { Inlay } from './OfficeFinish';
 
 const SCREEN = { w: 1.0, h: 0.6, px: 896, py: 538 };
-const WOOD = '#f1d19b';
+const DESKTOP = OFFICE.ivory;
 
 /**
  * The live terminal texture for one agent's laptop. Only repaints when something changed and the player is nearby, in
@@ -120,8 +122,8 @@ export function NameTag({ agent }: { agent: Agent }) {
 }
 
 const MONITOR = { y: 1.31, z: -0.3, tilt: -0.06 };
-const BEZEL = '#2b2d42';
-const STAND = '#3d4152';
+const BEZEL = OFFICE.graphite;
+const STAND = OFFICE.metal;
 // Shapes every desk shares, so a floor's desks draw them in one batch each (Batched.tsx).
 const LOGO = look(new THREE.CircleGeometry(0.06, 24), { shading: 'glow' });
 const LED = look(new THREE.CircleGeometry(0.008, 10), { shading: 'glow' });
@@ -435,7 +437,8 @@ export const Desk = memo(function Desk({
   return (
     <group ref={ref} position={position} rotation={[0, rotationY, 0]}>
       {/* desk */}
-      <Box size={[1.9, 0.06, 0.95]} position={[0, 0.74, 0]} color={WOOD} outline />
+      <Box size={[1.9, 0.06, 0.95]} position={[0, 0.74, 0]} color={DESKTOP} outline />
+      <Inlay at={[0, 0.735, 0.477]} size={[1.65, 0.012, 0.004]} />
       {[
         [-0.88, -0.42],
         [0.88, -0.42],
@@ -444,7 +447,8 @@ export const Desk = memo(function Desk({
       ].map(([x, z]) => (
         <Box key={`${x}${z}`} size={[0.06, 0.71, 0.06]} position={[x, 0.355, z]} color="#5c677d" />
       ))}
-      <Box size={[1.76, 0.4, 0.03]} position={[0, 0.5, -0.44]} color={shade(WOOD, -0.08)} />
+      <Box size={[1.76, 0.4, 0.03]} position={[0, 0.5, -0.44]} color={OFFICE.graphite} />
+      <Inlay at={[0, 0.63, -0.457]} size={[1.4, 0.018, 0.004]} color={OFFICE.amber} />
 
       {agent ? (
         <>
@@ -472,8 +476,9 @@ export const Desk = memo(function Desk({
 
       {/* chair (it rolls back when its owner gets up) */}
       <group ref={chairRef} position={[0, 0, agent ? 0.8 : 0.6]}>
-        <Box size={[0.52, 0.08, 0.5]} position={[0, 0.44, 0]} color={accent} outline />
-        <Box size={[0.48, 0.42, 0.07]} position={[0, 0.72, 0.28]} color={accent} outline />
+        <Box size={[0.52, 0.08, 0.5]} position={[0, 0.44, 0]} color={OFFICE.graphite} outline />
+        <Box size={[0.48, 0.42, 0.07]} position={[0, 0.72, 0.28]} color={OFFICE.ivory} outline />
+        <Inlay at={[0, 0.83, 0.317]} size={[0.3, 0.025, 0.004]} color={accent} />
         <Cyl r={0.035} h={0.36} position={[0, 0.22, 0]} color="#444a5c" />
         <Cyl r={0.26} h={0.04} position={[0, 0.03, 0]} color="#444a5c" />
       </group>
