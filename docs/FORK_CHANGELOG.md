@@ -23,6 +23,15 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### PR #6: conclusione del collaudo guidato
+
+**Stato:** collaudo delle superfici previste concluso; [PR #6](https://github.com/rosariomoscato/cubefarm/pull/6) ancora aperta, senza merge né aggiornamento dell’ufficio reale. Questa voce aggiorna gli stati provvisori delle verifiche sotto, conservati come cronologia.
+
+- **CI:** [41205092554](https://github.com/rosariomoscato/cubefarm/actions/runs/41205092554) superata sul codice `7cc8df6`, inclusa la correzione della fixture del frigorifero e i suggerimenti del caffè. Questa registrazione finale modifica soltanto la documentazione.
+- **Prove manuali del manager nella demo:** confermati decorazioni (acquisto, collocazione, raccolta, ripristino e scatola), dardi/ricarica, ping-pong, frigorifero/consumo, caffè corretto, telescopio e sdraio. Confermati ripresa di Cubetris e Cable Snake dopo chiusura del telefono, e cambio English/Italiano su giochi, fotografia, frigorifero e caffè con nomi invariati. La ripresa dei giochi non è un test di persistenza dopo ricarica della pagina.
+- **Video:** ultimo test manuale con telecamera libera ferma, ufficio non congelato e scheda in primo piano riuscito: circa 10 s e movimento visibile nel file. Anche orbita e telecamera libera in movimento erano state confermate. Il precedente blocco non si è ripresentato nel nuovo controllo; nessuna modifica al registratore e nessuna causa accertata. Restano documentati i WebM vuoti osservati nell’automazione headless, senza generalizzarli al browser interattivo.
+- **Limiti:** non si dichiara tradotta ogni stringa dell’applicazione; restano testi dinamici 3D, alcune viste/azioni delle schede e messaggi demo/server non coperti. Nessuna nuova suite completa locale: le verifiche complete remote sono distinte dai timeout locali storici. Il collaudo concluso non autorizza merge, pubblicazioni o aggiornamento del servizio reale.
+
 ### PR #6: correzione dei suggerimenti del frigorifero dopo prova manuale
 
 **Stato:** correzione sullo stesso branch della [PR #6](https://github.com/rosariomoscato/cubefarm/pull/6), nessun merge né aggiornamento dell’ufficio reale.
