@@ -2,10 +2,10 @@
 // meter, the HUD's pacing chip): clock times and the names of Claude's limits.
 
 /** "14:30", with the weekday when it isn't today. */
-export function clock(at: number, now: number): string {
+export function clock(at: number, now: number, locale = 'en-US'): string {
   const d = new Date(at);
   const hm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  return d.toDateString() === new Date(now).toDateString() ? hm : `${d.toLocaleDateString('en-US', { weekday: 'short' })} ${hm}`;
+  return d.toDateString() === new Date(now).toDateString() ? hm : `${d.toLocaleDateString(locale, { weekday: 'short' })} ${hm}`;
 }
 
 const LIMIT_NAMES: Record<string, string> = {

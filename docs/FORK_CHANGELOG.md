@@ -23,6 +23,20 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### PR #6: centro di controllo e riepilogo della giornata
+
+**Stato:** secondo blocco sullo stesso branch della [PR #6](https://github.com/rosariomoscato/cubefarm/pull/6), senza merge né aggiornamento dell’ufficio reale.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Centro di controllo | Localizzazione | Tradotti spiegazioni sull’utilizzo, comandi, conferme, diagnostica, titoli e descrizioni delle metriche. Allarmi e segnalazioni watchdog vengono tradotti solo se corrispondono ai formati noti; nomi, dettagli diagnostici e formati sconosciuti restano letterali. |
+| Riepilogo della giornata | Localizzazione | Nome italiano di Time-lapse; tradotti scheda, riepiloghi, velocità, intervalli di assenza, date, controlli di riproduzione e messaggi di caricamento/errore. Le etichette registrate nel diario restano inalterate. Nessun cambiamento a registrazione, permessi delle azioni o riproduzione. |
+| Regressioni | Verifica | Copertura AST estesa alle due viste e alle etichette fornite da dati (metriche, rimedi, velocità). Test contro i messaggi canonici del watchdog per tutti i sei tipi, durate, nomi con placeholder/caratteri speciali, fallback inglese e dettagli tecnici letterali. |
+
+**Verifiche di questo blocco:** 52 test passati su sei file; TypeScript e build superati. Prova Edge/Playwright nella sola demo isolata: entrambe le schede in IT/EN, pausa, avanzamento con tastiera, cambio velocità e ritorno al tempo reale superati, senza errori console. Primo tentativo di interazione fermato dalla cattura del mouse del canvas; ripetuto liberando il mouse, senza modificare l’app o forzare i clic. La demo resta disponibile sulla 4431 per il test del manager. La lingua della demo è stata ripristinata dopo la prova. Nessuna nuova esecuzione completa locale: i tre timeout del primo blocco restano documentati sotto; la precedente CI verde non valida questo nuovo codice.
+
+**Residui:** guida estesa, controlli, HUD/3D, fotografia, giochi/catalogo/carriere, alcune viste delle schede e messaggi tecnici/demo restituiti dal server. Non si dichiara completa la traduzione dell’applicazione.
+
 ### Traduzione italiana: console, impostazioni e flusso operativo
 
 **Stato:** primo blocco pubblicato sul branch `feat/complete-italian-ui` e nella [PR #6 del fork](https://github.com/rosariomoscato/cubefarm/pull/6), non ancora integrato in `main`. Il manager ha autorizzato esplicitamente l’apertura della PR nonostante i tre timeout locali riportati sotto, con tutti i limiti dichiarati e senza merge. Nessun rilascio npm o aggiornamento dell’ufficio reale.
@@ -36,7 +50,7 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 | Visita guidata e stati dinamici | Localizzazione | Tradotti i nove passaggi della visita guidata, le relative azioni, i riepiloghi dell’aggiornamento e le note generate dal Kanban/QA. Dettagli tecnici e note preesistenti restano letterali; nessun cambiamento alle decisioni del flusso di lavoro. |
 | Regressioni | Verifica | Aggiunto controllo AST delle chiavi esplicitamente marcate nelle superfici coperte, controllo dei cataloghi condivisi e casi di conservazione letterale di nomi, titoli e identificatori. Rimane il test globale sui placeholder del dizionario. |
 
-**Copertura residua esplicita:** questo blocco non completa l’intera applicazione. Restano da localizzare guida estesa, controlli, HUD e testi 3D, centro di controllo, time-lapse, fotografia, giochi/catalogo/carriere e alcune viste delle schede. Il fallback inglese resta attivo; la presenza di una chiave nel dizionario non implica che tutte le relative viste la usino.
+**Copertura residua del primo blocco:** guida estesa, controlli, HUD e testi 3D, centro di controllo, time-lapse, fotografia, giochi/catalogo/carriere e alcune viste delle schede. Centro di controllo e time-lapse sono affrontati nel secondo blocco descritto sopra. Il fallback inglese resta attivo; la presenza di una chiave nel dizionario non implica che tutte le relative viste la usino.
 
 **Verifiche intermedie:** gruppi mirati da 21 e poi 62 test superati; build/TypeScript successivamente superati dopo la correzione di due errori nei dati dei nuovi test. Prima prova browser su demo isolata superata in Edge headless: cambio EN/IT su impostazioni desktop e modalità tascabile, modulo nuova issue e nessun overflow orizzontale nella schermata mobile verificata; nessun errore console rilevato. Il browser integrato non ha risposto ai comandi di apertura/navigazione; la prova è stata quindi eseguita direttamente con Playwright e il browser già installato, senza nuove installazioni.
 

@@ -15,6 +15,7 @@ import type { OfficeUpdateView } from '../../shared/types';
 import type { Agent } from './store';
 
 const surfaces = [
+  'ui/MissionConsole.tsx', 'ui/TimeLapse.tsx', 'ui/operationText.ts',
   'ui/ManagerConsole.tsx', 'ui/KanbanView.tsx', 'ui/TerminalView.tsx', 'ui/AgentSettings.tsx',
   'ui/AccessibilitySettings.tsx', 'ui/ProfileSettings.tsx', 'ui/OutsideSettings.tsx',
   'ui/ThemeSettings.tsx', 'ui/NotifySettings.tsx', 'ui/VoiceSettings.tsx', 'ui/CloudSettings.tsx',
@@ -33,6 +34,20 @@ describe('Italian interface coverage', () => {
       }
     };
     const visit = (node: Node) => {
+      if (node.type === 'VariableDeclarator' && ['COLUMNS', 'FIXES', 'SPEED_NOTE'].includes(String((node.id as Node)?.name))) {
+        const collect = (value: unknown): void => {
+          if (!value || typeof value !== 'object') return;
+          const n = value as Node;
+          if (n.type === 'ArrowFunctionExpression' || n.type === 'FunctionExpression') return;
+          if (n.type === 'Literal' && typeof n.value === 'string') keys.add(n.value);
+          for (const [key, child] of Object.entries(n)) {
+            if (key === 'key') continue;
+            if (Array.isArray(child)) child.forEach(collect);
+            else collect(child);
+          }
+        };
+        collect(node.init);
+      }
       const callee = node.callee as Node | undefined;
       if (node.type === 'CallExpression' && (callee?.name === 't' || (callee?.type === 'MemberExpression' && (callee.property as Node)?.name === 't'))) literals((node.arguments as Node[])[0]);
       if (node.type === 'JSXElement' && ((node.openingElement as Node).name as Node)?.name === 'T') {
