@@ -25,7 +25,7 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ### Traduzione italiana: console, impostazioni e flusso operativo
 
-**Stato:** primo blocco sul branch `feat/complete-italian-ui`, non ancora integrato in `main`. Nessun rilascio npm o aggiornamento dell’ufficio reale.
+**Stato:** primo blocco pubblicato sul branch `feat/complete-italian-ui` e nella [PR #6 del fork](https://github.com/rosariomoscato/cubefarm/pull/6), non ancora integrato in `main`. Il manager ha autorizzato esplicitamente l’apertura della PR nonostante i tre timeout locali riportati sotto, con tutti i limiti dichiarati e senza merge. Nessun rilascio npm o aggiornamento dell’ufficio reale.
 
 | Feature | Tipo | Breve descrizione |
 | --- | --- | --- |
@@ -48,7 +48,7 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 **Suite completa finale locale:** run sull’implementazione congelata `efcfcf151500d1695be8760a71866907176063d3`, con un solo worker e senza modificare i sorgenti durante l’esecuzione: **2.563 test passati, tre timeout; 231 file passati su 234**, durata circa 979 secondi. Timeout in `server/workspace.test.ts` (worktree PR già aperto sulla postazione dell’autore, 60 secondi), `client/src/world/toys/throwSim.test.ts` e `client/src/world/sky/indoor.test.ts` (5 secondi). I due timeout 3D sono stati riprodotti sulla baseline; quello workspace non è stato confrontato isolatamente con il main. Tutti i nuovi controlli i18n sono passati. La suite locale non è dichiarata verde e nessuna soglia è stata allentata.
 
-**CI remota sullo stesso commit:** [run manuale 41190512044](https://github.com/rosariomoscato/cubefarm/actions/runs/41190512044) completato con successo su **Ubuntu, Windows e macOS**, inclusi TypeScript, suite completa, build e smoke test del pacchetto. Windows: **2.566 test passati**; Ubuntu e macOS: **2.564 passati e due saltati**; tutti i **234 file di test passati** su ciascun sistema. Il successo CI non viene presentato come esito positivo della suite su questo PC. Branch pubblicato solo sul fork; PR ancora da aprire, merge non autorizzato. Questa voce successiva aggiorna la documentazione, non il codice dell’implementazione verificata.
+**CI remota sullo stesso commit:** [run manuale 41190512044](https://github.com/rosariomoscato/cubefarm/actions/runs/41190512044) completato con successo su **Ubuntu, Windows e macOS**, inclusi TypeScript, suite completa, build e smoke test del pacchetto. Windows: **2.566 test passati**; Ubuntu e macOS: **2.564 passati e due saltati**; tutti i **234 file di test passati** su ciascun sistema. Il successo CI non viene presentato come esito positivo della suite su questo PC. Branch e PR pubblicati solo sul fork; merge non autorizzato. Le successive modifiche documentali non cambiano il codice dell’implementazione verificata; la CI della PR sul suo head è un controllo distinto dal run manuale qui citato.
 
 ### PR #5 integrata: consolidamento dipendenze e rifiniture del manager
 
