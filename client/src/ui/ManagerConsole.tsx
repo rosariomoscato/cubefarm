@@ -837,7 +837,7 @@ export function ManagerConsole({ initialTab, initialRepo, card }: { initialTab?:
     ['access', '♿ Accessibility'],
   ];
   return (
-    <Panel wide title="🧑‍💼 Manager's console">
+    <Panel wide className="cyan-panel" accent="#65d8ef" title="🧑‍💼 Manager's console">
       <div className="tabs" role="tablist" aria-label="Console">
         {tabs.map(([k, label]) => (
           <button key={k} role="tab" aria-selected={tab === k} className={`tab ${tab === k ? 'tab-on' : ''}`} onClick={() => setTab(k)}>
