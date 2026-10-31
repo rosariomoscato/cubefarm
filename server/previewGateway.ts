@@ -1,6 +1,7 @@
 import type http from 'node:http';
 import type net from 'node:net';
 import { passHeaders, syncedHeaders, tunnel, upstream } from './syncProxy.ts';
+import { handlePreviewCheck } from './previewCheck.ts';
 
 // The preview gateway: previews (and compare mode's sync proxies) listen on loopback ports, which a browser on another
 // device (a tablet over Tailscale Serve, a reverse proxy) can't reach. The office passes /preview/<port>/... on to that
@@ -114,6 +115,7 @@ export function escapedTo(req: { method?: string; url?: string; headers: http.In
  * under it. False when it's neither (the office handles it).
  */
 export function handleGateway(req: http.IncomingMessage, res: http.ServerResponse, proxied: (port: number) => boolean): boolean {
+  if (handlePreviewCheck(req, res, BOOT_SCRIPT)) return true;
   const url = req.url ?? '/';
   if (url === GATEWAY_WORKER || url.startsWith(`${GATEWAY_WORKER}?`)) {
     res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-cache' }).end(WORKER_SOURCE);

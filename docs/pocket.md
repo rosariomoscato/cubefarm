@@ -86,6 +86,10 @@ agents. **Remove** deletes them. A demo office keeps its own `demo-secrets.json`
 
 ## Reach the office from your phone
 
+The in-app **Settings → Phone access** guide detects unsupported connections and provides manual Tailscale/HTTPS
+proxy instructions plus a synthetic preview CSS/script check. See [Phone access](phone-access.md) for the setup,
+security boundaries and limitations. It never changes your network or starts a project automatically.
+
 The office listens on `127.0.0.1` only, on purpose: it can start agents that run commands on your PC, so it must
 never be open to your network or the internet as it is. It never changes that or opens ports itself unless you start
 it with `--host <address>` (or `SWARM_HOST`), which has no sign-in: only for a network you trust. To use it from your
@@ -99,9 +103,10 @@ phone, put something that authenticates you in front of it:
   ```
 
   It prints an address such as `https://office-pc.your-tailnet.ts.net`, with a real HTTPS certificate, reachable
-  only from your own devices. Open it on your phone: pocket mode, installing and push all work. Put the same address
-  in **Office address for links**. `tailscale serve reset` stops it. Don't use `tailscale funnel`, which publishes the
-  office to the whole internet.
+  from devices allowed by your tailnet’s access rules. Restrict those rules to trusted users/devices. Open it on your
+  phone and run the guide’s transport check. Put the same address in **Office address for links** if desired.
+  Inspect existing Serve routes before configuring or disabling sharing; do not reset unrelated routes. Don't use
+  `tailscale funnel`, which publishes the office to the whole internet.
 - **Cloudflare Tunnel with Cloudflare Access**, or another tunnel that makes you sign in before anything reaches the
   office, also works. A tunnel without its own sign-in is not safe.
 

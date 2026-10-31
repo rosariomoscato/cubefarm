@@ -1,0 +1,11 @@
+.phone-access { min-width: 0; }
+.settings-grid > .phone-access { grid-column: 1 / -1; }
+.phone-access p { overflow-wrap: anywhere; }
+.phone-access ol { padding-left: 1.4em; }
+.phone-access li { margin: 0.8em 0; }
+.phone-access .term { min-height: 0; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
+.phone-access .seg { align-self: flex-start; display: inline-flex; flex-wrap: wrap; max-width: 100%; }
+.phone-access-blocked { margin: 0.5rem 0; }
+@media (max-width: 900px) {
+  .settings-grid { grid-template-columns: minmax(0, 1fr); }
+}

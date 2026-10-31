@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { LanguageSelect, T, useT } from '../i18n';
 import { TeamStats } from './CareerCard';
+import { PhoneAccess } from './PhoneAccess';
 import { OpenCodeModelPicker, OpenCodeVariantSelect } from './OpenCodeModelPicker';
 import { api } from '../api';
 import { PreviewPill, PreviewSettings } from './AppViewer';
@@ -640,7 +641,8 @@ function SettingsTab() {
   const terminal = settings.runtime === 'terminal';
   const defaultCli = terminal ? settings.defaultCli : 'claude';
   return (
-    <div className="tab-grid">
+    <div className="tab-grid settings-grid">
+      <PhoneAccess />
       <div className="card">
         <LanguageSelect />
         <h3><T>🧠 Agents</T></h3>
