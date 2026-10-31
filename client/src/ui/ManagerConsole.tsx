@@ -528,7 +528,7 @@ function TeamTab() {
                       <td />
                       <td colSpan={terminal ? 8 : 7}>
                         <label className="row small">
-                          <span><T>Drawn as</T></span>
+                          <span><T>Agent identity</T></span>
                           <LookSelect agent={a} />
                         </label>
                         <LookEditor agent={a} />

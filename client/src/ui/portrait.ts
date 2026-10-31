@@ -1,172 +1,61 @@
-// A career card's portrait (#226): the agent's character drawn flat on a canvas from the same appearance the 3D
-// person is built from (world/appearance.ts): hair style and colour, skin, shirt, glasses, headphones, hats, beards.
-import { appearanceFor, ACCENTS } from '../world/appearance';
+// Canvas-only robot portrait: safe to load in pocket mode without three.js.
+import { ROBOT, robotAccent, robotAppearanceFor, robotModule } from '../world/robotAppearance';
 import type { Agent } from '../store';
 
-function ellipse(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, fill: string) {
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-  ctx.fillStyle = fill;
-  ctx.fill();
-}
-
-/** Draws `agent` in a square canvas of side `s`. */
-export function drawPortrait(ctx: CanvasRenderingContext2D, s: number, agent: Pick<Agent, 'id' | 'look' | 'role' | 'color' | 'hair' | 'skin'>) {
-  const look = appearanceFor(agent);
-  const accent = ACCENTS[look.accent];
-  const k = s / 160;
+export function drawPortrait(ctx: CanvasRenderingContext2D, s: number, agent: Pick<Agent, 'id' | 'look' | 'role' | 'color' | 'hair' | 'skin'> & Partial<Pick<Agent, 'style'>>) {
+  const look = robotAppearanceFor(agent);
+  const accent = robotAccent(look, agent.role);
+  const module = robotModule(look, agent.role);
   ctx.save();
-  ctx.scale(k, k);
+  ctx.scale(s / 160, s / 160);
   ctx.clearRect(0, 0, 160, 160);
-  // backdrop
-  const g = ctx.createLinearGradient(0, 0, 0, 160);
-  g.addColorStop(0, '#fff4e0');
-  g.addColorStop(1, '#ffd6a5');
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.roundRect(0, 0, 160, 160, 26);
-  ctx.fill();
-  ctx.lineJoin = 'round';
-  ctx.strokeStyle = '#1f1d2b';
-  ctx.lineWidth = 3;
-
-  // body: shoulders in their shirt
-  const shoulders = 52 * look.shoulders;
-  ctx.beginPath();
-  ctx.moveTo(80 - shoulders, 162);
-  ctx.quadraticCurveTo(80 - shoulders, 116, 80, 112);
-  ctx.quadraticCurveTo(80 + shoulders, 116, 80 + shoulders, 162);
-  ctx.closePath();
-  ctx.fillStyle = agent.color;
-  ctx.fill();
-  ctx.stroke();
-  if (look.outfit === 'stripe') {
-    ctx.fillStyle = accent;
-    for (const y of [132, 146]) ctx.fillRect(80 - shoulders + 6, y, shoulders * 2 - 12, 6);
-  } else if (look.outfit === 'hoodie') {
-    ctx.strokeStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(72, 120);
-    ctx.lineTo(70, 142);
-    ctx.moveTo(88, 120);
-    ctx.lineTo(90, 142);
-    ctx.stroke();
-    ctx.strokeStyle = '#1f1d2b';
-  } else if (look.outfit === 'sweater') {
-    ellipse(ctx, 80, 118, 18, 7, accent);
-  }
-  // neck and head
-  ctx.fillStyle = agent.skin;
-  ctx.fillRect(72, 98, 16, 18);
-  const hy = 72;
-  // hair behind the head
-  ctx.fillStyle = agent.hair;
-  if (look.hair === 'long') {
-    ctx.beginPath();
-    ctx.roundRect(46, 50, 68, 70, 24);
-    ctx.fill();
-  }
-  if (look.hair === 'afro') ellipse(ctx, 80, hy - 8, 44, 40, agent.hair);
-  if (look.hair === 'curls') for (let i = 0; i < 9; i++) ellipse(ctx, 80 + Math.cos((i / 8) * Math.PI) * 33, hy - 14 - Math.sin((i / 8) * Math.PI) * 20, 11, 11, agent.hair);
-  ellipse(ctx, 80, hy, 30, 34, agent.skin);
-  ctx.beginPath();
-  ctx.ellipse(80, hy, 30, 34, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ellipse(ctx, 50, hy + 4, 5, 8, agent.skin);
-  ellipse(ctx, 110, hy + 4, 5, 8, agent.skin);
-  // hair on top
-  ctx.fillStyle = agent.hair;
-  const cap = (top: number) => {
-    ctx.beginPath();
-    ctx.ellipse(80, hy - 10, 31, top, 0, Math.PI, Math.PI * 2);
-    ctx.fill();
+  const rect = (x: number, y: number, w: number, h: number, r: number, fill: string) => {
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fillStyle = fill; ctx.fill();
   };
-  switch (look.hair) {
-    case 'crop':
-    case 'curls':
-    case 'long':
-      cap(26);
-      break;
-    case 'buzz':
-      cap(20);
-      break;
-    case 'sidePart':
-      cap(25);
-      ellipse(ctx, 66, hy - 18, 16, 9, agent.hair);
-      break;
-    case 'quiff':
-      cap(24);
-      ellipse(ctx, 86, hy - 34, 20, 12, agent.hair);
-      break;
-    case 'ponytail':
-      cap(25);
-      ellipse(ctx, 113, hy - 4, 9, 20, agent.hair);
-      break;
-    case 'bun':
-      cap(25);
-      ellipse(ctx, 80, hy - 40, 14, 12, agent.hair);
-      break;
-    case 'afro':
-      cap(24);
-      break;
-    case 'bald':
-      break;
+  const circle = (x: number, y: number, r: number, fill: string) => {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill();
+  };
+  rect(0, 0, 160, 160, 26, '#e2edf0');
+  rect(49, 113, 62, 54, 20, ROBOT.shell);
+  rect(58, 121, 44, 5, 2, accent);
+  circle(80, 143, 12, ROBOT.joint);
+  ctx.strokeStyle = accent; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = accent; ctx.font = 'bold 13px monospace'; ctx.textAlign = 'center';
+  ctx.fillText(module === 'inspect' ? '✓' : module === 'plan' ? '◇' : module === 'coordinate' ? '◎' : '<>', 80, 148);
+  rect(19, 60, 20, 38, 9, accent); rect(121, 60, 20, 38, 9, accent);
+  rect(22, 65, 10, 28, 5, ROBOT.joint); rect(128, 65, 10, 28, 5, ROBOT.joint);
+  ctx.strokeStyle = ROBOT.joint; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(90, 41); ctx.lineTo(98, 20); ctx.stroke();
+  circle(99, 16, 6, accent);
+  rect(31, 35, 98, 81, 25, ROBOT.shell);
+  rect(38, 48, 84, 56, 18, ROBOT.visor);
+  rect(67, 36, 26, 4, 2, accent);
+  ctx.strokeStyle = '#304858'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(49, 59); ctx.quadraticCurveTo(50, 54, 64, 54); ctx.stroke();
+  ctx.strokeStyle = ROBOT.led; ctx.lineWidth = 4;
+  for (const x of [62, 98]) {
+    ctx.beginPath(); ctx.moveTo(x - 7, 80); ctx.bezierCurveTo(x - 7, 62, x + 7, 62, x + 7, 80); ctx.stroke();
   }
-  // face
-  ellipse(ctx, 69, hy + 2, 3.5, 4.5, '#1f1d2b');
-  ellipse(ctx, 91, hy + 2, 3.5, 4.5, '#1f1d2b');
-  ellipse(ctx, 63, hy + 13, 6, 3.5, 'rgba(255,120,120,0.35)');
-  ellipse(ctx, 97, hy + 13, 6, 3.5, 'rgba(255,120,120,0.35)');
-  if (look.facialHair === 'beard') {
-    ctx.beginPath();
-    ctx.ellipse(80, hy + 18, 26, 18, 0, 0, Math.PI);
-    ctx.fillStyle = agent.hair;
-    ctx.fill();
-  } else if (look.facialHair === 'moustache') ellipse(ctx, 80, hy + 15, 11, 3.5, agent.hair);
-  else if (look.facialHair === 'stubble') ellipse(ctx, 80, hy + 22, 20, 9, 'rgba(60,40,30,0.18)');
-  ctx.beginPath();
-  ctx.arc(80, hy + 13, 9, 0.15 * Math.PI, 0.85 * Math.PI);
-  ctx.stroke();
+  ctx.strokeStyle = '#d8f6ff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(75, 93); ctx.quadraticCurveTo(80, 96, 85, 93); ctx.stroke();
   if (look.glasses !== 'none') {
-    ctx.strokeStyle = accent === '#ffffff' ? '#2b2d42' : accent;
-    ctx.lineWidth = 3;
-    for (const x of [69, 91]) {
+    ctx.strokeStyle = accent; ctx.lineWidth = 2;
+    for (const x of [62, 98]) {
       ctx.beginPath();
-      if (look.glasses === 'square') ctx.rect(x - 9, hy - 6, 18, 14);
-      else ctx.arc(x, hy + 1, 9, 0, Math.PI * 2);
+      if (look.glasses === 'square') ctx.roundRect(x - 14, 59, 28, 28, 6);
+      else ctx.arc(x, 73, 15, 0, Math.PI * 2);
       ctx.stroke();
     }
-    ctx.beginPath();
-    ctx.moveTo(78, hy);
-    ctx.lineTo(82, hy);
-    ctx.stroke();
-    ctx.strokeStyle = '#1f1d2b';
+    ctx.beginPath(); ctx.moveTo(77, 72); ctx.lineTo(83, 72); ctx.stroke();
   }
   if (look.headphones) {
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = '#2b2d42';
-    ctx.beginPath();
-    ctx.arc(80, hy - 2, 36, Math.PI * 1.05, Math.PI * 1.95);
-    ctx.stroke();
-    ellipse(ctx, 46, hy + 2, 8, 12, accent === '#ffffff' ? '#ef476f' : accent);
-    ellipse(ctx, 114, hy + 2, 8, 12, accent === '#ffffff' ? '#ef476f' : accent);
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#1f1d2b';
+    ctx.strokeStyle = ROBOT.joint; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(25, 66); ctx.quadraticCurveTo(26, 26, 61, 31); ctx.stroke();
   }
-  if (look.headwear === 'beanie') {
-    ctx.beginPath();
-    ctx.ellipse(80, hy - 12, 32, 28, 0, Math.PI, Math.PI * 2);
-    ctx.fillStyle = accent === '#ffffff' ? '#118ab2' : accent;
-    ctx.fill();
-    ctx.stroke();
-    ellipse(ctx, 80, hy - 42, 7, 7, '#ffffff');
-  } else if (look.headwear === 'cap') {
-    ctx.beginPath();
-    ctx.ellipse(80, hy - 14, 31, 22, 0, Math.PI, Math.PI * 2);
-    ctx.fillStyle = accent === '#ffffff' ? '#ef476f' : accent;
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillRect(80, hy - 18, 40, 7);
+  if (look.headwear !== 'none') {
+    rect(33, 30, 94, 21, 10, accent);
+    if (look.headwear === 'cap') rect(72, 45, 63, 6, 3, accent);
+    else circle(80, 26, 7, ROBOT.shell);
   }
   ctx.restore();
 }

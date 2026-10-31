@@ -8,8 +8,11 @@ import type { BodyState } from '../body';
 import { SANS } from '../draw';
 import { useInteractable } from '../interact';
 import { GONG_SPOT, HALF_D, SPAWN } from '../layout';
-import { toon } from '../materials';
-import { Outlines } from '../Outlines';
+import { Part, Piece, useBatches } from '../Batched';
+import { look as batchLook } from '../batch';
+import { ROBOT } from '../robotAppearance';
+import { blink } from '../face';
+import { ROBOT_DOG as R } from './robotDogParts';
 import { playerAt } from '../camera/rig';
 import { bodyState, liveBodies } from '../people';
 import { walkways } from '../walkways';
@@ -30,17 +33,17 @@ import { isFood } from '../fridge';
 
 // The office dog on the floor you're on (one for the whole building: dogState.ts says which floor it's on). Its brain
 // (dogBrain.ts) runs every physics step and steers a kinematic body the balls bounce off; it carries a fetched ball
-// through the same hands other people use (npc.ts), so you can take it back. The body is a chunky toon dog with a
-// collar and name tag, rigged by dogRig.ts: a tail that wags with its mood, floppy ears, a walk, trot and gallop,
+// through the same hands other people use (npc.ts), so you can take it back. The robot puppy has an ivory shell,
+// copper ears and LED eyes, rigged by dogRig.ts: a tail that wags with its mood, floppy ears, a walk, trot and gallop,
 // sitting, lying and hopping. E pets it.
 
 const UP = new THREE.Vector3(0, 1, 0);
 const ZERO = { x: 0, y: 0, z: 0 };
-const INK = '#1f1d2b';
-const COAT = '#d9a066';
-const CREAM = '#f6e3c3';
-const EARS = '#a8673a';
-const DARK = '#2b2d42';
+const INK = ROBOT.joint;
+const COPPER = '#b87537';
+const AMBER = '#ffac38';
+const visorBatch = new THREE.MeshPhongMaterial({ color: '#ffffff', specular: '#4c7184', shininess: 90 });
+const visorPlain = new THREE.MeshPhongMaterial({ color: ROBOT.visor, specular: '#4c7184', shininess: 90 });
 
 /**
  * The collider round its body: balls bounce off it. It's off while it carries a ball, which would otherwise catch on it
@@ -118,12 +121,11 @@ const LEGS = new Set<keyof DogJoints>(['fl', 'fr', 'rl', 'rr']);
 function Leg({ legRef, at }: { legRef: React.RefObject<THREE.Group | null>; at: [number, number, number] }) {
   return (
     <group ref={legRef} position={at}>
-      <mesh position={[0, -0.14, 0]} castShadow material={toon(COAT)}>
-        <cylinderGeometry args={[0.058, 0.05, 0.28, 10]} />
-      </mesh>
-      <mesh position={[0.025, -0.285, 0]} scale={[1.35, 0.65, 1.05]} material={toon(CREAM)}>
-        <sphereGeometry args={[0.064, 12, 8]} />
-      </mesh>
+      <Piece geometry={R.legJoint} color={INK} />
+      <Piece geometry={R.leg} color={ROBOT.shell} castShadow />
+      <Piece geometry={R.ankle} color={AMBER} />
+      <Piece geometry={R.paw} color={INK} castShadow />
+      <Piece geometry={R.toeMarks} color="#8b9da4" />
     </group>
   );
 }
@@ -133,13 +135,15 @@ function Leg({ legRef, at }: { legRef: React.RefObject<THREE.Group | null>; at: 
  * flat), everything else from the hips, which pitch the body up to sit.
  */
 function DogLook({ brain, gait, carrying }: { brain: Brain; gait: { phase: number }; carrying: { current: string | null } }) {
+  const batches = useBatches();
   const root = useRef<THREE.Group>(null);
   const hips = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
   const earL = useRef<THREE.Group>(null);
   const earR = useRef<THREE.Group>(null);
   const tail = useRef<THREE.Group>(null);
-  const tongue = useRef<THREE.Mesh>(null);
+  const tongue = useRef<THREE.Group>(null);
+  const eyes = useRef<THREE.Group>(null);
   const fl = useRef<THREE.Group>(null);
   const fr = useRef<THREE.Group>(null);
   const rl = useRef<THREE.Group>(null);
@@ -187,6 +191,7 @@ function DogLook({ brain, gait, carrying }: { brain: Brain; gait: { phase: numbe
     if (earL.current) earL.current.rotation.set(cur.earOut, 0, -cur.earBack);
     if (earR.current) earR.current.rotation.set(-cur.earOut, 0, -cur.earBack);
     if (tongue.current) tongue.current.visible = cur.tongue > 0.5;
+    if (eyes.current) eyes.current.scale.y = brain.pose === 'sleep' ? 0.08 : 1 - blink(input.t, 427) * 0.92;
     if (fl.current) fl.current.rotation.z = cur.fl;
     if (fr.current) fr.current.rotation.z = cur.fr;
     if (rl.current) rl.current.rotation.z = cur.rl;
@@ -200,59 +205,48 @@ function DogLook({ brain, gait, carrying }: { brain: Brain; gait: { phase: numbe
       <Leg legRef={rr} at={[-0.18, 0.3, 0.085]} />
       <group ref={hips} position={[-0.18, 0.3, 0]}>
         <group position={[0.18, -0.3, 0]}>
-          {/* body: a chunky capsule with a cream belly and a round rump */}
-          <mesh position={[0.01, 0.36, 0]} rotation={[0, 0, Math.PI / 2]} castShadow material={toon(COAT)}>
-            <capsuleGeometry args={[0.15, 0.32, 6, 14]} />
-            <Outlines thickness={0.012} color={INK} />
-          </mesh>
-          <mesh position={[0.03, 0.28, 0]} scale={[1.6, 0.65, 0.95]} material={toon(CREAM)}>
-            <sphereGeometry args={[0.13, 14, 10]} />
-          </mesh>
+          <Piece geometry={R.body} color={ROBOT.shell} castShadow outline={0.006} />
+          <Piece geometry={R.backPanel} color={COPPER} />
+          <Piece geometry={R.sideDiscs} color={AMBER} />
+          <Piece geometry={R.pawMarks} color={ROBOT.shell} />
           <Leg legRef={fl} at={[0.17, 0.3, -0.085]} />
           <Leg legRef={fr} at={[0.17, 0.3, 0.085]} />
           {/* collar and its round name tag */}
-          <mesh position={[0.21, 0.45, 0]} rotation={[0, Math.PI / 2, -0.55]} material={toon('#e63946')}>
-            <torusGeometry args={[0.105, 0.022, 8, 20]} />
-          </mesh>
-          <mesh position={[0.29, 0.34, 0]} rotation={[0, 0, Math.PI / 2]} material={toon('#ffd166')}>
-            <cylinderGeometry args={[0.032, 0.032, 0.01, 14]} />
-          </mesh>
+          <Piece geometry={R.collar} position={[0.21, 0.45, 0]} rotation={[0, Math.PI / 2, -0.55]} color={AMBER} />
+          <Piece geometry={R.tag} position={[0.29, 0.34, 0]} rotation={[0, 0, Math.PI / 2]} color={ROBOT.gold} />
           {/* the tail, wagging from its base */}
           <group ref={tail} position={[-0.3, 0.44, 0]}>
-            <mesh position={[-0.05, 0.08, 0]} rotation={[0, 0, 0.6]} castShadow material={toon(COAT)}>
-              <capsuleGeometry args={[0.03, 0.16, 4, 8]} />
-            </mesh>
+            <Piece geometry={R.tailJoints} color={INK} />
+            <Piece geometry={R.tail} color={ROBOT.shell} castShadow />
+            <Piece geometry={R.tailTip} color={AMBER} />
           </group>
           {/* head on the neck: turns and nods about here */}
           <group ref={head} position={[0.26, 0.5, 0]}>
-            <mesh position={[0.06, 0.06, 0]} scale={[1.05, 0.95, 0.95]} castShadow material={toon(COAT)}>
-              <sphereGeometry args={[0.14, 18, 14]} />
-              <Outlines thickness={0.012} color={INK} />
-            </mesh>
-            <mesh position={[0.18, 0, 0]} scale={[1.35, 0.8, 0.95]} material={toon(CREAM)}>
-              <sphereGeometry args={[0.075, 14, 10]} />
-            </mesh>
-            <mesh position={[0.28, 0.025, 0]} material={toon(DARK)}>
-              <sphereGeometry args={[0.028, 10, 8]} />
-            </mesh>
-            {[-1, 1].map((s) => (
-              <mesh key={s} position={[0.14, 0.1, s * 0.068]} material={toon(DARK)}>
-                <sphereGeometry args={[0.021, 8, 6]} />
-              </mesh>
-            ))}
-            <mesh ref={tongue} position={[0.2, -0.065, 0]} visible={false} material={toon('#ff8fa3')}>
-              <boxGeometry args={[0.06, 0.012, 0.04]} />
-            </mesh>
-            {/* floppy ears, hanging from the top of the head */}
-            <group ref={earL} position={[0.02, 0.15, -0.105]}>
-              <mesh position={[0, -0.075, -0.012]} scale={[0.55, 1.25, 0.3]} material={toon(EARS)}>
-                <sphereGeometry args={[0.07, 12, 8]} />
-              </mesh>
+            <Piece geometry={R.head} color={ROBOT.shell} castShadow outline={0.006} />
+            <Part look={batchLook(R.visor, { material: batches ? visorBatch : visorPlain })} color={ROBOT.visor} />
+            <group ref={eyes} position={[0.254, 0.095, 0]}>
+              <Part look={batchLook(R.eyes, { shading: 'glow' })} color={ROBOT.led} />
             </group>
-            <group ref={earR} position={[0.02, 0.15, 0.105]}>
-              <mesh position={[0, -0.075, 0.012]} scale={[0.55, 1.25, 0.3]} material={toon(EARS)}>
-                <sphereGeometry args={[0.07, 12, 8]} />
-              </mesh>
+            <Piece geometry={R.muzzle} color={ROBOT.shell} />
+            <Piece geometry={R.nose} color={INK} />
+            <Piece geometry={R.mouth} color={INK} />
+            <Piece geometry={R.antenna} color={INK} />
+            <Part look={batchLook(R.antennaTip, { shading: 'glow' })} color={AMBER} />
+            <Piece geometry={R.headTrim} color={AMBER} />
+            {/* Visibility lives on a group: instanced stand-ins themselves are always invisible. */}
+            <group ref={tongue} position={[0.235, -0.065, 0]} visible={false}>
+              <Piece geometry={R.tongue} color="#ef8890" />
+            </group>
+            {/* floppy ears, hanging from the top of the head */}
+            <group ref={earL} position={[0.02, 0.16, -0.195]}>
+              <Piece geometry={R.ear} color={COPPER} castShadow />
+              <Piece geometry={R.earTrim} color={AMBER} />
+              <Piece geometry={R.earJoint} color={INK} />
+            </group>
+            <group ref={earR} position={[0.02, 0.16, 0.195]}>
+              <Piece geometry={R.ear} color={COPPER} castShadow />
+              <Piece geometry={R.earTrim} color={AMBER} />
+              <Piece geometry={R.earJoint} color={INK} />
             </group>
           </group>
         </group>
@@ -272,8 +266,8 @@ function Hint({ brain }: { brain: Brain }) {
     if (next !== text) setText(next);
   });
   return (
-    <mesh ref={ref} position={[0.05, 0.4, 0]}>
-      <boxGeometry args={[0.95, 0.8, 0.45]} />
+    <mesh ref={ref} position={[0.05, 0.44, 0]}>
+      <boxGeometry args={[1.06, 0.94, 0.52]} />
       <meshBasicMaterial visible={false} />
     </mesh>
   );

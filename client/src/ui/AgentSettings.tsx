@@ -2,9 +2,9 @@ import { Fragment, useEffect, useId, useMemo, useState, type CSSProperties } fro
 import { api } from '../api';
 import { isBusy, useStore, type Agent } from '../store';
 import type { AgentCli, AgentPromptView, CliView, CloudMachineState, EffortLevel, MachineHost } from '../../../shared/types';
-import { ACCENT_COLORS, BUILDS, FACIAL_HAIR, GLASSES, HAIR_COLORS, HAIR_STYLES, HEADWEAR, OUTFITS, SKIN_TONES, type AgentStyle, type HairStyle, type Outfit } from '../../../shared/looks';
+import { BUILDS, GLASSES, HEADWEAR, OUTFITS, type AgentStyle } from '../../../shared/looks';
 import { CLAUDE_MODELS, effectiveModel, modelSuggestions } from '../../../shared/models';
-import { TALL_HAIR, appearanceFor, randomStyle } from '../world/appearance';
+import { PANEL_LABELS, ROBOT_ACCENTS, robotAppearanceFor } from '../world/robotAppearance';
 import { LookPreview } from '../world/LookPreview';
 import { workerCli } from './floorRows';
 import { confirmDialog } from './Confirm';
@@ -168,29 +168,13 @@ export function EffortSelect({ agent, id, style }: FieldProps) {
 export function LookSelect({ agent, id }: FieldProps) {
   const t = useT();
   return (
-    <select id={id} value={agent.look} title={t('Character look')} aria-label={id ? undefined : t('Drawn as')} style={{ width: 'auto' }} onChange={(e) => void save(agent.id, { look: e.target.value as 'feminine' | 'masculine' })}>
-      <option value="feminine">{t('👩 She')}</option>
-      <option value="masculine">{t('👨 He')}</option>
+    <select id={id} value={agent.look} title={t('Agent identity')} aria-label={id ? undefined : t('Agent identity')} style={{ width: 'auto' }} onChange={(e) => void save(agent.id, { look: e.target.value as 'feminine' | 'masculine' })}>
+      <option value="feminine">{t('She')}</option>
+      <option value="masculine">{t('He')}</option>
     </select>
   );
 }
 
-const HAIR_LABEL: Record<HairStyle, string> = {
-  crop: 'Short crop',
-  long: 'Long',
-  ponytail: 'Ponytail',
-  bun: 'Bun',
-  quiff: 'Quiff',
-  afro: 'Afro',
-  sidePart: 'Side part',
-  buzz: 'Buzz cut',
-  bald: 'Bald',
-  curls: 'Curls',
-  bob: 'Bob',
-  mohawk: 'Mohawk',
-  locs: 'Locs',
-};
-const OUTFIT_LABEL: Record<Outfit, string> = { tee: 'T-shirt', hoodie: 'Hoodie', stripe: 'Striped tee', sweater: 'Sweater', cardigan: 'Cardigan', turtleneck: 'Turtleneck' };
 const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 function Swatches({ label, colors, value, onPick }: { label: string; colors: readonly string[]; value: string; onPick: (c: string) => void }) {
@@ -214,7 +198,7 @@ function PickSelect<T extends string>({ label, value, options, labels, onPick, d
   return (
     <label className="field" htmlFor={id}>
       <span>{t(label)}</span>
-      <select id={id} value={value} disabled={disabled} title={title} onChange={(e) => onPick(e.target.value as T)}>
+      <select id={id} aria-label={t(label)} value={value} disabled={disabled} title={title} onChange={(e) => onPick(e.target.value as T)}>
         {options.map((o) => (
           <option key={o} value={o}>
             {t(labels?.[o] ?? capital(o))}
@@ -231,48 +215,45 @@ function PickSelect<T extends string>({ label, value, options, labels, onPick, d
  */
 export function LookEditor({ agent }: { agent: Agent }) {
   const t = useT();
-  const look = useMemo(() => appearanceFor(agent), [agent]);
+  const look = useMemo(() => robotAppearanceFor(agent), [agent]);
   const pick = (patch: AgentStyle) => void save(agent.id, { style: { ...agent.style, ...patch } });
-  const tall = TALL_HAIR.includes(look.hair);
+  const shuffle = () => {
+    const one = <T,>(items: readonly T[]) => items[Math.floor(Math.random() * items.length)];
+    pick({ glasses: one(GLASSES), headwear: one(HEADWEAR), outfit: one(OUTFITS), build: one(BUILDS), accent: Math.floor(Math.random() * ROBOT_ACCENTS.length) });
+  };
   return (
     <fieldset className="look-editor">
       <legend><T>Look</T></legend>
       <div className="look-body">
         <LookPreview id={agent.id} label={t('{name} as they’ll look', { name: agent.name })} />
         <div className="look-fields">
-          <PickSelect label="Hair" value={look.hair} options={HAIR_STYLES} labels={HAIR_LABEL} onPick={(hair) => pick({ hair })} />
-          <PickSelect label="Facial hair" value={look.facialHair} options={FACIAL_HAIR} onPick={(facialHair) => pick({ facialHair })} />
           <PickSelect label="Glasses" value={look.glasses} options={GLASSES} onPick={(glasses) => pick({ glasses })} />
           <PickSelect
             label="Headwear"
             value={look.headwear}
             options={HEADWEAR}
-            disabled={tall}
-            title={tall ? t('A hat doesn’t fit over {hair} hair', { hair: t(HAIR_LABEL[look.hair]).toLowerCase() }) : undefined}
             onPick={(headwear) => pick({ headwear })}
           />
           {agent.role === 'ceo' ? (
             <div className="field">
-              <span><T>Outfit</T></span>
-              <span className="muted small"><T>Blazer and lanyard (uniform)</T></span>
+              <span><T>Shell module</T></span>
+              <span className="muted small"><T>Coordination module</T></span>
             </div>
           ) : (
-            <PickSelect label="Outfit" value={look.outfit} options={OUTFITS} labels={OUTFIT_LABEL} onPick={(outfit) => pick({ outfit })} />
+            <PickSelect label="Shell module" value={look.outfit} options={OUTFITS} labels={PANEL_LABELS} onPick={(outfit) => pick({ outfit })} />
           )}
           <PickSelect label="Build" value={look.build} options={BUILDS} onPick={(build) => pick({ build })} />
-          <Swatches label="Hair colour" colors={HAIR_COLORS} value={look.hairColor} onPick={(hairColor) => pick({ hairColor })} />
-          <Swatches label="Skin tone" colors={SKIN_TONES} value={look.skin} onPick={(skin) => pick({ skin })} />
-          <Swatches label="Accent colour" colors={ACCENT_COLORS} value={ACCENT_COLORS[look.accent]} onPick={(c) => pick({ accent: ACCENT_COLORS.indexOf(c as (typeof ACCENT_COLORS)[number]) })} />
+          <Swatches label="Accent colour" colors={ROBOT_ACCENTS} value={ROBOT_ACCENTS[look.accent]} onPick={(c) => pick({ accent: ROBOT_ACCENTS.indexOf(c as (typeof ROBOT_ACCENTS)[number]) })} />
         </div>
       </div>
       <div className="row wrap">
-        <button type="button" className="btn btn-small" onClick={() => void save(agent.id, { style: randomStyle(agent) })}>
+        <button type="button" className="btn btn-small" onClick={shuffle}>
           <T>🎲 Shuffle</T>
         </button>
         <button type="button" className="btn btn-small btn-ghost" disabled={!agent.style} onClick={() => void save(agent.id, { style: null })}>
           <T>↺ Back to their seeded look</T>
         </button>
-        <span className="muted small"><T>Accent: glasses frames, hats and the stripe.</T></span>
+        <span className="muted small"><T>Robot cosmetics only: modules do not change the agent’s job.</T></span>
       </div>
     </fieldset>
   );
@@ -361,7 +342,7 @@ export function AgentSetup({ agent }: { agent: Agent }) {
         )}
         {!ceo && (
           <label className="field" htmlFor={`${id}-look`}>
-            <span><T>Drawn as</T></span>
+            <span><T>Agent identity</T></span>
             <LookSelect agent={agent} id={`${id}-look`} />
           </label>
         )}

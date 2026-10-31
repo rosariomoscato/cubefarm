@@ -37,7 +37,7 @@ function Portrait({ agent, size }: { agent: Agent; size: number }) {
   useEffect(() => {
     const ctx = ref.current?.getContext('2d');
     if (ctx) drawPortrait(ctx, size * 2, agent);
-  }, [agent.id, agent.look, agent.role, agent.color, agent.hair, agent.skin, size]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [agent.id, agent.look, agent.role, agent.color, agent.hair, agent.skin, agent.style, size]); // eslint-disable-line react-hooks/exhaustive-deps
   return <canvas ref={ref} className="career-portrait" width={size * 2} height={size * 2} style={{ width: size, height: size }} aria-label={t('{name}’s portrait', { name: agent.name })} />;
 }
 

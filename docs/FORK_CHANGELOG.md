@@ -23,6 +23,40 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### Cane robot: implementazione del disegno approvato
+
+**Stato:** implementazione salvata in un commit locale sul medesimo branch `feat/robot-agents`, insieme agli agenti robot, su approvazione del manager. Nessun push, PR, merge o aggiornamento dell’app reale.
+
+- **Estetica 3D:** cucciolo con testa maggiorata, scocca avorio, visiera lucida, occhi LED ciano con battito e chiusura durante il sonno, musetto, lingua, orecchie rame articolate, zampe meccaniche e coda segmentata. Geometrie condivise e rendering instanziato coerenti con gli agenti robot; bersaglio delle carezze adeguato al nuovo ingombro.
+- **Compatibilità:** nome corrente conservato, senza rinomina automatica. Riutilizzati snodi, fisica, comportamento, trasporto della palla e suoni esistenti.
+- **Verifiche:** 54 test passati su sei file (`robotDogParts`, `dogRig`, `dogBrain`, `dogPlaces`, `dogTravel`, `batch`), inclusi geometrie finite, ancoraggi e occhi davanti alla visiera. TypeScript e build client/server superati. Suite globale non ripetuta; i quattro fallimenti storici restano non dichiarati risolti.
+- **Collaudo:** Chrome/Playwright nella sola demo isolata con agenti fittizi. Percorso finale completo riuscito: richiamo, carezze, inseguimento, presa, trasporto, restituzione e riposo, senza errori console. Verificati nome invariato, automazioni disabilitate e nessuna sessione AI. I tentativi intermedi di fotografia avevano inquadrature obsolete e un timeout sul riporto; corretto lo script di cattura congelando la scena e attendendo un nuovo frame. Il percorso finale è passato senza modificare comportamento o modalità foto dell’app; la causa del timeout intermedio non è accertata.
+
+**Evidenze:** [cane robot](screenshots/robot-dog/robot-dog-awake.png), [carezze](screenshots/robot-dog/robot-dog-petted.png), [trasporto della palla](screenshots/robot-dog/robot-dog-fetch.png), [riposo](screenshots/robot-dog/robot-dog-sleep.png). La palla da spiaggia esistente copre parte del musetto durante il trasporto.
+
+**Chiusura:** demo fermata dopo i controlli; `git diff --check` superato. Checkout reale verificato su `main` con working tree pulito.
+
+### Agenti robot: prima implementazione del design approvato
+
+**Stato:** modifiche locali sul branch dedicato `feat/robot-agents`, dalla baseline `760c3e2` (PR #7 integrata). Nessuna pubblicazione, PR, merge o distribuzione all’app reale. Il nome Droidsembly è stato scelto dal manager, ma il cambio di marchio resta un lavoro successivo.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Personaggi robot | Estetica 3D | Scocca avorio arrotondata, testa maggiorata, visiera scura lucida, occhi LED ciano, antenna, giunti grafite e mani meccaniche. Componenti geometrici condivisi e disegno instanziato, compresi gli schermi espressivi. |
+| Varianti estetiche | Personalizzazione | Moduli codice/arancio, pianificazione/ciano e ispezione/viola, più coordinamento per il CEO; emblemi e accessori affiancano i colori. Occhiali, cuffie, cappellini e rinforzi della scocca. La lente d’ispezione è riposta sul fianco, per lasciare libere le mani durante le interazioni. I moduli **non assegnano ruoli operativi**. |
+| Compatibilità | Animazioni/dati | Conservati snodi di spalle, mani, anche e ginocchia, espressioni e battito delle palpebre. Adeguate al nuovo ingombro etichette, fumetti, accessori stagionali e anteprima. Nessuna migrazione dei dati: i precedenti campi umani restano salvati, ma non sono disegnati; gli indici colore esistenti vengono interpretati nella palette robot. Identità, nomi e configurazioni AI restano separati dall’aspetto. |
+| Editor e schede | UX/EN/IT | Controlli coerenti con i robot, etichette accessibili e traduzioni dei nuovi moduli. Anteprima completa fino ai piedi e rispetto del movimento ridotto. Ritratti canvas robotici, aggiornati quando cambia lo stile; nessuna dipendenza Three.js aggiunta al percorso tascabile. |
+
+**Verifiche locali:** 67 test passati su nove file (`robotParts`, `appearance`, `face`, `batch`, `people`, `typing`, `fidgets`, copertura i18n, `shared/looks`), con un solo worker. Inclusi integrità dei dati legacy, accessori compatibili, valori accettati dal server, geometrie finite, occhi chiusi e tutte le espressioni davanti alla visiera. Un primo run parallelo aveva un timeout di 5 s nel test preesistente del battito delle palpebre; la ripetizione sequenziale è passata senza modifiche a soglie o asserzioni. TypeScript e build client/server superati, con i consueti avvisi bundle/Rapier. Non è stata ripetuta la suite globale: i quattro fallimenti locali già documentati prima del merge della PR #7 **non sono dichiarati risolti**.
+
+**Collaudo visivo:** Chrome locale tramite Playwright su demo isolata, dati fittizi e backend `--demo`; il browser integrato aveva restituito 502 sulla demo loopback, quindi il collaudo è stato eseguito dal browser locale. Verificati postura in piedi, camminata, ritorno alle sedie, espressioni, editor di tutte e tre le varianti, scelta di occhiali/cappellino, EN/IT e modalità tascabile a 390 px senza overflow della pagina né caricamento dei chunk 3D. Nessun errore console nel passaggio conclusivo. Il primo tentativo di inquadratura risentiva dell’orario serale (personaggi nascosti dal normale fine giornata): gli screenshot finali usano l’orologio diurno di QA. Alcuni selettori di collaudo sono stati corretti prima del passaggio conclusivo; nessuna azione AI è stata usata per preparare le scene.
+
+**Isolamento:** verificati tramite lo stato della sola demo assegnazione automatica e merge automatico disabilitati, revisioni CEO a zero, aggiornamenti automatici disabilitati, modifiche del team su approvazione e nessuna sessione avviata. Rete, Tailscale, launcher, porte e dati dell’ufficio reale non modificati. I controlli mirati non costituiscono un benchmark prestazionale né un collaudo end-to-end di ogni gioco/interazione o costume stagionale.
+
+**Chiusura del collaudo:** build finale e ripetizione completa del percorso visivo superate; verificato anche l’aggiornamento immediato del [ritratto nella scheda carriera](screenshots/robot-agents/robot-portrait.png) al cambio degli occhiali, con ripristino dello stile fittizio. Lingua della demo ripristinata in italiano e demo fermata dopo i controlli. Le modifiche restano locali sul branch dedicato, in attesa della revisione visiva del manager.
+
+**Evidenze:** [team robot nell’ufficio](screenshots/robot-agents/robot-team-3d.png), [camminata](screenshots/robot-agents/robot-walking.png), [espressioni](screenshots/robot-agents/robot-expressions.png), [postazioni](screenshots/robot-agents/robot-seated.png), editor [codice](screenshots/robot-agents/robot-editor-0-it.png), [pianificazione](screenshots/robot-agents/robot-editor-1-it.png), [ispezione](screenshots/robot-agents/robot-editor-2-it.png), [accessori](screenshots/robot-agents/robot-accessories-it.png), [editor EN](screenshots/robot-agents/robot-editor-en.png), pocket [IT](screenshots/robot-agents/robot-pocket-it.png) / [EN](screenshots/robot-agents/robot-pocket-en.png). Solo nomi e contenuti della demo.
+
 ### Accesso da telefono: guida HTTPS e verifica delle anteprime
 
 **Stato:** implementazione sul nuovo branch `feat/phone-access-guide`, separato dalla PR #6 già integrata. Nessun merge, rilascio, aggiornamento dell’ufficio reale o cambiamento alla rete dell’utente.

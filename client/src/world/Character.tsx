@@ -3,7 +3,9 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Piece } from './Batched';
 import { qaKey, useStore, type Agent } from '../store';
-import { BUILD_SHAPE, appearanceFor } from './appearance';
+import { BUILD_SHAPE } from './appearance';
+import { ROBOT, robotAppearanceFor } from './robotAppearance';
+import { ROBOT_PARTS } from './robotParts';
 import { WALK_SPEED, gait, newBodyState, smooth, stepBody, type BodyTarget, type Gait, type Gesture } from './body';
 import { PARTS } from './characterParts';
 import { PROUD_FOR, blink, expressionFor, isDrowsy, newFace, prFaceOf, stepFace } from './face';
@@ -53,7 +55,7 @@ const clone = (p: Pose): Pose => ({ ...p, l: { ...p.l }, r: { ...p.r } });
 const lerp = THREE.MathUtils.lerp;
 /** Marks a person's root, so High's contact-shadow bake (gfx/ContactShadows.tsx) can leave people out of it. */
 const PERSON = { person: true };
-const PANTS = '#3d4a6b';
+const PANTS = ROBOT.shell;
 
 // Hips go from the seat (y 0.5) to the top of straight legs; the knee is `thigh` below the hip (characterParts.ts).
 const HIP = { x: 0.11, seatY: 0.5, seatZ: -0.04, standY: 0.815, thigh: 0.32 };
@@ -245,7 +247,7 @@ export function Character({
   // From the id, so the typing sounds tap in time with these hands.
   const seed = useMemo(() => typingSeed(agent.id), [agent.id]);
   const lastTool = useRef({ name: null as string | null, at: 0 });
-  const look = useMemo(() => appearanceFor(agent), [agent.id, agent.look, agent.role, agent.hair, agent.skin, agent.style]);
+  const look = useMemo(() => robotAppearanceFor(agent), [agent.id, agent.look, agent.role, agent.style]);
   const root = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const seatedLegs = useRef<THREE.Group>(null);
@@ -566,7 +568,7 @@ export function Character({
     if (bubbleLift.current) bubbleLift.current.position.y = (HIP.standY - HIP.seatY) * up; // a "hey!" by the head, sat or standing
     if (tag.current) {
       const [tx, ty, tz] = TAG_SEATED;
-      tag.current.position.set(tx * k, ty * k + (HIP.standY + look.height * 0.86 + 0.26) * up, tz * k);
+      tag.current.position.set(tx * k, ty * k + (HIP.standY + look.height * 1.18 + 0.26) * up, tz * k);
     }
     if (head.current) {
       // Every few seconds, glance down at the keyboard; while setting up, look around.
@@ -602,11 +604,11 @@ export function Character({
     <group ref={root} userData={PERSON}>
       <group ref={body} scale={scale}>
         <group ref={bubbleLift}>{hit.bubble}</group>
-        <Zzz on={asleep} position={[0.16, 1.34, -0.14]} />
+        <Zzz on={asleep} position={[0.24, 1.6, -0.14]} />
         {/* seated legs don't move, so both are one mesh; getting up swaps in jointed ones */}
         <group ref={seatedLegs}>
-          <Piece geometry={PARTS.legs} color={PANTS} castShadow outline={0.012} />
-          <Piece geometry={PARTS.shoes} color={INK} castShadow />
+          <Piece geometry={ROBOT_PARTS.legs} color={PANTS} castShadow outline={0.008} />
+          <Piece geometry={ROBOT_PARTS.shoes} color={INK} castShadow />
         </group>
         <group ref={legs} visible={false}>
           {[
@@ -614,10 +616,12 @@ export function Character({
             { hip: hipR, knee: kneeR, x: HIP.x },
           ].map(({ hip, knee, x }) => (
             <group key={x} ref={hip} position={[x, HIP.seatY, HIP.seatZ]} rotation={[Math.PI / 2, 0, 0]}>
-              <Piece geometry={PARTS.thigh} color={PANTS} castShadow outline={0.012} />
+              <Piece geometry={ROBOT_PARTS.joint} color={INK} />
+              <Piece geometry={ROBOT_PARTS.thigh} color={PANTS} castShadow outline={0.008} />
               <group ref={knee} position={[0, -HIP.thigh, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <Piece geometry={PARTS.shin} color={PANTS} castShadow outline={0.012} />
-                <Piece geometry={PARTS.shoe} color={INK} castShadow />
+                <Piece geometry={ROBOT_PARTS.joint} color={INK} />
+                <Piece geometry={ROBOT_PARTS.shin} color={PANTS} castShadow outline={0.008} />
+                <Piece geometry={ROBOT_PARTS.shoe} color={INK} castShadow />
               </group>
             </group>
           ))}
@@ -679,10 +683,10 @@ export function Character({
             </group>
           ))}
 
-          <group ref={head} position={[0, 0.66, 0]}>
+          <group ref={head} position={[0, 0.7, 0]} scale={1.12}>
             <HeadParts agent={agent} look={look} busy={busy} face={faceMesh} />
-            <ThemeCostume agent={agent} look={look} part="head" />
-            {chair && <FaceGlow id={agent.id} geometry={PARTS.head} />}
+            <group scale={[1.4, 1.15, 1.15]}><ThemeCostume agent={agent} look={look} part="head" /></group>
+            {chair && <FaceGlow id={agent.id} geometry={ROBOT_PARTS.head} />}
           </group>
           {carrying && (
             <group ref={held} visible={false}>
@@ -691,7 +695,7 @@ export function Character({
           )}
         </group>
         {/* just above their name tag */}
-        <SpeechBubble id={agent.id} y={HIP.standY + look.height * 0.86 + 0.4} />
+        <SpeechBubble id={agent.id} y={HIP.standY + look.height * 1.18 + 0.4} />
         {children && (
           <group ref={tag} position={TAG_SEATED}>
             {children}
