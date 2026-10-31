@@ -37,6 +37,8 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 **Residui:** guida estesa, controlli, HUD/3D, fotografia, giochi/catalogo/carriere, alcune viste delle schede e messaggi tecnici/demo restituiti dal server. Non si dichiara completa la traduzione dell’applicazione.
 
+**Correzione CI del secondo blocco:** il [run 41193990605](https://github.com/rosariomoscato/cubefarm/actions/runs/41193990605) è fallito nei test sui tre sistemi: il nuovo test di localizzazione importava il watchdog server dalla cartella client, e il controllo di separazione client/server in `server/notifier.test.ts` lo rifiutava correttamente. Test spostato in `server/operationText.test.ts`, senza modifiche al codice applicativo o al controllo di sicurezza. Ripetizione locale: **29 test passati su quattro file**, incluso il controllo notifier, e TypeScript superato. Nuova CI da verificare; il primo run fallito non viene attribuito ai timeout preesistenti.
+
 ### Traduzione italiana: console, impostazioni e flusso operativo
 
 **Stato:** primo blocco pubblicato sul branch `feat/complete-italian-ui` e nella [PR #6 del fork](https://github.com/rosariomoscato/cubefarm/pull/6), non ancora integrato in `main`. Il manager ha autorizzato esplicitamente l’apertura della PR nonostante i tre timeout locali riportati sotto, con tutti i limiti dichiarati e senza merge. Nessun rilascio npm o aggiornamento dell’ufficio reale.

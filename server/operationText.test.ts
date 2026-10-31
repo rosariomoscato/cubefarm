@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { finding, type Problem } from '../../../server/watchdog';
-import type { OpsAlarm, UsageView } from '../../../shared/types';
-import { alarmText, doctorFindingText } from './operationText';
-import { usageMeter } from '../ops';
-import { clock } from '../../../shared/usage';
+import { finding, type Problem } from './watchdog';
+import type { OpsAlarm, UsageView } from '../shared/types';
+import { alarmText, doctorFindingText } from '../client/src/ui/operationText';
+import { usageMeter } from '../client/src/ops';
+import { clock } from '../shared/usage';
 
 const NOW = new Date(2026, 9, 31, 12).getTime();
 const name = "Settings $& {name}'s on PR #77";
