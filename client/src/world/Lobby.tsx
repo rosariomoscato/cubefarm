@@ -22,6 +22,8 @@ import { Shell } from './Shell';
 import { TimeLapseScreen } from './TimeLapseScreen';
 import { Ball, Box, Cyl } from './Toon';
 import { Toys } from './toys';
+import { OFFICE } from './officeAppearance';
+import { Inlay } from './OfficeFinish';
 
 const ACCENT = '#ff8a5b';
 const CEO_ACCENT = '#9b5de5';
@@ -102,10 +104,11 @@ function ManagerComputer() {
   );
   return (
     <group ref={ref} position={[MANAGER_DESK.x, 0, MANAGER_DESK.z]}>
-      <Box size={[MANAGER_DESK.w, 0.08, MANAGER_DESK.d]} position={[0, 0.76, 0]} color="#8d5a3b" outline />
-      <Box size={[MANAGER_DESK.w - 0.1, 0.72, 0.06]} position={[0, 0.37, -MANAGER_DESK.d / 2 + 0.05]} color="#6f4530" />
-      <Box size={[0.08, 0.72, MANAGER_DESK.d - 0.1]} position={[-MANAGER_DESK.w / 2 + 0.08, 0.37, 0]} color="#6f4530" />
-      <Box size={[0.08, 0.72, MANAGER_DESK.d - 0.1]} position={[MANAGER_DESK.w / 2 - 0.08, 0.37, 0]} color="#6f4530" />
+      <Box size={[MANAGER_DESK.w, 0.08, MANAGER_DESK.d]} position={[0, 0.76, 0]} color={OFFICE.ivory} outline />
+      <Box size={[MANAGER_DESK.w - 0.1, 0.72, 0.06]} position={[0, 0.37, -MANAGER_DESK.d / 2 + 0.05]} color={OFFICE.graphite} />
+      <Box size={[0.08, 0.72, MANAGER_DESK.d - 0.1]} position={[-MANAGER_DESK.w / 2 + 0.08, 0.37, 0]} color={OFFICE.graphite} />
+      <Box size={[0.08, 0.72, MANAGER_DESK.d - 0.1]} position={[MANAGER_DESK.w / 2 - 0.08, 0.37, 0]} color={OFFICE.graphite} />
+      <Inlay at={[0, 0.76, MANAGER_DESK.d / 2 + 0.002]} size={[MANAGER_DESK.w - 0.2, 0.018, 0.004]} />
       {/* big monitor facing the door */}
       <Box size={[0.1, 0.34, 0.1]} position={[0, 0.97, -0.15]} color="#adb5bd" />
       <Box size={[0.4, 0.03, 0.26]} position={[0, 0.815, -0.15]} color="#adb5bd" outline />
@@ -301,7 +304,7 @@ export function Lobby() {
   const boss = managerName || user;
   return (
     <group>
-      <Shell kind="lobby" accent={ACCENT} floorColor="#e2c7a3" />
+      <Shell kind="lobby" accent={ACCENT} floorColor={OFFICE.floor} />
       <Rug position={[(LOBBY_RUG.minX + LOBBY_RUG.maxX) / 2, 0.004, (LOBBY_RUG.minZ + LOBBY_RUG.maxZ) / 2]} size={[LOBBY_RUG.maxX - LOBBY_RUG.minX, LOBBY_RUG.maxZ - LOBBY_RUG.minZ]} color="#ffd6a5" />
 
       {/* manager's office */}
@@ -340,7 +343,8 @@ export function Lobby() {
       {/* reception */}
       <group position={[RECEPTION.x, 0, RECEPTION.z]}>
         <Box size={[RECEPTION.w, 1.05, RECEPTION.d]} position={[0, 0.525, 0]} color="#ffffff" outline />
-        <Box size={[RECEPTION.w + 0.1, 0.08, RECEPTION.d + 0.1]} position={[0, 1.09, 0]} color={ACCENT} outline />
+        <Box size={[RECEPTION.w + 0.1, 0.08, RECEPTION.d + 0.1]} position={[0, 1.09, 0]} color={OFFICE.graphite} outline />
+        <Inlay at={[0, 1.09, RECEPTION.d / 2 + 0.052]} size={[RECEPTION.w - 0.1, 0.018, 0.004]} />
         <Box size={[RECEPTION.w - 0.4, 0.3, 0.02]} position={[0, 0.6, RECEPTION.d / 2 + 0.01]} color={shade(ACCENT, 0.15)} shadow={false} />
         {/* a very cheerful receptionist bot */}
         <group position={[0, 1.13, -0.1]}>
@@ -383,7 +387,7 @@ export function Lobby() {
       <Kiosk />
       <TrophyShelf />
       <WallClock position={[8.4, 2.8, -HALF_D + 0.05]} />
-      <Couch position={[11.5, 0, 4]} rotationY={Math.PI} color="#4cc9f0" />
+      <Couch position={[11.5, 0, 4]} rotationY={Math.PI} color={OFFICE.orange} />
       <CoffeeTable position={[11.5, 0, 6.2]} />
       <Jukebox x={JUKEBOX.lobbyX} floor={0} />
       {/* coffee for visitors, across from the sofa: the counter's front faces north, into the lobby */}

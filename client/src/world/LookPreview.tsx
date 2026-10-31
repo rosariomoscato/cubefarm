@@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef } from 'react';
 import { createRoot, useFrame, type ReconcilerRoot, type RootStore } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../store';
-import { appearanceFor } from './appearance';
-import { PARTS } from './characterParts';
+import { ROBOT, robotAppearanceFor } from './robotAppearance';
+import { ROBOT_PARTS as PARTS } from './robotParts';
 import { blink, newFace, stepFace, type Expression } from './face';
 import { HeadParts, INK, Sleeve, TorsoWear, applyFace, torsoWidth } from './Figure';
 import { toon } from './materials';
 import { Outlines } from './Outlines';
 import { hashString } from './typing';
+import { reduceMotion } from '../ui/a11y';
 
 // The look editor's live preview (AgentSettings.tsx): the agent standing and turning a little, drawn with the same
 // parts as at their desk (Figure.tsx), blinking and trying on an expression now and then. One small renderer of its
@@ -33,9 +34,9 @@ function previewRoot() {
       size: { ...SIZE, top: 0, left: 0 },
       dpr: [1, 2],
       gl: { antialias: true, alpha: true },
-      camera: { fov: 26, near: 0.1, far: 20, position: [0, 1.15, 3.25] },
+      camera: { fov: 28, near: 0.1, far: 20, position: [0, 1.02, 4.5] },
       frameloop: 'never',
-      onCreated: ({ camera }) => camera.lookAt(0, 1.1, 0),
+      onCreated: ({ camera }) => camera.lookAt(0, 1.02, 0),
     });
     return { canvas, root };
   })();
@@ -44,19 +45,20 @@ function previewRoot() {
 
 function Person({ id }: { id: string }) {
   const agent = useStore((s) => s.agents[id]);
-  const look = useMemo(() => (agent ? appearanceFor(agent) : null), [agent]);
+  const look = useMemo(() => (agent ? robotAppearanceFor(agent) : null), [agent]);
   const turn = useRef<THREE.Group>(null);
   const faceMesh = useRef<THREE.Mesh>(null);
   const face = useMemo(() => ({ s: newFace(), seed: hashString(id) % 10007 }), [id]);
   useFrame((_, delta) => {
-    const t = performance.now() / 1000;
+    const still = reduceMotion();
+    const t = still ? 0 : performance.now() / 1000;
     if (turn.current) turn.current.rotation.y = Math.PI + Math.sin(t * 0.6) * 0.45; // facing the camera, swaying
     const showing = t % CYCLE_S > CYCLE_S - SHOW_S;
     stepFace(face.s, showing ? SHOWN[Math.floor(t / CYCLE_S) % SHOWN.length] : 'neutral', Math.min(delta, 0.1));
-    applyFace(faceMesh, face.s, blink(t, face.seed));
+    applyFace(faceMesh, face.s, still ? 0 : blink(t, face.seed));
   });
   if (!agent || !look) return null;
-  const pants = toon('#3d4a6b');
+  const pants = toon(ROBOT.shell);
   return (
     <>
       <hemisphereLight args={['#fffaf0', '#a48a6a', 0.95]} />
@@ -65,10 +67,12 @@ function Person({ id }: { id: string }) {
       <group ref={turn}>
         {[-0.11, 0.11].map((x) => (
           <group key={x} position={[x, HIP_Y, 0]}>
+            <mesh geometry={PARTS.joint} material={toon(INK)} />
             <mesh geometry={PARTS.thigh} material={pants}>
               <Outlines thickness={0.012} color={INK} angle={0} />
             </mesh>
             <group position={[0, -0.32, 0]}>
+              <mesh geometry={PARTS.joint} material={toon(INK)} />
               <mesh geometry={PARTS.shin} material={pants}>
                 <Outlines thickness={0.012} color={INK} angle={0} />
               </mesh>
@@ -83,7 +87,7 @@ function Person({ id }: { id: string }) {
               <Sleeve agent={agent} look={look} />
             </group>
           ))}
-          <group position={[0, 0.66, 0]}>
+          <group position={[0, 0.7, 0]} scale={1.12}>
             <HeadParts agent={agent} look={look} busy={false} face={faceMesh} />
           </group>
         </group>

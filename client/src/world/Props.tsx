@@ -7,13 +7,16 @@ import { MugDispenser } from './toys/mugLook';
 import { CoffeeMachine } from './CoffeeMachine';
 import { Fridge } from './KitchenFridge';
 import { officeNow } from '../officeTime';
+import { OFFICE } from './officeAppearance';
+import { Inlay } from './OfficeFinish';
 
 type P = [number, number, number];
 
-export function Plant({ position, scale = 1, pot = '#e07a5f' }: { position: P; scale?: number; pot?: string }) {
+export function Plant({ position, scale = 1, pot = OFFICE.ivory }: { position: P; scale?: number; pot?: string }) {
   return (
     <group position={position} scale={scale}>
       <Cyl r={0.22} rTop={0.28} h={0.5} position={[0, 0.25, 0]} color={pot} outline />
+      <Inlay at={[0, 0.3, 0.263]} size={[0.09, 0.025, 0.004]} />
       <Ball r={0.36} position={[0, 0.8, 0]} color="#52b788" outline />
       <Ball r={0.28} position={[0.2, 1.05, 0.08]} color="#40916c" outline />
       <Ball r={0.25} position={[-0.18, 1.12, -0.05]} color="#74c69d" outline />
@@ -40,8 +43,9 @@ export function Couch({ position, rotationY = 0, color = '#6c63ff' }: { position
       <Box size={[3, 0.6, 0.25]} position={[0, 0.7, 0.38]} color={dark} outline />
       <Box size={[0.25, 0.55, 1]} position={[-1.5, 0.45, 0]} color={dark} outline />
       <Box size={[0.25, 0.55, 1]} position={[1.5, 0.45, 0]} color={dark} outline />
-      <Box size={[0.5, 0.4, 0.14]} position={[-0.9, 0.62, 0.22]} color="#ffd166" outline />
-      <Box size={[0.5, 0.4, 0.14]} position={[0.9, 0.62, 0.22]} color="#ef476f" outline />
+      <Box size={[0.5, 0.4, 0.14]} position={[-0.9, 0.62, 0.22]} color={OFFICE.ivory} outline />
+      <Box size={[0.5, 0.4, 0.14]} position={[0.9, 0.62, 0.22]} color={OFFICE.graphite} outline />
+      <Inlay at={[0, 0.1, -0.502]} size={[2.7, 0.018, 0.004]} color={OFFICE.amber} />
     </group>
   );
 }
@@ -49,8 +53,9 @@ export function Couch({ position, rotationY = 0, color = '#6c63ff' }: { position
 export function CoffeeTable({ position, rotationY = 0 }: { position: P; rotationY?: number }) {
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
-      <Box size={[1.3, 0.08, 0.8]} position={[0, 0.42, 0]} color="#f1d19b" outline />
-      <Box size={[1.1, 0.38, 0.6]} position={[0, 0.2, 0]} color="#c9a26b" />
+      <Box size={[1.3, 0.08, 0.8]} position={[0, 0.42, 0]} color={OFFICE.ivory} outline />
+      <Box size={[1.1, 0.38, 0.6]} position={[0, 0.2, 0]} color={OFFICE.graphite} />
+      <Inlay at={[0, 0.42, 0.402]} size={[1.15, 0.014, 0.004]} />
       <Cyl r={0.05} h={0.1} position={[0.3, 0.51, 0.1]} color="#ffffff" outline />
       <Box size={[0.3, 0.04, 0.22]} position={[-0.25, 0.48, -0.05]} color="#4cc9f0" outline />
     </group>
@@ -62,7 +67,8 @@ export function Kitchenette({ position, floor, who }: { position: P; floor: numb
   return (
     <group position={position}>
       {/* counter runs along z */}
-      <Box size={[0.8, 0.9, 4]} position={[0, 0.45, 0]} color="#8ecae6" outline />
+      <Box size={[0.8, 0.9, 4]} position={[0, 0.45, 0]} color={OFFICE.graphite} outline />
+      <Inlay at={[-0.402, 0.84, 0]} size={[0.004, 0.022, 3.8]} color={OFFICE.amber} />
       <Box size={[0.9, 0.06, 4.1]} position={[-0.02, 0.93, 0]} color="#f8f9fa" outline />
       <CoffeeMachine position={[0, 0.96, -1.1]} />
       {/* mug dispenser, next to the coffee machine */}
@@ -83,7 +89,8 @@ export function Kitchenette({ position, floor, who }: { position: P; floor: numb
 export function CoffeeCorner({ position, rotationY = 0 }: { position: P; rotationY?: number }) {
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
-      <Box size={[0.8, 0.9, 1.4]} position={[0, 0.45, 0]} color="#8ecae6" outline />
+      <Box size={[0.8, 0.9, 1.4]} position={[0, 0.45, 0]} color={OFFICE.graphite} outline />
+      <Inlay at={[-0.402, 0.84, 0]} size={[0.004, 0.022, 1.2]} color={OFFICE.amber} />
       <Box size={[0.9, 0.06, 1.5]} position={[-0.02, 0.93, 0]} color="#f8f9fa" outline />
       <CoffeeMachine position={[0, 0.96, -0.3]} />
       <MugDispenser position={[0, 0.96, 0.4]} />
@@ -133,10 +140,11 @@ export function Bookshelf({ position, rotationY = 0 }: { position: P; rotationY?
   const colors = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#9b5de5', '#ffbe0b', '#06d6a0'];
   return (
     <group position={position} rotation={[0, rotationY, 0]}>
-      <Box size={[4.8, 2.2, 0.6]} position={[0, 1.1, 0]} color="#b08968" outline />
+      <Box size={[4.8, 2.2, 0.6]} position={[0, 1.1, 0]} color={OFFICE.graphite} outline />
       {[0.35, 0.95, 1.55].map((y, row) => (
         <group key={y}>
-          <Box size={[4.6, 0.04, 0.55]} position={[0, y - 0.25, 0.04]} color="#9c6644" shadow={false} />
+          <Box size={[4.6, 0.04, 0.55]} position={[0, y - 0.25, 0.04]} color={OFFICE.ivory} shadow={false} />
+          <Inlay at={[0, y - 0.25, 0.317]} size={[4.4, 0.012, 0.004]} color={OFFICE.amber} />
           {Array.from({ length: 14 }, (_, i) => (
             <Box
               key={i}
@@ -165,6 +173,7 @@ export function GlassWall({ from, to, height = 2.8 }: { from: [number, number]; 
         <boxGeometry args={[len, height, 0.04]} />
       </mesh>
       <Box size={[len, 0.08, 0.1]} position={[0, height, 0]} color="#8d99ae" shadow={false} />
+      <Inlay at={[0, height - 0.05, 0]} size={[len, 0.015, 0.045]} />
       <Box size={[len, 0.08, 0.1]} position={[0, 0.04, 0]} color="#8d99ae" shadow={false} />
       <Box size={[0.08, height, 0.1]} position={[-len / 2, height / 2, 0]} color="#8d99ae" shadow={false} />
       <Box size={[0.08, height, 0.1]} position={[len / 2, height / 2, 0]} color="#8d99ae" shadow={false} />

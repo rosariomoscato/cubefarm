@@ -10,8 +10,10 @@ import { boxesGeometry, merged, type BoxSpec } from './shapes';
 import { Box } from './Toon';
 import { LampHalos } from './sky/lamps';
 import { SunPatches } from './sky/SunPatches';
+import { OFFICE } from './officeAppearance';
+import { Inlay } from './OfficeFinish';
 
-const WALL = '#fbf3e4';
+const WALL = OFFICE.ivory;
 const INK = '#1f1d2b';
 
 type FloorKind = 'office' | 'lobby';
@@ -111,7 +113,7 @@ function SideWalls({ kind }: { kind: FloorKind }) {
   return (
     <group>
       <mesh geometry={walls} material={toon(WALL)} receiveShadow />
-      <mesh geometry={frame} material={toon('#ffffff')}>
+      <mesh geometry={frame} material={toon(OFFICE.graphite)}>
         <Outlines thickness={0.018} color={INK} />
       </mesh>
       <mesh geometry={glass} material={paneMaterial()} renderOrder={1} />
@@ -125,8 +127,8 @@ const PANEL = look(new THREE.PlaneGeometry(1.25, 0.38), { shading: 'glowNight' }
 function CeilingLight({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
-      <Box size={[1.4, 0.06, 0.5]} position={[0, 0, 0]} color="#e9ecef" shadow={false} />
-      <Part look={PANEL} color="#fffbe8" position={[0, -0.035, 0]} rotation={[Math.PI / 2, 0, 0]} />
+      <Box size={[1.4, 0.06, 0.5]} position={[0, 0, 0]} color={OFFICE.graphite} shadow={false} />
+      <Part look={PANEL} color="#ffe4bc" position={[0, -0.035, 0]} rotation={[Math.PI / 2, 0, 0]} />
     </group>
   );
 }
@@ -141,24 +143,25 @@ export function Shell({ kind, accent, floorColor }: { kind: FloorKind; accent: s
     return out;
   }, []);
   const floorTex = useMemo(() => {
-    // cartoon wood planks
+    // Large ceramic service panels; a quiet technical pattern rather than wood grain.
     const c = document.createElement('canvas');
     c.width = c.height = 512;
     const ctx = c.getContext('2d')!;
-    const plankH = 64;
+    const plankH = 256;
     for (let row = 0; row < 512 / plankH; row++) {
-      const offset = (row * 173) % 512;
+      const offset = 0;
       for (let x = -offset; x < 512; x += 256) {
         const v = ((row * 7 + Math.floor((x + offset) / 256) * 3) % 5) * 0.012 - 0.024;
         ctx.fillStyle = shade(floorColor, v);
         ctx.fillRect(x, row * plankH, 256, plankH);
         ctx.fillStyle = shade(floorColor, -0.1);
-        ctx.fillRect(x, row * plankH, 3, plankH);
+        ctx.fillRect(x, row * plankH, 2, plankH);
         ctx.fillStyle = shade(floorColor, v - 0.035);
-        for (let g = 0; g < 3; g++) ctx.fillRect(x + 30 + g * 70, row * plankH + 18 + g * 12, 60, 2);
+        ctx.fillRect(x + 12, row * plankH + 12, 20, 2);
+        ctx.fillRect(x + 12, row * plankH + 12, 2, 20);
       }
       ctx.fillStyle = shade(floorColor, -0.12);
-      ctx.fillRect(0, row * plankH, 512, 3);
+      ctx.fillRect(0, row * plankH, 512, 2);
     }
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -185,9 +188,19 @@ export function Shell({ kind, accent, floorColor }: { kind: FloorKind; accent: s
         <planeGeometry args={[HALF_W * 2, HALF_D * 2]} />
         <meshToonMaterial map={floorTex} />
       </mesh>
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, WALL_H, 0]} material={toon('#f3efe6')}>
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, WALL_H, 0]} material={toon(OFFICE.ceiling)}>
         <planeGeometry args={[HALF_W * 2, HALF_D * 2]} />
       </mesh>
+      {/* Flush ceiling ribbons: quiet service lanes, clear of the existing light panels. */}
+      {[-9, -3, 3, 9].map((x, i) => (
+        <group key={x}>
+          <Box size={[0.34, 0.018, HALF_D * 2 - 0.8]} position={[x, WALL_H - 0.012, 0]} color={OFFICE.graphite} shadow={false} />
+          <Inlay at={[x - 0.11, WALL_H - 0.024, 0]} size={[0.035, 0.006, HALF_D * 2 - 1.2]} color={i % 2 === 0 ? OFFICE.cyan : OFFICE.amber} />
+          {[-8, -2.5, 3, 8.5].map((z) => (
+            <Inlay key={z} at={[x + 0.08, WALL_H - 0.024, z]} size={[0.1, 0.006, 0.65]} color={i % 2 === 0 ? OFFICE.amber : OFFICE.cyan} />
+          ))}
+        </group>
+      ))}
       {lights.map((p) => (
         <CeilingLight key={p.join()} position={p} />
       ))}
@@ -216,12 +229,17 @@ export function Shell({ kind, accent, floorColor }: { kind: FloorKind; accent: s
         { p: [doorHalf + southSeg / 2, 0, HALF_D - 0.02] as const, r: Math.PI, w: southSeg },
       ].map(({ p, r, w }, i) => (
         <group key={i} position={[p[0], 0, p[2]]} rotation={[0, r, 0]}>
-          <mesh position={[0, 0.06, 0]} material={toon(shade(accent, -0.2))}>
+          <mesh position={[0, 0.06, 0]} material={toon(OFFICE.graphite)}>
             <boxGeometry args={[w, 0.12, 0.04]} />
           </mesh>
           <mesh position={[0, 0.95, 0]} material={toon(accent)}>
             <boxGeometry args={[w, 0.12, 0.03]} />
           </mesh>
+          <Inlay at={[0, 0.98, 0.018]} size={[w, 0.018, 0.006]} />
+          <mesh position={[0, WALL_H - 0.22, 0]} material={toon(OFFICE.graphite)}>
+            <boxGeometry args={[w, 0.26, 0.04]} />
+          </mesh>
+          <Inlay at={[0, WALL_H - 0.36, 0.025]} size={[w, 0.025, 0.008]} color={OFFICE.amber} />
         </group>
       ))}
     </group>
