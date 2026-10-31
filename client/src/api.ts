@@ -5,6 +5,7 @@ import type { AgentStyle } from '../../shared/looks';
 import type { AgentCli, AgentPromptView, AgentView, CloudView, DoctorFinding, DoctorFix, EffortLevel, GhRepoSummary, NotifyChannel, NotifyChannelsView, NotifyWebhook, OfficeUpdateView, PreviewView, ProjectFolderView, PrPreviewView, RepoView, SwarmSettings, UsageView, VoiceCacheView, VoiceOption, MachineHost } from '../../shared/types';
 import type { JournalChunk, JournalDayView } from '../../shared/journal';
 import type { DecorItem, ProgressView } from '../../shared/progress';
+import type { PhoneAccessInfo } from '../../shared/phoneAccess';
 
 async function call<T = unknown>(method: string, url: string, body?: unknown, toast = true): Promise<T> {
   // The time-lapse shows a recorded day: nothing in it can be acted on.
@@ -57,6 +58,7 @@ export interface FloorOptions {
 }
 
 export const api = {
+  phoneAccess: () => call<PhoneAccessInfo>('GET', '/api/phone-access', undefined, false),
   analyze: (id: string, text: string) => call('POST', `/api/agents/${id}/analyze`, { text }),
   openCodeModels: (context: { agent?: string; repo?: string } = {}, refresh = false) => call<OpenCodeCatalog>('GET', `/api/opencode/models?${new URLSearchParams({ ...context, ...(refresh ? { refresh: '1' } : {}) })}`, undefined, false),
   githubRepos: (owner?: string) => call<GhRepoSummary[]>('GET', `/api/github/repos${owner ? `?owner=${encodeURIComponent(owner)}` : ''}`),

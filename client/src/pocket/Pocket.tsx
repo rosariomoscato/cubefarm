@@ -8,6 +8,7 @@ import { CEO_ID } from '../../../shared/types';
 import { officeUpdateChip } from '../officeUpdate';
 import { KanbanView } from '../ui/KanbanView';
 import { NotifySettings } from '../ui/NotifySettings';
+import { PhoneAccess } from '../ui/PhoneAccess';
 import { AccessibilitySettings } from '../ui/AccessibilitySettings';
 import { Panel } from '../ui/Panel';
 import { Chat } from '../ui/Phone';
@@ -205,6 +206,7 @@ function Settings({ onClose }: { onClose: () => void }) {
   return (
     <Panel title={t('⚙️ This device and notifications')} onClose={onClose} className="pk-settings">
       <div className="card"><LanguageSelect /></div>
+      <PhoneAccess />
       <NotifySettings />
       <AccessibilitySettings pocket />
       <div className="card">

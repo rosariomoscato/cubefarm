@@ -18,6 +18,7 @@ import { serviceWorkerSource, swVersion } from './pwa.ts';
 import { screenStatus } from './screenReply.ts';
 import { parseSendBackNote } from './sendBack.ts';
 import { handleGateway, upgradeGateway } from './previewGateway.ts';
+import { phoneAccessInfo } from './phoneAccess.ts';
 import { PresenceHub } from './presence.ts';
 import { HttpError, Swarm } from './swarm.ts';
 
@@ -59,6 +60,8 @@ const str = (v: unknown) => (typeof v === 'string' ? v : '');
 const repoId = (req: Request) => decodeURIComponent(String(req.params.repo));
 
 app.get('/api/state', route(() => swarm.snapshot()));
+// Read-only guidance: no shell execution, URL probing, network changes or forwarded-header trust.
+app.get('/api/phone-access', route(() => phoneAccessInfo(server.address() as AddressInfo)));
 app.get('/api/opencode/models', route((req) => swarm.openCodeModels(str(req.query.agent) || undefined, str(req.query.repo) || undefined, req.query.refresh === '1')));
 
 app.get('/api/github/repos', route((req) => swarm.listGithubRepos(str(req.query.owner) || undefined)));

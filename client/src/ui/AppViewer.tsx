@@ -8,6 +8,8 @@ import { Markdown } from './Markdown';
 import { T, useT } from '../i18n';
 import { Panel } from './Panel';
 import { tuneChannel, useChannel, useWatch } from './theatre';
+import { browserPhoneConnection, PhoneAccess } from './PhoneAccess';
+import { needsPhoneAccess } from '../../../shared/phoneAccess';
 
 const STATUS_LABEL: Record<PreviewStatus, string> = {
   unconfigured: 'not set up',
@@ -554,6 +556,8 @@ export function AppViewer({ repoId, pr }: { repoId: string; pr?: number | null }
   const [showQa, setShowQa] = useState(lastQa);
   const [busy, setBusy] = useState(false);
   const [reloads, setReloads] = useState(0);
+  const [accessOpen, setAccessOpen] = useState(false);
+  const blockedAccess = needsPhoneAccess(browserPhoneConnection());
   const toolbar = useRef<HTMLDivElement>(null);
 
   // Opened on a channel (a chip on the big screen, a Kanban PR card): tune to it.
@@ -626,6 +630,7 @@ export function AppViewer({ repoId, pr }: { repoId: string; pr?: number | null }
       <div ref={toolbar}>
         <ChannelBar repo={repo} channel={channel} onPick={(n) => tuneChannel(repo.id, n)} />
         <div className="app-toolbar" role="toolbar" aria-label={t('App controls')}>
+          <button className="btn btn-small" disabled={blockedAccess} aria-expanded={accessOpen || blockedAccess} onClick={() => setAccessOpen(v => !v)}><T>📱 Phone access</T></button>
           {active ? (
             <>
               <button className="btn btn-small" disabled={busy} onClick={() => void (channel == null ? startMain() : startPr(true))} title={t(channel == null ? 'Restart {label}' : 'Restart {label} from the PR’s latest commit', { label })}>
@@ -677,7 +682,7 @@ export function AppViewer({ repoId, pr }: { repoId: string; pr?: number | null }
               📋 QA
             </button>
           )}
-          {current.url ? (
+          {current.url && !blockedAccess ? (
             <a className="btn btn-small" href={reachable(current.url, location)} target="_blank" rel="noreferrer">
               <T>Open in new tab ↗</T>
             </a>
@@ -689,9 +694,10 @@ export function AppViewer({ repoId, pr }: { repoId: string; pr?: number | null }
         </div>
       </div>
 
+      {(accessOpen || blockedAccess) && <PhoneAccess blocked={blockedAccess} />}
       <div className="app-body">
         <div className="app-main">
-          {comparing ? (
+          {blockedAccess ? <p className="muted"><T>The preview is hidden until this browser can route its assets securely. Your running app has not been stopped.</T></p> : comparing ? (
             <CompareView repo={repo} main={main} pr={prView} width={width} reloads={reloads} busy={busy} onStartMain={() => void startMain()} onStartPr={() => void startPr()} />
           ) : (
             <PreviewStage repo={repo} preview={current} label={label} src={current.url && reachable(current.url, location)} width={width} reloads={reloads} busy={busy} onStart={() => void (channel == null ? startMain() : startPr())} />
