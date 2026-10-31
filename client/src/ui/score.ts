@@ -10,8 +10,8 @@ import { onGongParty } from '../world/gongState';
 import { nightFactor } from '../world/sky/time';
 import { sampleDayTime } from '../world/sky/useDayTime';
 import { DUCK_GAIN } from './musicMix';
-import { followMusicDuck, jukeboxHeard, keys, musicDucked, pad, voice, type Tally } from './music';
-import { GONG_CLEAR, barSeconds, onStreak, parseMoodParam, recentMerges, scoreBar, scoreMood, stingNotes, type OfficeState, type ScoreMood, type ScoreNote } from './scoreMood';
+import { followMusicDuck, jukeboxHeard, musicDucked, pad, voice, type Tally } from './music';
+import { GONG_CLEAR, SCORE_BARS, barSeconds, onStreak, parseMoodParam, recentMerges, scoreBar, scoreMood, stingNotes, type OfficeState, type ScoreMood, type ScoreNote } from './scoreMood';
 import { audio, getAudioPrefs, groupOutput, recordSfx, subscribeAudio } from './sfx';
 
 const TICK_MS = 100;
@@ -171,7 +171,11 @@ function note(c: BaseAudioContext, ch: Chain, n: ScoreNote, barAt: number, beat:
   const dur = n.len * beat;
   const peak = PART[n.part] * n.level;
   if (n.part === 'pad') pad(c, ch.bus, n.midi, when, dur, peak, tally);
-  else if (n.part === 'keys') keys(c, ch.bus, n.midi, when, dur, peak, tally);
+  else if (n.part === 'keys') {
+    // A soft digital pluck with a quiet octave shimmer, exclusive to the adaptive score.
+    voice(c, ch.bus, 'triangle', n.midi, when, dur, peak * 0.65, 0.015, 0.12, tally);
+    voice(c, ch.bus, 'sine', n.midi + 12, when, dur * 0.65, peak * 0.18, 0.008, 0.08, tally);
+  }
   else voice(c, ch.bus, n.part === 'bass' ? 'sine' : 'triangle', n.midi, when, dur, peak, n.part === 'bass' ? 0.3 : 0.01, n.part === 'bass' ? 0.8 : 0.4, tally);
 }
 
@@ -218,7 +222,7 @@ subscribeAudio(() => {
 // ---------- probe ----------
 
 // window.__swarmScore: the soundtrack's mood, why, and what it's doing, for QA (a fresh snapshot per read). Mood changes
-// and stings are also recorded in window.__swarmSfx as score:… entries. __swarmScorePeak(what) renders a mood's four
+// and stings are also recorded in window.__swarmSfx as score:… entries. __swarmScorePeak(what) renders a mood's eight
 // bars or a sting offline at the slider's full level and resolves to its peak, to check it stays under the merge cue.
 if (typeof window !== 'undefined' && !Object.getOwnPropertyDescriptor(window, '__swarmScore')) {
   Object.defineProperty(window, '__swarmScore', {
@@ -257,14 +261,14 @@ if (typeof window !== 'undefined' && !Object.getOwnPropertyDescriptor(window, '_
       const rate = 44100;
       const isSting = what === 'sting' || what === 'sting:big';
       const m: ScoreMood = isSting ? 'calm' : what;
-      const secs = barSeconds(m) * (isSting ? 3 : 4) + 2;
+      const secs = barSeconds(m) * (isSting ? 3 : SCORE_BARS) + 2;
       const c = new OfflineAudioContext(1, Math.ceil(rate * secs), rate);
       const bus = c.createGain();
       bus.gain.value = LEVEL;
       bus.connect(c.destination);
       const ch = { bus } as Chain;
       const beat = barSeconds(m) / 4;
-      for (let b = 0; b < (isSting ? 3 : 4); b++) for (const n of scoreBar(m, b)) note(c, ch, n, b * beat * 4, beat);
+      for (let b = 0; b < (isSting ? 3 : SCORE_BARS); b++) for (const n of scoreBar(m, b)) note(c, ch, n, b * beat * 4, beat);
       if (isSting) for (const n of stingNotes(what === 'sting:big')) note(c, ch, n, beat * 4, beat);
       const data = (await c.startRendering()).getChannelData(0);
       let peak = 0;

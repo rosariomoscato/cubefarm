@@ -21,6 +21,30 @@ Questo documento raccoglie le personalizzazioni di [rosariomoscato/cubefarm](htt
 
 La data della prima modifica è ricavata dalla cronologia Git; non viene usata come attestazione della data di creazione del fork su GitHub.
 
+## 2026-11-01
+
+### Sottofondo adattivo electronic ambient: prima versione locale
+
+**Allineamento iniziale:** app reale su PR #12 (`e8b890e`), checkout reale pulito e nessuna PR aperta nel fork. Nuovo branch `feat/futuristic-soundtrack` da `origin/main`; conservati nota locale del deploy e `PerChatGPT.md`. Allegati nella chat restano una proposta discussa, non un lavoro implementato o in corso.
+
+- Frasi armoniche di otto battute anziché quattro, accordi aperti/add9/sospesi e variante più scura per la tensione. Calmo con piccoli arpeggi, impegnato con sequenza pulsante variata tra battute, tensione con ostinato basso, notte rarefatta. Tempo diurno 72 BPM e notturno 54 BPM.
+- Timbro delle note acute dedicato al solo sottofondo: onda triangolare morbida con lieve componente sinusoidale all’ottava superiore. Firma merge aggiornata con salita sospesa e risoluzione maggiore. Pad e basso riutilizzano il sintetizzatore esistente.
+- Regole degli stati, transizioni sulle battute, attenuazione sotto voce/avvisi, precedenza del jukebox, controlli audio e repertorio jukebox conservati. Nessun servizio esterno o richiesta AI.
+- 116 test mirati superati (scoreMood, musicMix, audioPrefs, jukeboxSongs); TypeScript e build client/server superati. Render Web Audio offline nella demo isolata: otto battute di ogni stato e due segnali merge, senza errori pagina; picchi rispettivamente circa 0.053/0.045/0.039/0.026 e 0.063/0.076, tutti sotto il limite esistente 0.1, non modificato. Impostazioni demo confrontate e conservate.
+- Anteprime WAV locali in `Temp/opencode/futuristic-score-audio`, amplificate di un fattore fisso 4 per ascolto (i controlli picco usano il segnale originale). Anteprime ottenute dal probe offline, prima del filtro finale e del volume utente; non equivalgono al mix completo dell’ufficio. Valutazione musicale all’ascolto del manager ancora da completare. Suite globale non ripetuta; quattro fallimenti storici invariati.
+
+**Approvazione e pubblicazione:** il manager ha ascoltato e approvato le anteprime dei quattro stati, richiedendo un sottofondo discreto, e autorizzato commit, push e PR sul solo fork. App reale ancora alla PR #12; merge e aggiornamento reale da autorizzare separatamente.
+
+**Mix in demo:** confermati volume predefinito soundtrack 30%, coefficiente di attenuazione voce/avvisi pari a -10 dB, precedenza del jukebox (sottofondo silente quando udibile), ripresa dopo spegnimento del jukebox, silenzio aprendo il telefono, ripresa alla chiusura e silenzio con M. Il controllo iniziale è stato interrotto dal riavvio dell’harness; i successivi timeout aspettavano erroneamente il sottofondo mentre il jukebox aveva precedenza. Corretto lo script di prova, controllo concluso regolarmente. Nessuna modifica al mix operativo necessaria.
+
+### PR #12 integrata e payoff aggiornato nell’app reale
+
+Merge e aggiornamento reale autorizzati dal manager. [PR #12](https://github.com/rosariomoscato/cubefarm/pull/12) integrata nel solo fork con merge `e8b890e`; CI [41250167132](https://github.com/rosariomoscato/cubefarm/actions/runs/41250167132) superata su Ubuntu, Windows/macOS saltati dal workflow.
+
+Backup `company-tagline-20261031-PR12` nella home reale: bundle Git verificato, build precedente, launcher e dati copiati a server fermo (esclusi backup precedenti e junction). Nessun agente in lavoro/preparazione al controllo iniziale. Checkout reale aggiornato in fast-forward da `8d8b80c` a `e8b890e`, TypeScript e build client/server superati, riavvio tramite launcher originale.
+
+Verificati HTTP/HTTPS 200, nuovo client e presenza di `Small droids. Serious software.` nell’asset Office servito. Confronto UTF-8: impostazioni, identità agenti, messaggi precedenti, colori progetto e automazioni conservati; launcher invariato. Nessuna richiesta AI di collaudo. Nota di deploy locale nella copia di sviluppo; le precedenti attese di autorizzazione descrivono le fasi storiche.
+
 ## 2026-10-31
 
 ### Nuovo payoff sotto il nome aziendale

@@ -102,42 +102,44 @@ export interface MoodBar {
 }
 
 export const MOOD_BARS: Record<ScoreMood, MoodBar> = {
-  calm: { bpm: 64, minor: false, bass: true, pulse: false, ostinato: false, bell: 2, pads: 1 },
-  busy: { bpm: 64, minor: false, bass: true, pulse: true, ostinato: false, bell: 4, pads: 0.9 },
-  tension: { bpm: 64, minor: true, bass: false, pulse: false, ostinato: true, bell: 0, pads: 0.85 },
-  night: { bpm: 52, minor: false, bass: false, pulse: false, ostinato: false, bell: 4, pads: 0.7 },
+  calm: { bpm: 72, minor: false, bass: true, pulse: false, ostinato: false, bell: 2, pads: 0.8 },
+  busy: { bpm: 72, minor: false, bass: true, pulse: true, ostinato: false, bell: 4, pads: 0.65 },
+  tension: { bpm: 72, minor: true, bass: false, pulse: false, ostinato: true, bell: 0, pads: 0.7 },
+  night: { bpm: 54, minor: false, bass: false, pulse: false, ostinato: false, bell: 4, pads: 0.55 },
 };
 
 export const barSeconds = (mood: ScoreMood) => (4 * 60) / MOOD_BARS[mood].bpm;
 
-// Four chords a bar each, round and round, in D: Dmaj7, Bm7, Gmaj7/D, A add9; under tension D minor's Dm9, Bbmaj7,
-// Gm6 and A7. Close voicings around D3, so changing mood mid-progression only moves a note or two.
+// Eight-bar electronic ambient phrase in D, with open add9/suspended voicings.
+// Parallel darker voicings retain nearby notes and the same roots across mood changes.
+export const SCORE_BARS = 8;
 const MAJOR = [
-  [50, 54, 57, 61],
-  [47, 50, 54, 57],
-  [50, 55, 59, 66],
-  [52, 57, 59, 61],
+  [50, 57, 61, 64], [50, 54, 59, 64],
+  [47, 54, 57, 62], [47, 54, 61, 64],
+  [43, 54, 57, 62], [43, 55, 59, 66],
+  [45, 52, 59, 62], [45, 52, 57, 61],
 ];
 const MINOR = [
-  [50, 53, 57, 64],
-  [46, 50, 53, 57],
-  [50, 55, 58, 64],
-  [49, 52, 55, 57],
+  [50, 53, 57, 64], [50, 53, 58, 64],
+  [47, 53, 57, 62], [47, 53, 60, 64],
+  [43, 53, 58, 62], [43, 55, 58, 64],
+  [45, 52, 58, 62], [45, 52, 55, 61],
 ];
-const MAJOR_ROOTS = [38, 35, 43, 45];
-const MINOR_ROOTS = [38, 34, 43, 45];
+const ROOTS = [38, 38, 35, 35, 43, 43, 45, 45];
 /** The low ostinato under tension, in eighths from the chord's root. */
-const OSTINATO = [0, 12, 7, 12, 0, 12, 7, 10];
+const OSTINATO = [0, 7, 12, 7, 0, 10, 7, 12];
+const ARP = [0, 2, 1, 3, 2, 1, 3, 2];
 
 /** What mood `mood` plays in bar `bar` (counted from the score's start, so the progression carries across moods). */
 export function scoreBar(mood: ScoreMood, bar: number): ScoreNote[] {
   const m = MOOD_BARS[mood];
-  const i = ((bar % 4) + 4) % 4;
+  const i = ((bar % SCORE_BARS) + SCORE_BARS) % SCORE_BARS;
   const chord = (m.minor ? MINOR : MAJOR)[i];
-  const root = (m.minor ? MINOR_ROOTS : MAJOR_ROOTS)[i];
+  const root = ROOTS[i];
   const notes: ScoreNote[] = chord.map((midi) => ({ part: 'pad', midi, at: 0, len: 4, level: m.pads }));
   if (m.bass) notes.push({ part: 'bass', midi: root, at: 0, len: 4, level: 0.8 });
-  if (m.pulse) for (let k = 0; k < 8; k++) notes.push({ part: 'keys', midi: chord[2 + (k % 2)] + 12, at: k / 2, len: 0.4, level: k % 2 ? 0.3 : 0.45 });
+  if (m.pulse) for (let k = 0; k < 8; k++) notes.push({ part: 'keys', midi: chord[ARP[(k + i) % ARP.length]] + 12, at: k / 2, len: 0.32, level: k % 2 ? 0.25 : 0.38 });
+  if (mood === 'calm') for (const k of [0, 1, 2]) notes.push({ part: 'keys', midi: chord[(k + i) % 4] + 12, at: 0.5 + k, len: 0.7, level: 0.22 });
   if (m.ostinato) OSTINATO.forEach((o, k) => notes.push({ part: 'ostinato', midi: root + o, at: k / 2, len: 0.42, level: k % 4 === 0 ? 0.9 : 0.6 }));
   if (m.bell && i % m.bell === m.bell - 1) notes.push({ part: 'keys', midi: chord[3] + 12, at: 1, len: 2.5, level: 0.6 });
   return notes;
@@ -148,8 +150,8 @@ export function scoreBar(mood: ScoreMood, bar: number): ScoreNote[] {
  * a streak it climbs two octaves and lands on a bigger chord over the bass.
  */
 export function stingNotes(big: boolean): ScoreNote[] {
-  const climb = big ? [62, 66, 69, 74, 78, 81, 86] : [62, 66, 69, 74];
-  const step = big ? 0.25 : 0.33;
+  const climb = big ? [62, 64, 69, 74, 76, 81, 86] : [62, 64, 69, 74];
+  const step = big ? 0.25 : 0.375;
   const notes: ScoreNote[] = climb.map((midi, k) => ({ part: 'keys', midi, at: k * step, len: 2, level: 0.55 + (0.4 * k) / climb.length }));
   const land = climb.length * step;
   for (const midi of big ? [50, 57, 62, 66, 69, 74] : [57, 62, 66, 69]) notes.push({ part: 'pad', midi, at: land, len: big ? 4 : 3, level: 1 });
