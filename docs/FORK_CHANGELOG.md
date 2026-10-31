@@ -23,6 +23,18 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### Nuovo payoff sotto il nome aziendale
+
+Su richiesta del manager, sostituito il sottotitolo dell’insegna aziendale nella lobby con `Small droids. Serious software.`. Autorizzati commit, push e apertura PR sul solo fork `rosariomoscato/cubefarm` per `style/company-tagline`; merge e aggiornamento reale richiedono conferma distinta. App reale ancora alla PR #11. Nessuna modifica a dati o logiche.
+
+### PR #11 integrata e installazione reale aggiornata
+
+**Autorizzazione:** merge e aggiornamento reale approvati dal manager. [PR #11](https://github.com/rosariomoscato/cubefarm/pull/11) integrata nel solo fork con merge `8d8b80c`; CI [41249035218](https://github.com/rosariomoscato/cubefarm/actions/runs/41249035218) superata su Ubuntu, job Windows/macOS saltati dal workflow.
+
+**Aggiornamento:** backup `soft-accents-20261031-PR11` nella home reale, con bundle Git verificato, build precedente, launcher e dati copiati a server fermo (esclusi backup precedenti e junction). Nessun agente in lavoro/preparazione prima dell’arresto. Checkout reale aggiornato in fast-forward da `182fbbe` a `8d8b80c`; TypeScript e build client/server superati, riavvio tramite launcher originale.
+
+**Verifiche:** HTTP/HTTPS 200 e nuovo asset client confermato. Confronto UTF-8: impostazioni, identità agenti, messaggi precedenti, colori salvati dei progetti e automazioni conservati; assegnazione/merge automatici spenti, revisioni CEO a zero, cambi team su approvazione. Launcher invariato. Nessuna richiesta AI inviata dal collaudo. Nota di deploy registrata localmente nella copia di sviluppo; le note sottostanti sull’attesa di autorizzazione descrivono le fasi precedenti.
+
 ### Accenti di progetto più delicati nel piano 3D
 
 **Autorizzazione:** il manager ha approvato commit, push e apertura PR sul solo fork `rosariomoscato/cubefarm` per `feat/soft-project-accents`, dalla PR #10 integrata. Merge e aggiornamento reale richiedono autorizzazione distinta.
