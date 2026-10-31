@@ -1192,6 +1192,24 @@ input.inline:focus {
   min-height: 0;
 }
 
+/* Coordinated manager / Kanban surfaces; project and status colours stay local. */
+.cyan-panel {
+  --paper: #faf8f5;
+}
+.cyan-panel > .panel-head {
+  background: #17485c;
+  color: #faf8f5;
+}
+.cyan-panel .panel-title a {
+  color: #65d8ef;
+}
+.cyan-panel .office-badge {
+  background: #dceef2;
+}
+.cyan-panel :is(.repo-row:hover, .voice-row:hover, .voice-row-on) {
+  background: #dceef2;
+}
+
 .help h3 {
   margin: 14px 0 4px;
 }
@@ -2969,11 +2987,13 @@ input.inline:focus {
   background: rgba(21, 21, 31, 0.28);
 }
 .phone {
+  --accent: #65d8ef;
+  --paper: #faf8f5;
   width: min(400px, 100%);
   height: min(760px, calc(100vh - 32px));
   display: flex;
   flex-direction: column;
-  background: #23263a;
+  background: #202b38;
   border: 4px solid var(--ink);
   border-radius: 38px;
   padding: 10px 10px 8px;
@@ -3034,8 +3054,9 @@ input.inline:focus {
   cursor: pointer;
 }
 .phone-tab-on {
-  background: #3b3f5c;
+  background: #17485c;
   color: #fff;
+  box-shadow: inset 0 -2px 0 #65d8ef;
 }
 .phone-tab-icon {
   position: relative;
@@ -3091,6 +3112,8 @@ input.inline:focus {
 
 /* chat */
 .phone-chat {
+  --accent: #65d8ef;
+  --paper: #faf8f5;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -3102,7 +3125,7 @@ input.inline:focus {
   gap: 10px;
   padding: 10px 12px;
   border-bottom: 2px solid rgba(31, 29, 43, 0.08);
-  background: #fff;
+  background: #dceef2;
 }
 .presence-busy {
   color: #d9480f;
@@ -3115,7 +3138,7 @@ input.inline:focus {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: #f4f1ea;
+  background: #edf2f4;
 }
 .bubble-row {
   display: flex;
@@ -3132,15 +3155,15 @@ input.inline:focus {
   line-height: 1.4;
 }
 .bubble-them {
-  background: #fff;
+  background: var(--paper);
   border-bottom-left-radius: 4px;
 }
 .bubble-me {
-  background: #ffd6a5;
+  background: #c4eef5;
   border-bottom-right-radius: 4px;
 }
 .bubble-me .bubble-time {
-  color: #4d5163; /* --muted is a touch light on the peach bubble */
+  color: #4d5163;
 }
 .bubble-from {
   font-size: 0.72rem;
@@ -3385,6 +3408,13 @@ input.inline:focus {
   gap: 6px;
   padding: 8px 10px 10px;
   background: #fff;
+}
+.phone-chat .chat-input .btn-good {
+  background: var(--accent);
+  color: var(--ink);
+}
+.phone-chat :is(.bubble-play:hover:not(:disabled), .bubble-play-on, .mic-btn:hover:not(:disabled)) {
+  background: #dceef2;
 }
 
 /* ui/MicButton.tsx: the 🎙 by a message box's Send, and what it's doing */

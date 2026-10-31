@@ -23,6 +23,26 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### Console Manager e Kanban coordinati
+
+**Autorizzazione:** approvati commit, push e PR sul solo fork per `feat/cyan-manager-kanban`, includendo la successiva richiesta di coordinare anche la chat CEO. Merge e aggiornamento reale richiedono conferma distinta.
+
+- Chat CEO coordinata in telefono 3D e pocket: messaggi manager azzurri, risposte avorio, sfondo grigio-blu chiaro, invio ciano e navigazione telefono petrolio/grafite. Preservati gli indicatori semantici e le funzioni voce/invio.
+- Collaudo chat IT/EN a 1440, 390 e 820 px superato, con messaggi fittizi predisposti nella sola fixture demo e compilazione di una bozza senza invio. Colori verificati, nessun overflow interno o errore pagina, messaggi e impostazioni confrontati prima/dopo. Build client/server e TypeScript superati. [Chat smartphone IT](screenshots/cyan-panels/chat-it-390.png), [telefono desktop IT](screenshots/cyan-panels/chat-it-1440.png).
+
+- Intestazioni petrolio e testo avorio, accenti ciano per schede e controlli, superfici avorio. Console Manager e Kanban condividono una classe CSS circoscritta; aggiornato anche il Kanban incorporato nella modalità pocket.
+- Il colore del repository resta come piccolo segno accanto al titolo Kanban e nei dettagli delle schede progetto. Conservati i colori semantici delle colonne e degli avvisi, campi, interazioni, dati e automazioni.
+- TypeScript e build client/server superati. Demo isolata: apertura Console Manager e navigazione di tutte le schede, apertura Kanban in IT/EN; verificati header petrolio e accento ciano del Kanban pocket a 390/820 px, senza overflow della pagina né errori JavaScript. Script concluso regolarmente, lingua ripristinata e impostazioni/automazioni dei progetti confrontate e conservate. Nessuna richiesta AI o modifica a progetti reali; suite globale non ripetuta e quattro fallimenti storici invariati.
+- Screenshot: [Console Manager IT](screenshots/cyan-panels/manager-it.png), [Kanban IT](screenshots/cyan-panels/kanban-it.png), [Kanban smartphone](screenshots/cyan-panels/kanban-it-390.png); equivalenti EN e tablet nella stessa cartella.
+
+### PR #9 integrata e aggiornamento reale autorizzato
+
+**Autorizzazione:** merge e aggiornamento reale approvati dal manager dopo la pubblicazione della PR. [PR #9](https://github.com/rosariomoscato/cubefarm/pull/9) integrata nel solo fork con merge `59bad4e`; CI [41244390457](https://github.com/rosariomoscato/cubefarm/actions/runs/41244390457) superata su Ubuntu, job Windows/macOS saltati dal workflow.
+
+**Aggiornamento:** backup `cyan-office-20261031-PR9` nella home reale, con bundle Git verificato, build precedente, launcher e dati copiati a server fermo (esclusi backup precedenti e junction). Checkout reale avanzato in fast-forward da `a97b7ec` a `59bad4e`; TypeScript e build client/server superati. Riavvio tramite launcher originale. Le note precedenti sull’attesa di autorizzazione descrivono le fasi storiche.
+
+**Verifica reale:** HTTP e HTTPS 200, nuovo asset client confermato; impostazioni e identità agenti confrontate prima/dopo e conservate, assegnazione e merge automatici disabilitati, launcher invariato e checkout reale pulito. Le prime due richieste erano arrivate prima della disponibilità del servizio; verifica successiva superata. Nessuna operazione AI sui progetti reali. Nota di deploy registrata localmente nella copia di sviluppo.
+
 ### Ingresso e configurazione iniziale coordinati
 
 **Autorizzazione:** il manager ha approvato commit, push e apertura PR sul solo fork `rosariomoscato/cubefarm` per il branch `feat/cyan-office-ui`, comprendente palette ufficio/pocket e ingresso/configurazione iniziale. Merge e aggiornamento reale richiedono conferma successiva. Le note di stato locale sottostanti descrivono la fase di sviluppo precedente.
