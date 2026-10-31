@@ -23,6 +23,15 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### PR #6: correzione dei suggerimenti del frigorifero dopo prova manuale
+
+**Stato:** correzione sullo stesso branch della [PR #6](https://github.com/rosariomoscato/cubefarm/pull/6), nessun merge né aggiornamento dell’ufficio reale.
+
+- **Localizzazione:** la prova del manager ha individuato i suggerimenti 3D `Grab…` ancora inglesi. Tradotti apertura/chiusura del frigorifero, presa/scorte esaurite dei prodotti e avvisi di mani occupate, consumo prioritario e rifornimento. Il tasto indicato nell’avviso segue la configurazione dei comandi. Solo formati canonici corrispondenti all’azione e al prodotto vengono tradotti; etichette personali dei pranzi e formati sconosciuti restano letterali.
+- **Verifica:** **60 test passati su sei file**, incluse tutte le otto categorie di prodotti disponibili/esauriti, fallback inglese, azioni/etichette non corrispondenti, contenuti personali, frigorifero/consumo e notifier. TypeScript e build superati con i consueti avvisi. Prova Edge/Playwright nella sola demo: apertura con E, suggerimento della pizza con cambio EN/IT senza ricarica, presa, avviso “uno alla volta”, consumo con E di cibo e bevanda e conteggi decrescenti in EN/IT; nessun errore console. Presa della bevanda e tentativo a mani occupate tramite probe QA esistente; nessuna modifica al comportamento per facilitare il test. Lingua ripristinata.
+- **Esiti manuali riferiti dal manager sul quarto blocco:** acquisto/collocazione della pianta, raccolta/ripristino/comandi della scatola, dardi/ricarica e ping-pong confermati funzionanti durante la guida. Video con orbita confermato riproducibile; anche telecamera libera in movimento confermata con file di circa 2,3 MB. Un precedente video con telecamera libera ferma si bloccava poco dopo l’inizio: resta da chiarire; nessuna correzione del registratore o dichiarazione di completa risoluzione.
+- **CI precedente:** il quarto blocco `2ee7645` ha superato [41201052701](https://github.com/rosariomoscato/cubefarm/actions/runs/41201052701). La presente correzione richiede la propria CI dopo il push. Restano i residui e i limiti video descritti sotto; nessuna nuova suite completa locale.
+
 ### PR #6: fotografia, giochi, catalogo, carriere e HUD specializzati
 
 **Stato:** quarto blocco sul branch della [PR #6](https://github.com/rosariomoscato/cubefarm/pull/6), senza merge né aggiornamento dell’ufficio reale.

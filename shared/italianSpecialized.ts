@@ -1,5 +1,11 @@
 /** Photography, games, decorations and career UI. Names, save formats and repository content remain literal. */
 export const italianSpecialized: Readonly<Record<string, string>> = {
+  'Open the fridge': 'Apri il frigorifero', 'Close the fridge': 'Chiudi il frigorifero',
+  'Grab the {snack}': 'Prendi: {snack}', 'Out of {snack}': 'Esaurito: {snack}',
+  '🥡 “{label}”. Best leave it.': '🥡 “{label}”. Meglio lasciarlo stare.',
+  '{emoji} One at a time: finish that one first ({key})': '{emoji} Uno alla volta: finisci prima quello che hai ({key})',
+  '🙌 Your hands are full': '🙌 Hai le mani occupate',
+  '{emoji} Out of {snack}: more comes in every few minutes': '{emoji} Esaurito: {snack}. Le scorte si rinnovano ogni pochi minuti',
   'Hard drop': 'Caduta immediata', 'hard drop': 'caduta',
   'new line': 'a capo', 'to talk': 'per parlare', 'games': 'giochi', 'to put it away': 'per riporlo',
   'PRs that passed QA on their first round': 'PR con QA superato al primo tentativo', 'Merged': 'Integrate', 'ntfy': 'ntfy',
