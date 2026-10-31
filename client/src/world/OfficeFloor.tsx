@@ -17,7 +17,6 @@ import { KanbanBoard } from './KanbanBoard';
 import { Jukebox } from './Jukebox';
 import { Leaver, useLeavers } from './Leavers';
 import { DESK_RUGS, HALF_D, HALF_W, JUKEBOX, MAX_DESKS, SEATS, deskPosition, deskRotation } from './layout';
-import { shade } from './materials';
 import { MergeConfetti } from './MergeConfetti';
 import { Beacon, useFloorAlarm } from './MissionControl';
 import { CoinBurst } from './decor/CoinBurst';
@@ -72,7 +71,7 @@ export const OfficeFloor = memo(function OfficeFloor({ repo }: { repo: RepoView 
   const ops = useStore((s) => signLine(s.ops.floors.find((f) => f.repoId === repo.id) ?? EMPTY_NUMBERS));
   const { alarm, ref: signRef } = useFloorAlarm(repo.id);
   const name = repo.fullName.split('/')[1] ?? repo.fullName;
-  const rugColor = shade(repo.color, -0.22);
+  const rugColor = OFFICE.rug;
   // whose lunch the tupperware in the fridge might be
   const lunchNames = agents.filter((a) => a.role !== 'ceo').map((a) => a.name).join('\n');
 

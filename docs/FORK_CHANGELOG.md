@@ -23,6 +23,38 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### Ingresso e configurazione iniziale coordinati
+
+**Autorizzazione:** il manager ha approvato commit, push e apertura PR sul solo fork `rosariomoscato/cubefarm` per il branch `feat/cyan-office-ui`, comprendente palette ufficio/pocket e ingresso/configurazione iniziale. Merge e aggiornamento reale richiedono conferma successiva. Le note di stato locale sottostanti descrivono la fase di sviluppo precedente.
+
+- Ingresso e wizard con sfondo petrolio/grafite, pannello avorio e pulsanti principali ciano con testo scuro leggibile. Coordinati i passaggi azienda/responsabile, CEO, primo progetto e riepilogo.
+- Ritratto decorativo CEO robot; preservati campi, opzioni, testi EN/IT e logiche di salvataggio.
+- Corretto l’overflow del passaggio CEO a 390 px: ritratto sopra i campi e padding adattato sugli schermi stretti.
+- TypeScript e build client/server superati. Collaudo browser nella sola demo isolata superato in IT/EN a 1280, 390 e 820 px: ingresso e navigazione azienda/CEO/progetto/riepilogo, nessun overflow interno o errore pagina; script concluso regolarmente. POST setup simulato, nessun progetto collegato e impostazioni temporanee della demo ripristinate. I primi tentativi avevano rilevato il passaggio automatico a pocket nell’automazione e l’overflow CEO, poi corretti rispettivamente nell’URL di prova e nel CSS.
+- Suite globale non ripetuta: i quattro fallimenti storici restano documentati.
+
+**Evidenze:** [ingresso desktop](screenshots/cyan-office-ui/start-it-1280.png), [azienda smartphone](screenshots/cyan-office-ui/setup-company-it-390.png), [CEO smartphone](screenshots/cyan-office-ui/setup-ceo-it-390.png), [primo progetto tablet](screenshots/cyan-office-ui/setup-project-it-820.png). Screenshot equivalenti EN nella stessa cartella.
+
+### Palette coordinata: pavimento neutro, insegna petrolio e modalità touch ciano
+
+**Stato:** modifiche locali sul nuovo branch `feat/cyan-office-ui`, dalla PR #8 integrata. Nessun aggiornamento dell’app reale per questo seguito.
+
+- Fasce sotto le postazioni in grigio-blu neutro, indipendenti dal colore del repository; i colori identificativi salvati e i piccoli dettagli delle postazioni restano invariati.
+- Pannello con il nome aziendale su fondo blu petrolio, con testo e nome personale invariati.
+- Modalità tascabile con intestazione petrolio, superfici chiare, navigazione grafite e accenti ciano; override CSS limitato alla modalità pocket. Preservati colori semantici di stato/avviso e colori identificativi dei progetti.
+- Modifiche solo a colori e CSS, senza logiche operative, layout funzionale o dati. TypeScript e build client/server superati al secondo tentativo; il primo comando era scaduto dopo 240 s. Nessuna nuova suite globale o modifica alle soglie dei test.
+- Demo isolata: verifiche IT/EN a 390 e 820 px, navigazione tra schede, assenza di overflow orizzontale e mancato caricamento dei chunk 3D in pocket. Screenshot di pavimento e insegna verificati. Controlli conclusi con esito positivo, senza errori pagina (pocket) o console (3D); entrambi gli script sono poi scaduti nella fase di chiusura del browser. Un tentativo precedente 3D era scaduto sul pulsante di ingresso; ripetizione riuscita con maggiore attesa nell’automazione.
+
+**Evidenze:** [pocket IT smartphone](screenshots/cyan-office-ui/pocket-it-390.png), [pocket IT tablet](screenshots/cyan-office-ui/pocket-it-820.png), [pocket EN smartphone](screenshots/cyan-office-ui/pocket-en-390.png), [pocket EN tablet](screenshots/cyan-office-ui/pocket-en-820.png), [pavimento](screenshots/cyan-office-ui/office-day.png), [insegna aziendale](screenshots/cyan-office-ui/lobby-day.png). Solo dati fittizi.
+
+### PR #8 integrata e installazione reale aggiornata
+
+**Autorizzazioni:** push e PR, merge e aggiornamento dell’app reale approvati separatamente dal manager dopo la prova visiva. [PR #8](https://github.com/rosariomoscato/cubefarm/pull/8) integrata nel solo fork con merge `a97b7ec`; CI della PR [41236497503](https://github.com/rosariomoscato/cubefarm/actions/runs/41236497503) superata su Ubuntu, Windows e macOS.
+
+**Aggiornamento reale:** checkout pulito su `main`, avanzato in fast-forward da `760c3e2` ad `a97b7ec`. Prima dell’aggiornamento: backup locale del codice (bundle Git verificato), build precedente, launcher e home dati, esclusi i backup precedenti e i collegamenti junction. Copia dei dati effettuata a server fermo. Nessuna installazione di dipendenze necessaria; TypeScript e build client/server superati nell’installazione reale.
+
+**Riavvio e verifica:** usato il launcher esistente, senza modificarlo. Confermati risposta HTTP 200 sul servizio locale e sull’indirizzo HTTPS privato, con il nuovo asset client servito. Impostazioni e identità degli agenti confrontate prima/dopo e invariate; nessun agente in lavoro/preparazione, assegnazione e merge automatici disabilitati, revisioni CEO a zero e aggiornamenti automatici spenti. Checkout reale pulito dopo la build. La prima richiesta di verifica era arrivata prima che il server fosse pronto; la verifica successiva è riuscita. Nessuna prova operativa AI sui progetti reali. I fallimenti storici locali restano documentati; la CI verde della PR è una verifica distinta.
+
 ### Ufficio cartoon futuristico: restyling esclusivamente estetico
 
 **Stato:** modifiche locali su `feat/robot-agents`, successive al commit `96b3881` di agenti e cane robot. Ispirazione all’Identity Book approvata dal manager; nessun push, PR, merge o aggiornamento dell’ufficio reale.

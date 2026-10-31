@@ -371,7 +371,7 @@ export function Lobby() {
           drawSign(ctx, 1400, 320, [
             { text: `✻ ${company || 'cubefarm'}`, size: 120 },
             { text: company ? 'powered by a team of AI coding agents' : 'a team of AI coding agents', size: 48, weight: 500 },
-          ], ACCENT)
+          ], OFFICE.petrol)
         }
         deps={[company]}
       />
