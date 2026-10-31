@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { avgFixRounds, knownFor, mergesThisWeek, passRate, rank, tenureDays, type CareerView } from '../../../shared/careers';
 import { useStore, type Agent } from '../store';
 import { drawPortrait } from './portrait';
+import { T, useT } from '../i18n';
+import { translate, type Language } from '../../../shared/i18n';
 
 const PEEK_MS = 700;
 const LAST = 5;
@@ -12,46 +14,50 @@ export const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x *
 export const fixed1 = (x: number | null) => (x === null ? '—' : x.toFixed(1));
 
 /** "3 days", "5 hours", "12 minutes" on the team. */
-export function tenureText(c: CareerView, now: number) {
+export function tenureText(c: CareerView, now: number, language?: Language) {
   const d = tenureDays(c, now);
-  if (d >= 1) return `${Math.floor(d)} day${Math.floor(d) === 1 ? '' : 's'}`;
+  if (d >= 1) return translate(language, Math.floor(d) === 1 ? '{count} day' : '{count} days', { count: Math.floor(d) });
   const h = d * 24;
-  if (h >= 1) return `${Math.floor(h)} hour${Math.floor(h) === 1 ? '' : 's'}`;
+  if (h >= 1) return translate(language, Math.floor(h) === 1 ? '{count} hour' : '{count} hours', { count: Math.floor(h) });
   const m = Math.max(1, Math.round(h * 60));
-  return `${m} minute${m === 1 ? '' : 's'}`;
+  return translate(language, m === 1 ? '{count} minute' : '{count} minutes', { count: m });
 }
 
-function ago(at: number, now: number) {
+function ago(at: number, now: number, t: ReturnType<typeof useT>) {
   const m = Math.max(0, Math.round((now - at) / 60_000));
-  if (m < 60) return m <= 1 ? 'just now' : `${m} min ago`;
+  if (m < 60) return m <= 1 ? t('just now') : t('{count} min ago', { count: m });
   const h = Math.round(m / 60);
-  if (h < 24) return `${h} h ago`;
-  return `${Math.round(h / 24)} d ago`;
+  if (h < 24) return t('{count} h ago', { count: h });
+  return t('{count} d ago', { count: Math.round(h / 24) });
 }
 
 function Portrait({ agent, size }: { agent: Agent; size: number }) {
+  const t = useT();
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const ctx = ref.current?.getContext('2d');
     if (ctx) drawPortrait(ctx, size * 2, agent);
   }, [agent.id, agent.look, agent.role, agent.color, agent.hair, agent.skin, size]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <canvas ref={ref} className="career-portrait" width={size * 2} height={size * 2} style={{ width: size, height: size }} aria-label={`${agent.name}'s portrait`} />;
+  return <canvas ref={ref} className="career-portrait" width={size * 2} height={size * 2} style={{ width: size, height: size }} aria-label={t('{name}’s portrait', { name: agent.name })} />;
 }
 
 function Stat({ label, value, title }: { label: string; value: string | number; title?: string }) {
+  const t = useT();
   return (
     <div className="career-stat" title={title}>
       <b>{value}</b>
-      <span>{label}</span>
+      <span>{t(label)}</span>
     </div>
   );
 }
 
 export function CareerCard({ agent, compact = false }: { agent: Agent; compact?: boolean }) {
+  const t = useT();
+  const language = useStore((s) => s.settings.language);
   const repo = useStore((s) => s.repos.find((r) => r.id === agent.repoId));
   const now = Date.now();
   const c = agent.career;
-  if (!c) return <div className="career-card muted small">{agent.name} runs the company; their record is the whole office.</div>;
+  if (!c) return <div className="career-card muted small">{t('{name} runs the company; their record is the whole office.', { name: agent.name })}</div>;
   return (
     <div className={`career-card ${compact ? 'career-compact' : ''}`} style={{ ['--accent' as string]: agent.color }}>
       <div className="career-head">
@@ -59,35 +65,35 @@ export function CareerCard({ agent, compact = false }: { agent: Agent; compact?:
         <div className="career-who">
           <div className="career-name">{agent.name}</div>
           <div className="career-title">
-            {rank(c)}
-            {repo ? ` · floor ${repo.floor}` : ''}
+            {rank(c, language)}
+            {repo ? ` · ${t('floor {floor}', { floor: repo.floor })}` : ''}
           </div>
           {c.firstPass >= 10 && (
             <div className="career-badges">
-              <span className="career-badge career-star">⭐ 10 first-time passes</span>
+              <span className="career-badge career-star"><T>⭐ 10 first-time passes</T></span>
             </div>
           )}
-          <div className="career-known">“{knownFor(c)}”</div>
+          <div className="career-known">“{knownFor(c, language)}”</div>
         </div>
       </div>
       <div className="career-stats">
         <Stat label="PRs merged" value={c.merged} />
         <Stat label="PRs opened" value={c.opened} />
-        <Stat label="first-time QA" value={c.firstPass} title="PRs that passed QA on their first round" />
-        <Stat label="QA pass rate" value={pct(passRate(c))} title={`${c.qaPass} of ${c.qaPass + c.qaFail} QA rounds on their PRs passed`} />
+        <Stat label="first-time QA" value={c.firstPass} title={t('PRs that passed QA on their first round')} />
+        <Stat label="QA pass rate" value={pct(passRate(c))} title={t('{passed} of {total} QA rounds on their PRs passed', { passed: c.qaPass, total: c.qaPass + c.qaFail })} />
         <Stat label="fix rounds / PR" value={fixed1(avgFixRounds(c))} />
         <Stat label="QA reviews" value={c.reviews} />
-        <Stat label="longest streak" value={c.best} title="PRs in a row that passed QA first time" />
-        <Stat label="on the team" value={tenureText(c, now)} />
-        {!compact && <Stat label="est. cost" value={`$${c.costUsd.toFixed(2)}`} title="What the coding agents report, API-equivalent; subscription usage is billed by plan" />}
+        <Stat label="longest streak" value={c.best} title={t('PRs in a row that passed QA first time')} />
+        <Stat label="on the team" value={tenureText(c, now, language)} />
+        {!compact && <Stat label="est. cost" value={`$${c.costUsd.toFixed(2)}`} title={t('What the coding agents report, API-equivalent; subscription usage is billed by plan')} />}
         {!compact && <Stat label="turns" value={c.turns} />}
       </div>
       {c.recent.length > 0 && (
         <div className="career-recent">
-          {!compact && <div className="muted small">Last merged</div>}
+          {!compact && <div className="muted small"><T>Last merged</T></div>}
           {c.recent.slice(0, compact ? 1 : LAST).map((r) => (
             <div key={r.n} className="career-pr">
-              {compact && <span className="muted">Last merged </span>}
+              {compact && <span className="muted"><T>Last merged</T> </span>}
               {repo ? (
                 <a href={`https://github.com/${repo.fullName}/pull/${r.n}`} target="_blank" rel="noreferrer">
                   #{r.n}
@@ -95,7 +101,7 @@ export function CareerCard({ agent, compact = false }: { agent: Agent; compact?:
               ) : (
                 <b>#{r.n}</b>
               )}{' '}
-              <span className="career-pr-title">{r.title || 'untitled'}</span> <span className="muted">{ago(r.at, now)}</span>
+              <span className="career-pr-title">{r.title || t('untitled')}</span> <span className="muted">{ago(r.at, now, t)}</span>
             </div>
           ))}
         </div>
@@ -143,6 +149,8 @@ const COLS: Col[] = [
 
 /** Everyone's stats in one sortable table (click a heading; again to flip it). */
 export function TeamStats() {
+  const t = useT();
+  const language = useStore((s) => s.settings.language);
   const agents = useStore((s) => s.agents);
   const repos = useStore((s) => s.repos);
   const openOverlay = useStore((s) => s.openOverlay);
@@ -162,9 +170,9 @@ export function TeamStats() {
     });
   if (!rows.length) return null;
   const head = (key: string, label: string, title?: string) => (
-    <th key={key} title={title} aria-sort={sort.key === key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
+    <th key={key} title={title ? t(title) : undefined} aria-sort={sort.key === key ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
       <button className="sort-btn" onClick={() => setSort({ key, dir: sort.key === key ? (-sort.dir as 1 | -1) : key === 'name' || key === 'floor' ? 1 : -1 })}>
-        {label}
+        {t(label)}
         {sort.key === key ? (sort.dir === 1 ? ' ▲' : ' ▼') : ''}
       </button>
     </th>
@@ -172,8 +180,8 @@ export function TeamStats() {
   return (
     <div className="card team-stats">
       <div className="row">
-        <b className="grow">🏅 Careers</b>
-        <span className="muted small">Counted from what the office sees: PRs, QA rounds, fixes and merges. Look at a desk for a moment to see its card.</span>
+        <b className="grow"><T>🏅 Careers</T></b>
+        <span className="muted small"><T>Counted from what the office sees: PRs, QA rounds, fixes and merges. Look at a desk for a moment to see its card.</T></span>
       </div>
       <div className="team-stats-scroll">
         <table className="team stats-table">
@@ -189,14 +197,14 @@ export function TeamStats() {
               <tr key={a.id}>
                 <td className="nowrap">
                   <span className="dot" style={{ background: a.color }} />{' '}
-                  <button className="link-btn" title="Open their desk" onClick={() => openOverlay({ kind: 'terminal', agentId: a.id })}>
+                  <button className="link-btn" title={t('Open their desk')} onClick={() => openOverlay({ kind: 'terminal', agentId: a.id })}>
                     {a.name}
                   </button>
                 </td>
                 <td>{repos.find((r) => r.id === a.repoId)?.floor ?? '—'}</td>
                 {COLS.map((c) => (
                   <td key={c.key} className="num">
-                    {c.show ? c.show(a, a.career, now) : c.value(a, a.career, now)}
+                    {c.key === 'since' ? tenureText(a.career, now, language) : c.show ? c.show(a, a.career, now) : c.value(a, a.career, now)}
                   </td>
                 ))}
               </tr>

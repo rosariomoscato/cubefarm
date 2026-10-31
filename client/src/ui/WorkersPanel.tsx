@@ -5,6 +5,7 @@ import { VisitorsList } from './VisitorsList';
 import { dialogOpen } from './dialogFocus';
 import { isKey, useKeyName } from './controls';
 import { Key } from './Key';
+import { T, useT } from '../i18n';
 
 // Who is busy with what, across the whole company: everyone working right now with their project and their latest
 // thought, reply or tool call. Idle workers are left out; the floor you're on comes first. Click someone to watch
@@ -23,10 +24,10 @@ function latest(l: LogLine | undefined): { text: string; kind: LogLine['kind']; 
   return { text: l.kind === 'thinking' ? 'thinking…' : text, kind: l.kind, t: l.t };
 }
 
-function doing(a: Agent) {
+function doing(a: Agent, t: ReturnType<typeof useT>) {
   if (a.role === 'ceo') return a.issueTitle;
   if (a.task === 'qa') return `QA · PR #${a.prNumber}`;
-  if (a.task === 'fix') return `fixing PR #${a.prNumber}`;
+  if (a.task === 'fix') return t('fixing PR #{number}', { number: a.prNumber ?? '?' });
   return a.issueNumber ? `#${a.issueNumber}` : null;
 }
 
@@ -36,14 +37,15 @@ function ago(t: number, now: number) {
 }
 
 function Row({ a, now }: { a: Agent; now: number }) {
+  const t = useT();
   const openOverlay = useStore((s) => s.openOverlay);
   const line = useStore((s) => s.latest[a.id]);
   // CLIs that don't report each step (Codex, OpenCode…) have nothing new until their turn ends: show what they're on.
   const found = latest(line);
   const last = found && (!a.startedAt || found.t >= a.startedAt) ? found : null;
-  const task = doing(a);
+  const task = doing(a, t);
   return (
-    <button className="wk-row" onClick={() => openOverlay({ kind: 'terminal', agentId: a.id })} title={`Watch ${a.name}'s screen`}>
+    <button className="wk-row" onClick={() => openOverlay({ kind: 'terminal', agentId: a.id })} title={t('Watch {name}’s screen', { name: a.name })}>
       <span className="wk-dot" style={{ background: a.color }} />
       <span className="wk-main">
         <span className="wk-name">
@@ -52,7 +54,7 @@ function Row({ a, now }: { a: Agent; now: number }) {
         </span>
         <span className="wk-line">
           <span className={`wk-last wk-last-${last?.kind ?? 'none'}`} title={last?.text}>
-            {a.status === 'preparing' ? (a.currentTool === INSTALL_STEP ? 'installing dependencies…' : 'setting up the worktree…') : (last?.text ?? (a.issueTitle ? `working on ${a.issueTitle}` : 'starting…'))}
+            {a.status === 'preparing' ? t(a.currentTool === INSTALL_STEP ? 'installing dependencies…' : 'setting up the worktree…') : last ? (last.kind === 'thinking' ? t('thinking…') : last.text) : a.issueTitle ? t('working on {title}', { title: a.issueTitle }) : t('starting…')}
           </span>
           {last && a.status !== 'preparing' && <span className="wk-ago">{ago(last.t, now)}</span>}
         </span>
@@ -78,6 +80,7 @@ function loadCollapsed(): Set<string> {
 }
 
 export function WorkersPanel() {
+  const t = useT();
   const floor = useStore((s) => s.floor);
   const repos = useStore((s) => s.repos);
   const agents = useStore((s) => s.agents);
@@ -141,11 +144,11 @@ export function WorkersPanel() {
   const ceo = agents[CEO_ID];
   const floors = [...repos].sort((x, y) => (x.floor === floor ? -1 : y.floor === floor ? 1 : x.floor - y.floor));
   const groups: Group[] = [
-    ...(ceo && isWorking(ceo) ? [{ key: 'hq', label: 'HQ', title: 'The CEO, in the lobby', color: ceo.color, list: [ceo] }] : []),
+    ...(ceo && isWorking(ceo) ? [{ key: 'hq', label: t('HQ'), title: t('The CEO, in the lobby'), color: ceo.color, list: [ceo] }] : []),
     ...floors.map((r: RepoView) => ({
       key: r.id,
       label: `${r.floor} · ${r.fullName.split('/')[1]}`,
-      title: `Floor ${r.floor}: ${r.fullName}`,
+      title: t('Floor {floor}: {repo}', { floor: r.floor, repo: r.fullName }),
       color: r.color,
       list: agentsOnRepo(agents, r.id).filter(isWorking),
     })),
@@ -154,9 +157,9 @@ export function WorkersPanel() {
 
   return (
     <div className={`workers ${open ? '' : 'workers-closed'}`}>
-      <button className="wk-head" onClick={toggle} title={open ? `Hide the list (${key})` : `Show who is working (${key})`}>
+      <button className="wk-head" onClick={toggle} title={t(open ? 'Hide the list ({key})' : 'Show who is working ({key})', { key })}>
         <span>
-          Working <b>{total}</b>
+          <T>Working</T> <b>{total}</b>
         </span>
         <span className="wk-chevron">
           <Key action="workers" /> {open ? '▾' : '▸'}
@@ -165,12 +168,12 @@ export function WorkersPanel() {
       {open && (
         <div className="wk-list">
           <VisitorsList />
-          {total === 0 && <div className="wk-empty">Nobody is working right now.</div>}
+          {total === 0 && <div className="wk-empty"><T>Nobody is working right now.</T></div>}
           {groups.map((g) => {
             const shut = collapsed.has(g.key);
             return (
               <div key={g.key} className="wk-group">
-                <button className="wk-group-head" onClick={() => toggleGroup(g.key)} title={`${g.title} · click to ${shut ? 'expand' : 'collapse'}`}>
+                <button className="wk-group-head" onClick={() => toggleGroup(g.key)} title={t(shut ? '{group} · click to expand' : '{group} · click to collapse', { group: g.title })}>
                   <span className="wk-group-arrow">{shut ? '▸' : '▾'}</span>
                   <span className="wk-swatch" style={{ background: g.color }} />
                   <span className="wk-group-name">{g.label}</span>

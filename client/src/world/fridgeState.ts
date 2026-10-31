@@ -4,6 +4,8 @@
 // window.__swarmFridge and __swarmFridgeDo are its probes for QA.
 
 import { useStore } from '../store';
+import { translate } from '../../../shared/i18n';
+import { keyName } from '../ui/controls';
 import { fridgeBeep, fridgeClose, fridgeOpen, tone, type Vec3 } from '../ui/sfx';
 import { playerAt } from './camera/rig';
 import { DOOR, SNACKS, closeDoor, doorTick, isSnackId, lunchLabel, newDoor, newPantry, openDoor, restock, takeSnack, type Pantry, type SnackId, type Stock } from './fridge';
@@ -119,24 +121,25 @@ export function tickFridge(quiet: boolean) {
 /** E on the fridge: open or shut the door, grab a snack (hands free, door open), or read the label on someone's lunch. */
 export function fridgeAction(op: 'door' | 'take' | 'lunch', snack?: SnackId) {
   const s = useStore.getState();
+  const t = (key: string, values?: Record<string, string | number>) => translate(s.settings.language, key, values);
   if (op === 'door') {
     if (!close()) open();
     return;
   }
   if (op === 'lunch') {
-    s.pushToast('info', `🥡 “${lunch}”. Best leave it.`);
+    s.pushToast('info', t('🥡 “{label}”. Best leave it.', { label: lunch }));
     return;
   }
   if (!snack || !isSnackId(snack)) return;
   const def = SNACKS[snack];
   if (s.held) {
-    s.pushToast('info', s.held.kind === 'snack' ? `${SNACKS[s.held.snack].emoji} One at a time: finish that one first (E)` : '🙌 Your hands are full');
+    s.pushToast('info', s.held.kind === 'snack' ? t('{emoji} One at a time: finish that one first ({key})', { emoji: SNACKS[s.held.snack].emoji, key: keyName('interact') }) : t('🙌 Your hands are full'));
     return;
   }
   if (!take(snack)) {
     if (door.open) {
       tone({ name: 'fridge:none', group: 'toys', pos: fridgeAt, freq: 240, to: 180, type: 'triangle', dur: 0.12, peak: 0.03 });
-      s.pushToast('info', `${def.emoji} Out of ${def.short}: more comes in every few minutes`);
+      s.pushToast('info', t('{emoji} Out of {snack}: more comes in every few minutes', { emoji: def.emoji, snack: t(def.short) }));
     }
     return;
   }

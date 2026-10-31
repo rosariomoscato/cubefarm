@@ -1,4 +1,8 @@
 import { SAMPLE_LINE } from './speech.ts';
+import { italianUi } from './italianUi.ts';
+import { italianOperations } from './italianOperations.ts';
+import { italianNavigation } from './italianNavigation.ts';
+import { italianSpecialized } from './italianSpecialized.ts';
 
 /** Office language. English keys double as readable, safe fallback strings. Never translate user content or IDs. */
 export type Language = 'en' | 'it';
@@ -6,6 +10,10 @@ export const languageOf = (value: unknown): Language => value === 'it' ? 'it' : 
 export const languageTag = (value: unknown) => languageOf(value) === 'it' ? 'it-IT' : 'en-US';
 
 export const italian: Readonly<Record<string, string>> = {
+  ...italianUi,
+  ...italianOperations,
+  ...italianNavigation,
+  ...italianSpecialized,
   'Request changes': 'Richiedi modifiche',
   'Manager-requested changes': 'Modifiche richieste dal manager',
   'Request changes on PR #{number}?': 'Richiedere modifiche alla PR #{number}?',
@@ -87,7 +95,7 @@ export const italian: Readonly<Record<string, string>> = {
   'Your phone': 'Il tuo telefono', 'Console': 'Console', 'Floor list': 'Elenco piani', 'Help': 'Aiuto', 'Accessibility': 'Accessibilità',
   'Manager’s console': 'Console del manager', "🧑‍💼 Manager's console": '🧑‍💼 Console del manager',
   '🏢 Floors & repos': '🏢 Piani e repository', '🛰️ Mission control': '🛰️ Centro di controllo', '🧠 CEO': '🧠 CEO', '👩‍💻 Team': '👩‍💻 Team',
-  '📝 Issues': '📝 Issue', '⚙️ Settings': '⚙️ Impostazioni', '📼 Time-lapse': '📼 Time-lapse', '♿ Accessibility': '♿ Accessibilità',
+  '📝 Issues': '📝 Issue', '⚙️ Settings': '⚙️ Impostazioni', '📼 Time-lapse': '📼 Riepilogo della giornata', '♿ Accessibility': '♿ Accessibilità',
   'Welcome': 'Benvenuto', 'You': 'Tu', 'Your CEO': 'Il tuo CEO', 'First project': 'Primo progetto', 'Ready': 'Pronto',
   'Your own cartoon software company, staffed by AI coding agents.': 'La tua azienda software in un ufficio animato, con un team di agenti AI.',
   "Let's set up your company": 'Configuriamo la tua azienda', 'Skip setup and use the defaults': 'Salta la configurazione e usa i valori predefiniti',

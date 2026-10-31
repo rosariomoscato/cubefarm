@@ -1,5 +1,6 @@
 // Careers (#226): an agent's record as the ledger (server/ledger.ts) keeps it, and what the office reads from it: pass
 // rates, a rank, a "known for" line, the MVP of the week and the things that pile up on their desk. Pure.
+import { translate, type Language } from './i18n.ts';
 
 /** One agent's career, kept compactly on their record. */
 export interface CareerView {
@@ -53,26 +54,25 @@ export const tenureDays = (c: CareerView, now: number) => Math.max(0, (now - c.s
 export const mergesThisWeek = (c: CareerView, now: number) => c.week.filter((t) => t > now - WEEK_MS && t <= now).length;
 
 /** A fun rank from their work: merges and QA reviews together. */
-export function rank(c: CareerView): string {
+export function rank(c: CareerView, language?: Language): string {
   const n = c.merged + c.reviews;
-  return n >= 40 ? 'Legend' : n >= 15 ? 'Veteran' : n >= 5 ? 'Regular' : 'Rookie';
+  return translate(language, n >= 40 ? 'Legend' : n >= 15 ? 'Veteran' : n >= 5 ? 'Regular' : 'Rookie');
 }
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** Mostly reviews other people's work: more QA reviews than merges, and a few of them. */
 const mostlyReviews = (c: CareerView) => c.reviews > c.merged && c.reviews >= 3;
 
 /** The career card's one-liner: what they're best known for, picked from the stats. */
-export function knownFor(c: CareerView): string {
-  if (mostlyReviews(c)) return `QA reviews: ${c.reviews} and counting`;
-  if (c.best >= 3) return `First-time QA passes: ${c.best} in a row`;
+export function knownFor(c: CareerView, language?: Language): string {
+  const t = (key: string, values?: Record<string, string | number>) => translate(language, key, values);
+  if (mostlyReviews(c)) return t('QA reviews: {count} and counting', { count: c.reviews });
+  if (c.best >= 3) return t('First-time QA passes: {count} in a row', { count: c.best });
   const rate = passRate(c);
-  if (rate === 1 && c.qaPass >= 3) return `Never failed QA: ${plural(c.qaPass, 'round')} passed`;
-  if (c.merged >= 1 && avgFixRounds(c) === 0) return `Clean shipper: ${plural(c.merged, 'PR')} merged without a fix round`;
-  if (c.merged >= 1) return `Shipped ${plural(c.merged, 'PR')} so far`;
-  if (c.opened >= 1) return 'First PR in review, fingers crossed';
-  return 'Fresh on the team: first task coming up';
+  if (rate === 1 && c.qaPass >= 3) return t(c.qaPass === 1 ? 'Never failed QA: {count} round passed' : 'Never failed QA: {count} rounds passed', { count: c.qaPass });
+  if (c.merged >= 1 && avgFixRounds(c) === 0) return t(c.merged === 1 ? 'Clean shipper: {count} PR merged without a fix round' : 'Clean shipper: {count} PRs merged without a fix round', { count: c.merged });
+  if (c.merged >= 1) return t(c.merged === 1 ? 'Shipped {count} PR so far' : 'Shipped {count} PRs so far', { count: c.merged });
+  if (c.opened >= 1) return t('First PR in review, fingers crossed');
+  return t('Fresh on the team: first task coming up');
 }
 
 /** The MVP of the week among `people`: most merges in the last 7 days (ties: most merged overall). Null without any. */

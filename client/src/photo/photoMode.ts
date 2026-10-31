@@ -44,8 +44,10 @@ export interface PhotoState {
   recording: { started: number; limit: number; fps: number } | null;
   /** Something slow is under way ("Developing…", "Saving the clip…"). */
   busy: string | null;
-  note: { text: string; level: 'info' | 'error' } | null;
+  note: { text: string; level: 'info' | 'error'; message?: PhotoMessage[] } | null;
 }
+
+export interface PhotoMessage { key: string; values?: Record<string, string | number> }
 
 export const usePhoto = create<PhotoState>(() => ({
   filter: 'none',
@@ -104,8 +106,8 @@ interface ClipResult {
 
 export const activeClip = () => clip;
 
-function note(text: string, level: 'info' | 'error' = 'info') {
-  usePhoto.setState({ note: { text, level } });
+function note(text: string, level: 'info' | 'error' = 'info', message?: PhotoMessage[]) {
+  usePhoto.setState({ note: { text, level, message } });
 }
 
 // ---------- in and out ----------
@@ -175,7 +177,7 @@ export function overlayOptions(guides: boolean): OverlayOptions {
 export function focusCenter() {
   const d = bridge?.focusCenter() ?? null;
   if (d === null) {
-    note('Nothing in the middle of the view to focus on.');
+    note('Nothing in the middle of the view to focus on.', 'info', [{ key: 'Nothing in the middle of the view to focus on.' }]);
     return null;
   }
   update({ dof: true, focus: Math.round(d * 10) / 10 });
@@ -194,10 +196,15 @@ export async function takeShot(scale: ShotScale = usePhoto.getState().scale) {
     download(item.url, name);
     const copied = await copyImage(r.png);
     const shrunk = r.scale < scale ? ` (${scale}× was too big for the browser, so ${Math.round(r.scale * 10) / 10}×)` : '';
-    note(`📸 Saved ${name}, ${r.width}×${r.height}${shrunk}${copied ? ', and copied it' : ''}`);
+    note(`📸 Saved ${name}, ${r.width}×${r.height}${shrunk}${copied ? ', and copied it' : ''}`, 'info', [
+      { key: '📸 Saved {name}, {width}×{height}', values: { name, width: r.width, height: r.height } },
+      ...(shrunk ? [{ key: ' ({requested}× was too big for the browser, so {actual}×)', values: { requested: scale, actual: Math.round(r.scale * 10) / 10 } }] : []),
+      ...(copied ? [{ key: ', and copied it' }] : []),
+    ]);
     return { name, width: r.width, height: r.height, bytes: r.png.size, copied };
   } catch (err) {
-    note(`The shot failed: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    const error = err instanceof Error ? err.message : String(err);
+    note(`The shot failed: ${error}`, 'error', [{ key: 'The shot failed: {error}', values: { error } }]);
     return null;
   } finally {
     usePhoto.setState({ busy: null });
@@ -212,14 +219,16 @@ export function startRecording(): Promise<ClipResult | null> {
   const canvas = officeCanvas();
   const support = clipSupport(canvas);
   if (!support.ok || !canvas) {
-    note(support.ok ? 'The 3D view is not ready.' : support.why, 'error');
+    const text = support.ok ? 'The 3D view is not ready.' : support.why;
+    note(text, 'error', [{ key: text }]);
     return Promise.resolve(null);
   }
   const s = usePhoto.getState();
   try {
     clip = startClip({ source: canvas, fps: s.fps, seconds: s.clipSeconds, overlay: overlayOptions(false), audio: soundStream(), type: support.type, onLimit: () => void stopRecording() });
   } catch (err) {
-    note(`Recording could not start: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    const error = err instanceof Error ? err.message : String(err);
+    note(`Recording could not start: ${error}`, 'error', [{ key: 'Recording could not start: {error}', values: { error } }]);
     return Promise.resolve(null);
   }
   usePhoto.setState({ recording: { started: performance.now(), limit: s.clipSeconds, fps: s.fps }, note: null });
@@ -242,9 +251,10 @@ export async function stopRecording(): Promise<ClipResult | null> {
     const item = addToGallery(blob, { kind: 'clip', name, width: c.width, height: c.height, seconds });
     download(item.url, name);
     result = { name, bytes: blob.size, seconds, type: blob.type, width: c.width, height: c.height };
-    note(`🎬 Saved ${name}, ${Math.round(seconds)} s at ${c.width}×${c.height}`);
+    note(`🎬 Saved ${name}, ${Math.round(seconds)} s at ${c.width}×${c.height}`, 'info', [{ key: '🎬 Saved {name}, {seconds} s at {width}×{height}', values: { name, seconds: Math.round(seconds), width: c.width, height: c.height } }]);
   } catch (err) {
-    note(`The clip failed: ${err instanceof Error ? err.message : String(err)}`, 'error');
+    const error = err instanceof Error ? err.message : String(err);
+    note(`The clip failed: ${error}`, 'error', [{ key: 'The clip failed: {error}', values: { error } }]);
   } finally {
     usePhoto.setState({ busy: null });
   }

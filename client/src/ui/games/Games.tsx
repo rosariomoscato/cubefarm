@@ -8,6 +8,7 @@ import { PET_COLOR, Pet, drawDeliveryBox, drawPetFigure } from './PetGame';
 import { SNAKE_COLOR, Snake, snakeInProgress } from './SnakeGame';
 import { TETRIS_COLOR, Tetris, tetrisInProgress } from './TetrisGame';
 import { bestScore } from './storage';
+import { T, useT } from '../../i18n';
 
 // The phone's Games app: a little launcher for Cubetris, Cable Snake and Desk Pet, something to do while the
 // team works. Backspace goes back to the list from a game.
@@ -81,12 +82,13 @@ const drawSnakeThumb = (ctx: CanvasRenderingContext2D) => {
 };
 
 function Card({ icon, name, what, status, color, onOpen }: { icon: (ctx: CanvasRenderingContext2D) => void; name: string; what: string; status: string; color: string; onOpen: () => void }) {
+  const t = useT();
   return (
     <button type="button" className="game-card" style={{ ['--game' as string]: color }} onClick={onOpen}>
       <Thumb draw={icon} />
       <span className="game-card-text">
         <b>{name}</b>
-        <span className="game-card-what">{what}</span>
+        <span className="game-card-what">{t(what)}</span>
         <span className="game-card-status">{status}</span>
       </span>
       <span className="game-card-go">▶</span>
@@ -95,15 +97,16 @@ function Card({ icon, name, what, status, color, onOpen }: { icon: (ctx: CanvasR
 }
 
 function Launcher({ onGame }: { onGame: (g: GameId) => void }) {
+  const t = useT();
   const pet = useSyncExternalStore(subscribePet, getPet);
   const [now] = useState(Date.now);
   const view = pet ? advance(pet, now) : null;
   const petIcon = (ctx: CanvasRenderingContext2D) => {
     ctx.translate(28, 50);
     if (view) drawPetFigure(ctx, { size: 38, color: view.color, mood: mood(view), stage: stage(view.xp), blink: false });
-    else drawDeliveryBox(ctx, 0.6);
+    else drawDeliveryBox(ctx, 0.6, t);
   };
-  const best = (g: 'tetris' | 'snake') => (bestScore(g) ? `Best ${bestScore(g).toLocaleString()}` : 'No best score yet');
+  const best = (g: 'tetris' | 'snake') => (bestScore(g) ? t('Best {score}', { score: bestScore(g).toLocaleString() }) : t('No best score yet'));
   const moodText: Record<string, string> = { asleep: 'is napping', happy: 'is thrilled', content: 'is doing fine', hungry: 'is hungry', bored: 'is bored', tired: 'is sleepy', grumpy: 'is grumpy, needs you' };
 
   useGameKeys((e) => {
@@ -115,20 +118,20 @@ function Launcher({ onGame }: { onGame: (g: GameId) => void }) {
 
   return (
     <div className="phone-scroll games-list">
-      <h3 className="phone-h">🎮 Games</h3>
-      <p className="muted small games-blurb">Something to do while the team works. They pause when you put the phone away.</p>
-      <Card icon={drawTetrisThumb} name="Cubetris" what="Falling blocks (a Tetris clone)" status={tetrisInProgress() ? '⏸ Game paused, tap to resume' : best('tetris')} color={TETRIS_COLOR} onOpen={() => onGame('tetris')} />
-      <Card icon={drawSnakeThumb} name="Cable Snake" what="Eat the bugs (a Snake clone)" status={snakeInProgress() ? '⏸ Game paused, tap to resume' : best('snake')} color={SNAKE_COLOR} onOpen={() => onGame('snake')} />
+      <h3 className="phone-h"><T>🎮 Games</T></h3>
+      <p className="muted small games-blurb"><T>Something to do while the team works. They pause when you put the phone away.</T></p>
+      <Card icon={drawTetrisThumb} name="Cubetris" what="Falling blocks (a Tetris clone)" status={tetrisInProgress() ? t('⏸ Game paused, tap to resume') : best('tetris')} color={TETRIS_COLOR} onOpen={() => onGame('tetris')} />
+      <Card icon={drawSnakeThumb} name="Cable Snake" what="Eat the bugs (a Snake clone)" status={snakeInProgress() ? t('⏸ Game paused, tap to resume') : best('snake')} color={SNAKE_COLOR} onOpen={() => onGame('snake')} />
       <Card
         icon={petIcon}
         name="Desk Pet"
         what="Your office pet (a Tamagotchi clone)"
-        status={view ? `${view.name} the ${STAGES[stage(view.xp)].title.toLowerCase()} ${moodText[mood(view)]}` : '📦 A delivery is waiting for you'}
+        status={view ? t('{name} the {stage} {mood}', { name: view.name, stage: t(STAGES[stage(view.xp)].title).toLowerCase(), mood: t(moodText[mood(view)]) }) : t('📦 A delivery is waiting for you')}
         color={PET_COLOR}
         onOpen={() => onGame('pet')}
       />
       <p className="muted small games-blurb">
-        <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> open a game · <kbd>Backspace</kbd> comes back here
+        <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <T>open a game</T> · <kbd>Backspace</kbd> <T>comes back here</T>
       </p>
     </div>
   );

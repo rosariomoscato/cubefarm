@@ -27,6 +27,7 @@ import {
 import { clockTime, formatBytes, SCALES, shotSize } from './shots';
 import { useDayTime } from '../world/sky/useDayTime';
 import { Key, MoveKeys } from '../ui/Key';
+import { T, useT } from '../i18n';
 import './photo.css';
 
 /** The overlay as it will be saved, plus the thirds guides, over the live view. */
@@ -69,7 +70,7 @@ function Recording() {
     <div className="photo-rec" role="status">
       <span className="photo-rec-dot" /> REC {fmt(secs)} / {fmt(rec.limit)}
       <button className="btn btn-small" onClick={() => void toggleRecording()}>
-        ■ Stop <kbd>V</kbd>
+        <T>■ Stop</T> <kbd>V</kbd>
       </button>
     </div>
   );
@@ -81,12 +82,13 @@ function Thumb({ item }: { item: GalleryItem }) {
 }
 
 function Gallery() {
+  const t = useT();
   const items = useGallery((s) => s.items);
   const total = items.reduce((n, i) => n + i.bytes, 0);
   return (
     <section className="photo-section">
       <h4>
-        Gallery <span className="muted small">{items.length ? `${items.length} · ${formatBytes(total)} · this tab only` : 'empty'}</span>
+        <T>Gallery</T> <span className="muted small">{items.length ? t('{count} · {size} · this tab only', { count: items.length, size: formatBytes(total) }) : t('empty')}</span>
       </h4>
       {items.length > 0 && (
         <ul className="photo-gallery">
@@ -98,10 +100,10 @@ function Gallery() {
                 <span className="muted">{formatBytes(i.bytes)}</span>
               </div>
               <div className="photo-gallery-actions">
-                <button className="btn btn-ghost btn-small" onClick={() => saveItem(i)} aria-label={`Download ${i.name}`}>
+                <button className="btn btn-ghost btn-small" onClick={() => saveItem(i)} aria-label={t('Download {name}', { name: i.name })}>
                   ⬇
                 </button>
-                <button className="btn btn-ghost btn-small" onClick={() => removeFromGallery(i.id)} aria-label={`Delete ${i.name}`}>
+                <button className="btn btn-ghost btn-small" onClick={() => removeFromGallery(i.id)} aria-label={t('Delete {name}', { name: i.name })}>
                   🗑
                 </button>
               </div>
@@ -124,6 +126,7 @@ function useCamera() {
 }
 
 export default function PhotoPanel() {
+  const t = useT();
   const s = usePhoto();
   const frozen = usePhotoGate((g) => g.frozen);
   const replay = usePhotoGate((g) => g.replay);
@@ -136,7 +139,7 @@ export default function PhotoPanel() {
   const people = Object.values(agents).filter((a) => (repo ? a.repoId === repo.id : a.role === 'ceo') && bodyState(a.id));
   const size = shotSize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1, s.scale);
   const sky = useDayTime().t;
-  const t = s.daytime ?? sky;
+  const daytime = s.daytime ?? sky;
 
   return (
     <>
@@ -144,38 +147,38 @@ export default function PhotoPanel() {
       <Recording />
       {!s.panel ? (
         <button className="photo-show" onClick={() => update({ panel: true })}>
-          📷 <kbd>H</kbd> show the panel
+          📷 <kbd>H</kbd> <T>show the panel</T>
         </button>
       ) : (
-        <aside className="photo-panel" aria-label="Photo mode">
+        <aside className="photo-panel" aria-label={t('Photo mode')}>
           <header className="photo-head">
-            <b>📷 Photo mode</b>
-            <button className="btn btn-small" onClick={leave} title="Back to the office (or Esc with the mouse free)">
-              Leave <Key action="photo" />
+            <b><T>📷 Photo mode</T></b>
+            <button className="btn btn-small" onClick={leave} title={t('Back to the office (or Esc with the mouse free)')}>
+              <T>Leave</T> <Key action="photo" />
             </button>
           </header>
           {s.note && (
             <p className={`photo-note ${s.note.level === 'error' ? 'photo-note-bad' : ''}`} role="status" onClick={() => update({ note: null })}>
-              {s.note.text}
+              {s.note.message ? s.note.message.map((m) => t(m.key, m.values)).join('') : s.note.text}
             </p>
           )}
 
           <section className="photo-section">
             <label className="toggle">
-              <input type="checkbox" checked={frozen} onChange={(e) => setFrozen(e.target.checked)} /> ❄ Freeze the office <kbd>F</kbd>
+              <input type="checkbox" checked={frozen} onChange={(e) => setFrozen(e.target.checked)} /> <T>❄ Freeze the office</T> <kbd>F</kbd>
             </label>
-            <p className="muted small">{frozen ? 'Everyone holds still; the work carries on and catches up when you thaw.' : 'Live: people, toys and the sky move. Good for clips.'}</p>
+            <p className="muted small">{t(frozen ? 'Everyone holds still; the work carries on and catches up when you thaw.' : 'Live: people, toys and the sky move. Good for clips.')}</p>
           </section>
 
           <section className="photo-section">
-            <h4>Camera</h4>
+            <h4><T>Camera</T></h4>
             <label className="photo-row">
-              <span>Zoom</span>
-              <input type="range" min={FOV_MIN} max={FOV_MAX} step={1} value={Math.round(fov)} onChange={(e) => ((cam.fov = Number(e.target.value)), requestFrame())} aria-label="Field of view" />
+              <span><T>Zoom</T></span>
+              <input type="range" min={FOV_MIN} max={FOV_MAX} step={1} value={Math.round(fov)} onChange={(e) => ((cam.fov = Number(e.target.value)), requestFrame())} aria-label={t('Field of view')} />
               <b>{Math.round(fov)}°</b>
             </label>
             <label className="photo-row">
-              <span>Roll</span>
+              <span><T>Roll</T></span>
               <input
                 type="range"
                 min={-45}
@@ -183,78 +186,78 @@ export default function PhotoPanel() {
                 step={1}
                 value={Math.round((roll * 180) / Math.PI)}
                 onChange={(e) => ((cam.roll = Math.max(-ROLL_MAX, Math.min(ROLL_MAX, (Number(e.target.value) * Math.PI) / 180))), requestFrame())}
-                aria-label="Roll"
+                aria-label={t('Roll')}
               />
               <b>{Math.round((roll * 180) / Math.PI)}°</b>
             </label>
             <label className="toggle">
-              <input type="checkbox" checked={s.dof} onChange={(e) => update({ dof: e.target.checked })} /> Depth of field
+              <input type="checkbox" checked={s.dof} onChange={(e) => update({ dof: e.target.checked })} /> <T>Depth of field</T>
             </label>
             {s.dof && (
               <>
                 <label className="photo-row">
-                  <span>Focus</span>
-                  <input type="range" min={0.3} max={40} step={0.1} value={s.focus} onChange={(e) => update({ focus: Number(e.target.value) })} aria-label="Focus distance" />
+                  <span><T>Focus</T></span>
+                  <input type="range" min={0.3} max={40} step={0.1} value={s.focus} onChange={(e) => update({ focus: Number(e.target.value) })} aria-label={t('Focus distance')} />
                   <b>{s.focus.toFixed(1)} m</b>
                 </label>
                 <label className="photo-row">
-                  <span>Blur</span>
-                  <input type="range" min={0} max={1} step={0.05} value={s.blur} onChange={(e) => update({ blur: Number(e.target.value) })} aria-label="Blur strength" />
+                  <span><T>Blur</T></span>
+                  <input type="range" min={0} max={1} step={0.05} value={s.blur} onChange={(e) => update({ blur: Number(e.target.value) })} aria-label={t('Blur strength')} />
                   <b>{Math.round(s.blur * 100)}%</b>
                 </label>
               </>
             )}
             <button className="btn btn-ghost btn-small" onClick={() => focusCenter()}>
-              ◎ Focus on the middle <kbd>T</kbd>
+              <T>◎ Focus on the middle</T> <kbd>T</kbd>
             </button>
           </section>
 
           <section className="photo-section">
-            <h4>Filter</h4>
-            <div className="photo-chips" role="radiogroup" aria-label="Filter">
+            <h4><T>Filter</T></h4>
+            <div className="photo-chips" role="radiogroup" aria-label={t('Filter')}>
               {FILTERS.map((f) => (
                 <button key={f} role="radio" aria-checked={s.filter === f} className={`photo-chip ${s.filter === f ? 'on' : ''}`} onClick={() => update({ filter: f })}>
-                  {FILTER_LABELS[f]}
+                  {t(FILTER_LABELS[f])}
                 </button>
               ))}
             </div>
             <div className="photo-checks">
               <label className="toggle">
-                <input type="checkbox" checked={s.stamp} onChange={(e) => update({ stamp: e.target.checked })} /> Logo stamp
+                <input type="checkbox" checked={s.stamp} onChange={(e) => update({ stamp: e.target.checked })} /> <T>Logo stamp</T>
               </label>
               <label className="toggle">
-                <input type="checkbox" checked={s.caption} onChange={(e) => update({ caption: e.target.checked })} /> Floor and date
+                <input type="checkbox" checked={s.caption} onChange={(e) => update({ caption: e.target.checked })} /> <T>Floor and date</T>
               </label>
               <label className="toggle">
-                <input type="checkbox" checked={s.guides} onChange={(e) => update({ guides: e.target.checked })} /> Thirds guides
+                <input type="checkbox" checked={s.guides} onChange={(e) => update({ guides: e.target.checked })} /> <T>Thirds guides</T>
               </label>
             </div>
           </section>
 
           <section className="photo-section">
             <h4>
-              Time of day <span className="muted small">{clockTime(t)}</span>
+              <T>Time of day</T> <span className="muted small">{clockTime(daytime)}</span>
             </h4>
-            <input type="range" min={0} max={1} step={0.002} value={t} onChange={(e) => setDaytime(Number(e.target.value))} aria-label="Time of day" aria-valuetext={clockTime(t)} />
+            <input type="range" min={0} max={1} step={0.002} value={daytime} onChange={(e) => setDaytime(Number(e.target.value))} aria-label={t('Time of day')} aria-valuetext={clockTime(daytime)} />
             <div className="row wrap">
               <button className="btn btn-ghost btn-small" onClick={() => setDaytime(GOLDEN_HOUR)}>
-                🌇 Golden hour
+                <T>🌇 Golden hour</T>
               </button>
               <button className="btn btn-ghost btn-small" onClick={() => setDaytime(0.5)}>
-                ☀️ Noon
+                <T>☀️ Noon</T>
               </button>
               <button className="btn btn-ghost btn-small" onClick={() => setDaytime(0.79)}>
-                🌆 Blue hour
+                <T>🌆 Blue hour</T>
               </button>
               <button className="btn btn-ghost btn-small" onClick={() => setDaytime(null)} disabled={s.daytime === null}>
-                ↺ As it is
+                <T>↺ As it is</T>
               </button>
             </div>
           </section>
 
           <section className="photo-section">
-            <h4>Shot</h4>
-            <div className="photo-chips" role="radiogroup" aria-label="Shot size">
+            <h4><T>Shot</T></h4>
+            <div className="photo-chips" role="radiogroup" aria-label={t('Shot size')}>
               {SCALES.map((k) => (
                 <button key={k} role="radio" aria-checked={s.scale === k} className={`photo-chip ${s.scale === k ? 'on' : ''}`} onClick={() => update({ scale: k })}>
                   {k}×
@@ -265,13 +268,13 @@ export default function PhotoPanel() {
               </span>
             </div>
             <button className="btn photo-big" disabled={!!s.busy} onClick={() => void takeShot()}>
-              📸 {s.busy === 'Developing…' ? 'Developing…' : 'Take the shot'} <kbd>Enter</kbd>
+              📸 {t(s.busy === 'Developing…' ? 'Developing…' : 'Take the shot')} <kbd>Enter</kbd>
             </button>
-            <p className="muted small">Saves a PNG to your downloads and copies it.</p>
+            <p className="muted small"><T>Saves a PNG to your downloads and copies it.</T></p>
           </section>
 
           <section className="photo-section">
-            <h4>Clip</h4>
+            <h4><T>Clip</T></h4>
             <div className="photo-chips">
               {CLIP_SECONDS.map((n) => (
                 <button key={n} className={`photo-chip ${s.clipSeconds === n ? 'on' : ''}`} aria-pressed={s.clipSeconds === n} onClick={() => update({ clipSeconds: n })}>
@@ -285,39 +288,39 @@ export default function PhotoPanel() {
               ))}
             </div>
             <label className="photo-row">
-              <span>Camera</span>
-              <select value={s.orbit} onChange={(e) => update({ orbit: e.target.value as OrbitTarget })} aria-label="Cinematic orbit">
-                <option value="free">Free (fly it yourself)</option>
-                {floor !== 0 && <option value="gong">Orbit the gong</option>}
-                {floor !== 0 && <option value="board">Orbit the whiteboard</option>}
+              <span><T>Camera</T></span>
+              <select value={s.orbit} onChange={(e) => update({ orbit: e.target.value as OrbitTarget })} aria-label={t('Cinematic orbit')}>
+                <option value="free">{t('Free (fly it yourself)')}</option>
+                {floor !== 0 && <option value="gong">{t('Orbit the gong')}</option>}
+                {floor !== 0 && <option value="board">{t('Orbit the whiteboard')}</option>}
                 {people.map((a) => (
                   <option key={a.id} value={`person:${a.id}`}>
-                    Orbit {a.name}
+                    {t('Orbit {name}', { name: a.name })}
                   </option>
                 ))}
               </select>
             </label>
             <button className={`btn photo-big ${s.recording ? 'photo-recording' : ''}`} disabled={!s.recording && !!s.busy} onClick={() => void toggleRecording()}>
-              {s.recording ? '■ Stop recording' : s.busy === 'Saving the clip…' ? 'Saving the clip…' : '⏺ Record'} <kbd>V</kbd>
+              {t(s.recording ? '■ Stop recording' : s.busy === 'Saving the clip…' ? 'Saving the clip…' : '⏺ Record')} <kbd>V</kbd>
             </button>
-            <p className="muted small">A WebM with the office's sound, up to a minute{frozen ? ' (frozen: a still scene, unless the camera moves)' : ''}.</p>
+            <p className="muted small"><T>A WebM with the office’s sound, up to a minute</T>{frozen ? t(' (frozen: a still scene, unless the camera moves)') : ''}.</p>
           </section>
 
           <section className="photo-section">
-            <h4>Instant replay</h4>
+            <h4><T>Instant replay</T></h4>
             <label className="toggle">
-              <input type="checkbox" checked={replay} onChange={(e) => setReplay(e.target.checked)} /> Keep the last 15 s, any time
+              <input type="checkbox" checked={replay} onChange={(e) => setReplay(e.target.checked)} /> <T>Keep the last 15 s, any time</T>
             </label>
             <p className="muted small">
-              Press <Key action="saveReplay" /> to save them. Off by default: it records all the time, which takes memory.
+              <T>Press</T> <Key action="saveReplay" /> <T>to save them. Off by default: it records all the time, which takes memory.</T>
             </p>
           </section>
 
           <Gallery />
 
           <p className="photo-keys muted small">
-            Click the view to steer · <MoveKeys joined /> fly · <kbd>Space</kbd>/<kbd>C</kbd> up/down · <Key action="run" /> faster · <Key action="rotateLeft" />/<Key action="rotateRight" /> roll · wheel zoom ·{' '}
-            <kbd>R</kbd> reset · <kbd>H</kbd> hide panel · <kbd>Esc</kbd> frees the mouse, then leaves
+            <T>Click the view to steer ·</T> <MoveKeys joined /> <T>fly</T> · <kbd>Space</kbd>/<kbd>C</kbd> <T>up/down</T> · <Key action="run" /> <T>faster</T> · <Key action="rotateLeft" />/<Key action="rotateRight" /> <T>roll · wheel zoom ·</T>{' '}
+            <kbd>R</kbd> <T>reset</T> · <kbd>H</kbd> <T>hide panel</T> · <kbd>Esc</kbd> <T>frees the mouse, then leaves</T>
           </p>
         </aside>
       )}

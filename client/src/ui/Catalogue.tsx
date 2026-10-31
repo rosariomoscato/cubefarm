@@ -8,6 +8,7 @@ import { carry, decorName, kaching } from '../world/decor/actions';
 import { SLOT_NAMES } from '../world/decor/decor';
 import { Key } from './Key';
 import { Panel } from './Overlays';
+import { T, useT } from '../i18n';
 
 const EMPTY: FloorProgressView = { coins: 0, earned: 0, merges: 0, owned: {}, placed: {}, firstPr: null };
 
@@ -18,6 +19,7 @@ function room(floor: FloorProgressView, kind: DecorKind) {
 }
 
 export function Catalogue({ repoId }: { repoId?: string }) {
+  const t = useT();
   const repos = useStore((s) => s.repos);
   const floors = useStore((s) => s.progress.floors);
   const [pick, setPick] = useState(repoId ?? repos[0]?.id ?? '');
@@ -30,7 +32,7 @@ export function Catalogue({ repoId }: { repoId?: string }) {
     try {
       await api.buyDecor(repo.id, item);
       kaching();
-      useStore.getState().pushToast('success', `🛍️ ${decorName(item)} bought for floor ${repo.floor}: it's in the 📦 decor box by their elevator`);
+      useStore.getState().pushToast('success', t('🛍️ {item} bought for floor {floor}: it’s in the 📦 decor box by their elevator', { item: t(decorName(item)), floor: repo.floor }));
     } catch {
       // api toasted it
     } finally {
@@ -38,9 +40,9 @@ export function Catalogue({ repoId }: { repoId?: string }) {
     }
   };
   return (
-    <Panel title="🛍️ Decoration catalogue" accent={repo?.color} className="catalogue">
+    <Panel title={t('🛍️ Decoration catalogue')} accent={repo?.color} className="catalogue">
       {!repo ? (
-        <p className="muted">Connect a repo first: floors earn coins when their PRs merge, and spend them here.</p>
+        <p className="muted"><T>Connect a repo first: floors earn coins when their PRs merge, and spend them here.</T></p>
       ) : (
         <>
           <div className="tabs catalogue-floors">
@@ -53,8 +55,7 @@ export function Catalogue({ repoId }: { repoId?: string }) {
           <div className="catalogue-purse">
             <b className="catalogue-coins">🪙 {floor.coins}</b>
             <span className="muted small">
-              {floor.merges} merge{floor.merges === 1 ? '' : 's'} · {floor.earned} earned. A merge pays {COINS.merge}, plus {COINS.firstQa} if QA passed it first time, {COINS.greenCi} for green checks first time and{' '}
-              {COINS.streak} for the third merge in an hour.
+              {t(floor.merges === 1 ? '{count} merge' : '{count} merges', { count: floor.merges })} · {t('{earned} earned. A merge pays {merge}, plus {qa} if QA passed it first time, {ci} for green checks first time and {streak} for the third merge in an hour.', { earned: floor.earned, merge: COINS.merge, qa: COINS.firstQa, ci: COINS.greenCi, streak: COINS.streak })}
             </span>
           </div>
           <div className="catalogue-grid">
@@ -66,20 +67,20 @@ export function Catalogue({ repoId }: { repoId?: string }) {
               return (
                 <div key={c.id} className={`catalogue-item ${full || poor ? 'catalogue-off' : ''}`}>
                   <div className="catalogue-icon">{c.icon}</div>
-                  <b>{c.name}</b>
-                  <div className="muted small">{c.blurb}</div>
+                  <b>{t(c.name)}</b>
+                  <div className="muted small">{t(c.blurb)}</div>
                   <div className="small">
-                    {owned ? `${owned} owned · ${stored(floor, c.id)} in the box` : <span className="muted">{c.kind === 'wall' ? 'hangs on a wall' : c.kind === 'rug' ? 'lies on the floor' : c.kind === 'big' ? 'needs a big spot' : 'fits a corner'}</span>}
+                    {owned ? t('{owned} owned · {stored} in the box', { owned, stored: stored(floor, c.id) }) : <span className="muted">{t(c.kind === 'wall' ? 'hangs on a wall' : c.kind === 'rug' ? 'lies on the floor' : c.kind === 'big' ? 'needs a big spot' : 'fits a corner')}</span>}
                   </div>
-                  <button className="btn btn-small btn-good" disabled={full || poor || busy !== null} onClick={() => void buy(c.id)} title={full ? 'Every spot for this kind of decoration on this floor is spoken for' : poor ? 'Not enough coins yet' : undefined}>
-                    {busy === c.id ? '…' : full ? 'No room' : `🪙 ${price}`}
+                  <button className="btn btn-small btn-good" disabled={full || poor || busy !== null} onClick={() => void buy(c.id)} title={full ? t('Every spot for this kind of decoration on this floor is spoken for') : poor ? t('Not enough coins yet') : undefined}>
+                    {busy === c.id ? '…' : full ? t('No room') : `🪙 ${price}`}
                   </button>
                 </div>
               );
             })}
           </div>
           <p className="muted small">
-            Bought decorations wait in the floor's 📦 decor box, next to its elevator. Take one out, walk to a glowing spot and press <Key action="interact" />: it snaps in. <Key action="interact" /> on a placed decoration picks it up again; <Key action="drop" /> puts it back where it was.
+            <T>Bought decorations wait in the floor’s 📦 decor box, next to its elevator. Take one out, walk to a glowing spot and press</T> <Key action="interact" /><T>: it snaps in.</T> <Key action="interact" /> <T>on a placed decoration picks it up again;</T> <Key action="drop" /> <T>puts it back where it was.</T>
           </p>
         </>
       )}
@@ -88,6 +89,7 @@ export function Catalogue({ repoId }: { repoId?: string }) {
 }
 
 export function DecorBoxPanel({ repoId }: { repoId: string }) {
+  const t = useT();
   const repo = useStore((s) => s.repos.find((r) => r.id === repoId));
   const floor = useStore((s) => s.progress.floors[repoId]) ?? EMPTY;
   const [busy, setBusy] = useState(false);
@@ -105,28 +107,28 @@ export function DecorBoxPanel({ repoId }: { repoId: string }) {
     }
   };
   return (
-    <Panel title={`📦 Decor box · floor ${repo.floor}`} accent={repo.color} className="decor-box">
-      <h3>In the box</h3>
+    <Panel title={t('📦 Decor box · floor {floor}', { floor: repo.floor })} accent={repo.color} className="decor-box">
+      <h3><T>In the box</T></h3>
       {inBox.length === 0 ? (
-        <p className="muted small">Nothing in the box. Buy decorations with this floor's coins (🪙 {floor.coins}) at the catalogue kiosk in the lobby.</p>
+        <p className="muted small">{t('Nothing in the box. Buy decorations with this floor’s coins (🪙 {coins}) at the catalogue kiosk in the lobby.', { coins: floor.coins })}</p>
       ) : (
         <div className="decor-list">
           {inBox.map((c) => (
             <div key={c.id} className="decor-row">
               <span className="catalogue-icon small-icon">{c.icon}</span>
               <span className="grow">
-                {c.name} {stored(floor, c.id) > 1 && <span className="muted">×{stored(floor, c.id)}</span>}
+                {t(c.name)} {stored(floor, c.id) > 1 && <span className="muted">×{stored(floor, c.id)}</span>}
               </span>
               <button className="btn btn-small btn-good" onClick={() => carry(c.id, null)}>
-                Carry it
+                <T>Carry it</T>
               </button>
             </div>
           ))}
         </div>
       )}
-      <h3>On the floor</h3>
+      <h3><T>On the floor</T></h3>
       {placed.length === 0 ? (
-        <p className="muted small">Nothing placed yet.</p>
+        <p className="muted small"><T>Nothing placed yet.</T></p>
       ) : (
         <div className="decor-list">
           {placed.map((d) => {
@@ -135,13 +137,13 @@ export function DecorBoxPanel({ repoId }: { repoId: string }) {
               <div key={d.id} className="decor-row">
                 <span className="catalogue-icon small-icon">{CATALOGUE.find((c) => c.id === item)?.icon}</span>
                 <span className="grow">
-                  {decorName(item)} <span className="muted small">· {SLOT_NAMES[d.id] ?? d.id}</span>
+                  {t(decorName(item))} <span className="muted small">· {SLOT_NAMES[d.id] ? t(SLOT_NAMES[d.id]) : d.id}</span>
                 </span>
                 <button className="btn btn-small" onClick={() => carry(item, d.id)}>
-                  Move
+                  <T>Move</T>
                 </button>
                 <button className="btn btn-small btn-ghost" disabled={busy} onClick={() => void putAway(d.id, item)}>
-                  Put away
+                  <T>Put away</T>
                 </button>
               </div>
             );
@@ -149,7 +151,7 @@ export function DecorBoxPanel({ repoId }: { repoId: string }) {
         </div>
       )}
       <p className="muted small">
-        Carrying one, glowing spots show where it fits: aim at one and press <Key action="interact" />. <Key action="drop" /> puts it back where it came from.
+        <T>Carrying one, glowing spots show where it fits: aim at one and press</T> <Key action="interact" />. <Key action="drop" /> <T>puts it back where it came from.</T>
       </p>
     </Panel>
   );

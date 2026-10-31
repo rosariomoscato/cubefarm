@@ -9,6 +9,7 @@ import { emote, myLastEmote, presenceVersion, subscribePresence } from '../world
 import { EMOTE_MS, WHEEL, wheelPick, wheelSpot } from '../world/presence/presenceMath';
 import { isConfirmOpen } from './Confirm';
 import { isKey, useKeyName } from './controls';
+import { useT } from '../i18n';
 
 // The social bits of shared presence on the HUD: the emote wheel (hold its key, T unless rebound: point and let go; a
 // quick tap waves; 1–5 pick straight away) and your own emote popping up, so you know it went.
@@ -96,12 +97,13 @@ function useWheelKeys() {
 }
 
 function EmoteWheel() {
+  const t = useT();
   const { open, pick } = useWheel();
   const key = useKeyName('emote');
   if (!open) return null;
   return (
-    <div className="emote-wheel" role="menu" aria-label="Emotes">
-      <div className="emote-hub">{pick ? EMOTE_LABEL[pick] : `Point, then let go of ${key}`}</div>
+    <div className="emote-wheel" role="menu" aria-label={t('Emotes')}>
+      <div className="emote-hub">{pick ? t(EMOTE_LABEL[pick]) : t('Point, then let go of {key}', { key })}</div>
       {WHEEL.map((e, i) => {
         const at = wheelSpot(i, RADIUS);
         return (
@@ -112,7 +114,7 @@ function EmoteWheel() {
             style={{ transform: `translate(${at.x}px, ${at.y}px)` }}
             onMouseEnter={() => useWheel.setState({ pick: e })}
             onClick={() => close(e)}
-            title={`${EMOTE_LABEL[e]} (${i + 1})`}
+            title={`${t(EMOTE_LABEL[e])} (${i + 1})`}
           >
             <span className="emote-emoji">{EMOTE_EMOJI[e]}</span>
             <kbd>{i + 1}</kbd>
@@ -125,6 +127,7 @@ function EmoteWheel() {
 
 /** Your own emote, for a moment: you can't see yourself wave. */
 function MyEmote() {
+  const t = useT();
   useSyncExternalStore(subscribePresence, presenceVersion);
   const mine = myLastEmote();
   const [, tick] = useState(0);
@@ -136,7 +139,7 @@ function MyEmote() {
   if (!mine || performance.now() - mine.at > EMOTE_MS) return null;
   return (
     <div className="my-emote" key={mine.at} aria-live="polite">
-      {EMOTE_EMOJI[mine.e]} <span>{EMOTE_LABEL[mine.e]}</span>
+      {EMOTE_EMOJI[mine.e]} <span>{t(EMOTE_LABEL[mine.e])}</span>
     </div>
   );
 }

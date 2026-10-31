@@ -4,6 +4,9 @@ import { FLOOR, INK, burst, drawParticles, eyes, outlinedText, shade, text, toon
 import { MOOD_LINES, STAGES, act, advance, hatch, mood, stage, type Mood, type PetAction, type PetState } from './pet';
 import { getPet, setPet, subscribePet } from './petStore';
 import { blip } from './sounds';
+import { T, useT } from '../../i18n';
+import { useStore } from '../../store';
+import { petSpeech } from './petText';
 
 // Desk Pet on the phone: a little cube creature living on a cubicle desk. Feed it, give it coffee, play with it and
 // let it nap; it grows up (Intern to Tech Lead) the more you look after it, and cheers when the team ships.
@@ -277,7 +280,7 @@ function drawMug(ctx: CanvasRenderingContext2D, x: number, y: number, now: numbe
 }
 
 /** Its little cubicle: fabric wall, a pinboard, employee of the month, a desk with a monitor and a plant. */
-function drawCubicle(ctx: CanvasRenderingContext2D, now: number, star: boolean) {
+function drawCubicle(ctx: CanvasRenderingContext2D, now: number, star: boolean, tr: (text: string) => string) {
   ctx.fillStyle = '#d6e2ef';
   ctx.fillRect(0, 0, W, DESK_Y);
   ctx.fillStyle = 'rgba(255,255,255,0.28)';
@@ -319,8 +322,8 @@ function drawCubicle(ctx: CanvasRenderingContext2D, now: number, star: boolean) 
 
   // employee of the month
   toonBlock(ctx, 232, 54, 66, 60, '#ffffff', 5, 2);
-  text(ctx, 'EMPLOYEE', 265, 64, 7.5, INK, 700);
-  text(ctx, 'OF THE MONTH', 265, 73, 7, INK, 700);
+  text(ctx, tr('EMPLOYEE'), 265, 64, 7.5, INK, 700);
+  text(ctx, tr('OF THE MONTH'), 265, 73, 7, INK, 700);
   drawStar(ctx, 265, 93, 13, star ? '#ffc93c' : '#e3e7ee');
 
   // the office clock, telling the real time
@@ -388,14 +391,14 @@ function drawCubicle(ctx: CanvasRenderingContext2D, now: number, star: boolean) 
 }
 
 /** The box a new desk pet arrives in, standing on (0, 0). */
-export function drawDeliveryBox(ctx: CanvasRenderingContext2D, scale = 1) {
+export function drawDeliveryBox(ctx: CanvasRenderingContext2D, scale = 1, tr: (text: string) => string = (text) => text) {
   ctx.save();
   ctx.scale(scale, scale);
   toonBlock(ctx, -38, -56, 76, 56, '#d9a066', 6, 2.5);
   ctx.fillStyle = 'rgba(241,209,155,0.9)';
   ctx.fillRect(-7, -55, 14, 54);
   toonBlock(ctx, -30, -34, 38, 16, '#ffffff', 3, 1.5);
-  text(ctx, 'NEW HIRE', -11, -26, 7.5, INK, 700);
+  text(ctx, tr('NEW HIRE'), -11, -26, 7.5, INK, 700);
   ctx.restore();
 }
 
@@ -423,6 +426,8 @@ function thought(ctx: CanvasRenderingContext2D, x: number, y: number, draw: () =
 }
 
 export function Pet({ onBack }: { onBack: () => void }) {
+  const tr = useT();
+  const language = useStore((s) => s.settings.language);
   const pet = useSyncExternalStore(subscribePet, getPet);
   const [now, setNow] = useState(Date.now());
   const anim = useRef<Anim | null>(null);
@@ -533,7 +538,7 @@ export function Pet({ onBack }: { onBack: () => void }) {
     const p = raw ? advance(raw, Date.now()) : null;
     const m = p ? mood(p) : 'content';
     const st = p ? stage(p.xp) : 0;
-    drawCubicle(ctx, t, st >= 2 || m === 'happy');
+    drawCubicle(ctx, t, st >= 2 || m === 'happy', tr);
     const a = anim.current;
     if (a) {
       a.t += dt;
@@ -546,7 +551,7 @@ export function Pet({ onBack }: { onBack: () => void }) {
       ctx.save();
       ctx.translate(W / 2, DESK_Y + 1);
       ctx.rotate(wob);
-      drawDeliveryBox(ctx);
+      drawDeliveryBox(ctx, 1, tr);
       ctx.restore();
       outlinedText(ctx, '?', W / 2 + 34, DESK_Y - 70 + Math.sin(t / 300) * 3, 20, '#ffc93c');
     } else {
@@ -669,9 +674,9 @@ export function Pet({ onBack }: { onBack: () => void }) {
 
   const view: PetState | null = pet ? advance(pet, now) : null;
   const m = view ? mood(view) : null;
-  const fresh = view?.say && now - view.say.at < 20_000 ? view.say.text : null;
-  const bubble = !view ? 'A delivery just arrived at your desk…' : fresh ?? (recap && now - openedAt < 10_000 ? `While you were away: ${recap.text}` : MOOD_LINES[m!]);
-  const title = view ? STAGES[stage(view.xp)].title : '';
+  const fresh = view?.say && now - view.say.at < 20_000 ? petSpeech(view.say.text, view.name, language) : null;
+  const bubble = !view ? tr('A delivery just arrived at your desk…') : fresh ?? (recap && now - openedAt < 10_000 ? tr('While you were away: {text}', { text: petSpeech(recap.text, view.name, language) }) : tr(MOOD_LINES[m!]));
+  const title = view ? tr(STAGES[stage(view.xp)].title) : '';
   const day = view ? Math.floor((now - view.born) / 86_400_000) + 1 : 0;
   const bars: [string, string, number, string][] = view
     ? [
@@ -685,7 +690,7 @@ export function Pet({ onBack }: { onBack: () => void }) {
     <div className="game pet">
       <GameHeader title="Desk Pet" color={PET_COLOR} onBack={onBack}>
         {view && (
-          <span className="game-chip" title={`${view.xp} care points`}>
+          <span className="game-chip" title={tr('{count} care points', { count: view.xp })}>
             {view.name} · {title}
           </span>
         )}
@@ -693,14 +698,14 @@ export function Pet({ onBack }: { onBack: () => void }) {
       <div className="pet-say" aria-live="polite">
         {bubble}
       </div>
-      <GameCanvas width={W} height={H} frame={frame} label={view ? `${view.name}, your desk pet, is ${m}` : 'A delivery box'} onPointer={onPointer} />
+      <GameCanvas width={W} height={H} frame={frame} label={view ? tr('{name}, your desk pet, is {mood}', { name: view.name, mood: tr(m!) }) : tr('A delivery box')} onPointer={onPointer} />
       {view ? (
         <>
           <div className="pet-bars">
             {bars.map(([icon, label, v, color]) => (
-              <div key={label} className={`pet-bar ${v < 25 ? 'pet-bar-low' : ''}`} title={`${label}: ${Math.round(v)}%`}>
+              <div key={label} className={`pet-bar ${v < 25 ? 'pet-bar-low' : ''}`} title={`${tr(label)}: ${Math.round(v)}%`}>
                 <span className="pet-bar-label">
-                  {icon} {label}
+                  {icon} {tr(label)}
                 </span>
                 <span className="pet-meter">
                   <i style={{ width: `${Math.max(2, v)}%`, background: color }} />
@@ -712,21 +717,21 @@ export function Pet({ onBack }: { onBack: () => void }) {
             {ACTIONS.map((x) => {
               const wake = x.action === 'nap' && view.asleep;
               return (
-                <button key={x.action} type="button" className="btn btn-small pet-act" tabIndex={-1} onPointerDown={(e) => e.preventDefault()} onClick={() => doAction(x.action)} disabled={view.asleep && !wake} title={`${wake ? 'Wake up' : x.label} (${x.key})`}>
+                <button key={x.action} type="button" className="btn btn-small pet-act" tabIndex={-1} onPointerDown={(e) => e.preventDefault()} onClick={() => doAction(x.action)} disabled={view.asleep && !wake} title={`${tr(wake ? 'Wake up' : x.action === 'play' ? 'Play with pet' : x.label)} (${x.key})`}>
                   <span className="pet-act-icon">{wake ? '☀️' : x.icon}</span>
-                  {wake ? 'Wake' : x.label}
+                  {tr(wake ? 'Wake' : x.action === 'play' ? 'Play with pet' : x.label)}
                 </button>
               );
             })}
           </div>
           <div className="game-keys">
-            <kbd>1</kbd>–<kbd>4</kbd> care · click {view.name} (or <kbd>Space</kbd>) for a pat · day {day}
+            <kbd>1</kbd>–<kbd>4</kbd> <T>care · click</T> {view.name} (<T>or</T> <kbd>Space</kbd>) {tr('for a pat · day {day}', { day })}
           </div>
         </>
       ) : (
         <div className="pet-actions">
           <button type="button" className="btn btn-good pet-unbox" onClick={unbox}>
-            📦 Unbox your desk pet
+            <T>📦 Unbox your desk pet</T>
           </button>
         </div>
       )}

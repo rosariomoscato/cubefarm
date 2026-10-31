@@ -166,6 +166,14 @@ export function messageCard(ctx: CanvasRenderingContext2D, w: number, h: number,
   ctx.fillRect(x, y, cw, 10);
   ctx.restore();
   ctx.stroke();
-  outlinedText(ctx, title, w / 2, y + 36, 24, accent);
-  lines.forEach((l, i) => text(ctx, l, w / 2, y + 68 + i * 22, i === lines.length - 1 ? 13 : 15, i === lines.length - 1 ? MUTED : INK, i === lines.length - 1 ? 600 : 700));
+  const fit = (s: string, size: number, weight: number) => {
+    ctx.font = `${weight} ${size}px ${SANS}`;
+    const width = ctx.measureText(s).width;
+    return width > cw - 24 ? size * (cw - 24) / width : size;
+  };
+  outlinedText(ctx, title, w / 2, y + 36, fit(title, 24, 700), accent);
+  lines.forEach((l, i) => {
+    const last = i === lines.length - 1;
+    text(ctx, l, w / 2, y + 68 + i * 22, fit(l, last ? 13 : 15, last ? 600 : 700), last ? MUTED : INK, last ? 600 : 700);
+  });
 }

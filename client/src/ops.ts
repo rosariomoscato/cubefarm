@@ -3,6 +3,7 @@
 
 import type { OpsAlarm, OpsNumbers, OpsView, UsageView } from '../../shared/types';
 import { clock } from '../../shared/usage';
+import { languageTag, translate, type Language } from '../../shared/i18n';
 
 export const EMPTY_NUMBERS: OpsNumbers = {
   ready: 0,
@@ -49,24 +50,29 @@ export const fmtPct = (x: number | null) => (x === null ? '—' : `${Math.round(
 export const fmtUsd = (n: number) => (n >= 100 ? `$${Math.round(n)}` : `$${n.toFixed(2)}`);
 
 /** The HUD's chip while new work is held back (null at full speed), e.g. "🐢 Paced until Tue 00:00: new issues start when fewer than 3 sessions run". */
-export function usageChip(u: UsageView, pacingSessions: number, now: number): string | null {
+export function usageChip(u: UsageView, pacingSessions: number, now: number, language?: Language): string | null {
   if (u.state === 'normal' || u.until === null) return null;
-  const until = clock(u.until, now);
-  if (u.state === 'paused') return `⏸ Paused until ${until}: at Claude's usage limit, nothing new starts`;
-  return `🐢 Paced until ${until}: new issues start when fewer than ${pacingSessions} session${pacingSessions === 1 ? '' : 's'} run`;
+  const until = clock(u.until, now, languageTag(language));
+  if (u.state === 'paused') return translate(language, "⏸ Paused until {time}: at Claude's usage limit, nothing new starts", { time: until });
+  return translate(language, pacingSessions === 1 ? '🐢 Paced until {time}: new issues start when fewer than {count} session run' : '🐢 Paced until {time}: new issues start when fewer than {count} sessions run', { time: until, count: pacingSessions });
 }
 
 /** The usage meter's headline and details: the state, and the last warning's limit, fill and reset time. */
-export function usageMeter(u: UsageView, now: number): { state: string; tone: 'good' | 'warn' | 'bad'; limit: string; pct: number | null; resets: string | null } {
+export function usageMeter(u: UsageView, now: number, language?: Language): { state: string; tone: 'good' | 'warn' | 'bad'; limit: string; pct: number | null; resets: string | null } {
   const w = u.warning;
   const resetsAt = u.state === 'normal' ? (w?.resetsAt && w.resetsAt > now ? w.resetsAt : null) : u.until;
   return {
-    state: u.state === 'paused' ? 'Paused' : u.state === 'pacing' ? 'Pacing' : 'Normal',
+    state: translate(language, u.state === 'paused' ? 'Paused' : u.state === 'pacing' ? 'Pacing' : 'Normal'),
     tone: u.state === 'paused' ? 'bad' : u.state === 'pacing' ? 'warn' : 'good',
-    limit: w ? `${w.limit ?? "Claude's usage"}${w.pct === null ? '' : ` · ${w.pct}%`}` : 'No usage warnings',
+    limit: w ? `${w.limit ? localizedLimit(w.limit, language) : translate(language, "Claude's usage")}${w.pct === null ? '' : ` · ${w.pct}%`}` : translate(language, 'No usage warnings'),
     pct: w?.pct ?? null,
-    resets: resetsAt ? clock(resetsAt, now) : null,
+    resets: resetsAt ? clock(resetsAt, now, languageTag(language)) : null,
   };
+}
+
+/** Unknown provider limit identifiers are not interface text. */
+function localizedLimit(limit: string, language?: Language) {
+  return ['5-hour limit', 'weekly limit', 'weekly Opus limit', 'weekly Sonnet limit'].includes(limit) ? translate(language, limit) : limit;
 }
 
 /** Alarms in `next` that weren't in `prev`: these sound. */

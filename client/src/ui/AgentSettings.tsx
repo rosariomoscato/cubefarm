@@ -9,6 +9,7 @@ import { LookPreview } from '../world/LookPreview';
 import { workerCli } from './floorRows';
 import { confirmDialog } from './Confirm';
 import { OpenCodeModelPicker, OpenCodeVariantSelect } from './OpenCodeModelPicker';
+import { T, useT } from '../i18n';
 
 // One agent's setup (name, look, coding agent, model, effort), edited in place: the Team tab's row cells and the
 // ⚙️ Setup section of their panel share these. Every change is a PATCH; the `agent` event updates all views.
@@ -29,12 +30,13 @@ async function save(id: string, patch: Patch) {
 
 /** The coding agents to pick from, installed ones first, each saying if it's missing on this machine. */
 export function CliOptions({ clis }: { clis: CliView[] }) {
+  const t = useT();
   return (
     <>
       {[...clis].sort((a, b) => Number(b.installed) - Number(a.installed)).map((c) => (
         <option key={c.id} value={c.id} disabled={!c.installed || !!c.problem} title={c.problem}>
           {c.label}
-          {!c.installed ? ' (not installed)' : c.problem ? ' (incompatible version)' : ''}
+          {t(!c.installed ? ' (not installed)' : c.problem ? ' (incompatible version)' : '')}
         </option>
       ))}
     </>
@@ -49,6 +51,7 @@ interface FieldProps {
 }
 
 export function NameInput({ agent, id, className = 'inline', style }: FieldProps) {
+  const t = useT();
   return (
     <input
       id={id}
@@ -57,19 +60,20 @@ export function NameInput({ agent, id, className = 'inline', style }: FieldProps
       style={style}
       defaultValue={agent.name}
       maxLength={24}
-      aria-label={id ? undefined : 'Name'}
+      aria-label={id ? undefined : t('Name')}
       onBlur={(e) => e.target.value.trim() && e.target.value !== agent.name && void save(agent.id, { name: e.target.value })}
     />
   );
 }
 
 export function CliSelect({ agent, id, style }: FieldProps) {
+  const t = useT();
   const settings = useStore((s) => s.settings);
   const clis = useStore((s) => s.clis);
   const ceo = agent.role === 'ceo';
   return (
-    <select id={id} value={agent.cli} title="Their coding agent" aria-label={id ? undefined : 'Coding agent'} style={style} onChange={(e) => void save(agent.id, { cli: e.target.value as AgentCli | '' })}>
-      <option value="">{cliName(clis, ceo ? 'claude' : settings.defaultCli)} (default)</option>
+    <select id={id} value={agent.cli} title={t('Their coding agent')} aria-label={id ? undefined : t('Coding agent')} style={style} onChange={(e) => void save(agent.id, { cli: e.target.value as AgentCli | '' })}>
+      <option value="">{cliName(clis, ceo ? 'claude' : settings.defaultCli)} {t('(default)')}</option>
       <CliOptions clis={ceo ? clis.filter((c) => c.id === 'claude' || c.id === 'opencode') : clis} />
     </select>
   );
@@ -88,6 +92,7 @@ export const CLOUD_STATE: Record<CloudMachineState, string> = {
 
 /** Where they work: this computer or an Upstash Box of their own (docs/cloud.md). A move waits until they have no task. */
 export function HostSelect({ agent, id, style }: FieldProps) {
+  const t = useT();
   const settings = useStore((s) => s.settings);
   const keySet = useStore((s) => s.cloud.keySet);
   const box = agent.host === 'box';
@@ -95,23 +100,24 @@ export function HostSelect({ agent, id, style }: FieldProps) {
   const busy = !!agent.task || isBusy(agent);
   const move = async (to: MachineHost) => {
     const ok = await confirmDialog({
-      title: to === 'box' ? `Move ${agent.name} to the cloud?` : `Move ${agent.name} back to this computer?`,
-      body: `Their machine ${to === 'box' ? 'here' : 'in the cloud'} is removed (work that isn't on GitHub is saved to leftovers first), and their next session starts fresh${to === 'box' ? ' in an Upstash Box of their own' : ''}.`,
-      confirm: 'Move',
+      title: t(to === 'box' ? 'Move {name} to the cloud?' : 'Move {name} back to this computer?', { name: agent.name }),
+      body: t(to === 'box' ? 'Their local machine is removed (work that isn’t on GitHub is saved to leftovers first), and their next session starts fresh in an Upstash Box of their own.' : 'Their cloud machine is removed (work that isn’t on GitHub is saved to leftovers first), and their next session starts fresh.'),
+      confirm: t('Move'),
     });
     if (ok) await save(agent.id, { host: to });
   };
   return (
-    <select id={id} value={box ? 'box' : 'local'} disabled={busy} style={style} title={busy ? 'Move them once their task is done' : 'Where they work'} aria-label={id ? undefined : 'Works on'} onChange={(e) => void move(e.target.value as MachineHost)}>
-      <option value="local">🖥️ This computer</option>
+    <select id={id} value={box ? 'box' : 'local'} disabled={busy} style={style} title={t(busy ? 'Move them once their task is done' : 'Where they work')} aria-label={id ? undefined : t('Works on')} onChange={(e) => void move(e.target.value as MachineHost)}>
+      <option value="local">{t('🖥️ This computer')}</option>
       <option value="box" disabled={!box && (!keySet || opencode)}>
-        ☁️ Upstash Box{!box && !keySet ? ' (connect Upstash in Settings first)' : !box && opencode ? " (OpenCode can't run there)" : ''}
+        ☁️ Upstash Box{t(!box && !keySet ? ' (connect Upstash in Settings first)' : !box && opencode ? ' (OpenCode can’t run there)' : '')}
       </option>
     </select>
   );
 }
 
 export function ModelInput({ agent, id, className = 'inline', style }: FieldProps) {
+  const t = useT();
   const settings = useStore((s) => s.settings);
   const listId = useId();
   const cli = workerCli(agent, settings);
@@ -124,9 +130,9 @@ export function ModelInput({ agent, id, className = 'inline', style }: FieldProp
         style={style}
         list={listId}
         defaultValue={agent.model}
-        placeholder={(agent.role === 'ceo' ? (cli === 'claude' ? CLAUDE_MODELS[0] : '') : effectiveModel('', cli, settings, CLAUDE_MODELS[0])) || 'agent default'}
-        title={cli === 'opencode' ? 'OpenCode model: provider/model#variant (empty = OpenCode default)' : agent.role === 'ceo' ? "The CEO's model" : "Their model ('' = the default for their coding agent)"}
-        aria-label={id ? undefined : 'Model'}
+        placeholder={(agent.role === 'ceo' ? (cli === 'claude' ? CLAUDE_MODELS[0] : '') : effectiveModel('', cli, settings, CLAUDE_MODELS[0])) || t('agent default')}
+        title={t(cli === 'opencode' ? 'OpenCode model: provider/model#variant (empty = OpenCode default)' : agent.role === 'ceo' ? 'The CEO’s model' : 'Their model (empty = the default for their coding agent)')}
+        aria-label={id ? undefined : t('Model')}
         onBlur={(e) => e.target.value !== agent.model && void save(agent.id, { model: e.target.value })}
       />
       {cli === 'opencode' && <OpenCodeModelPicker value={agent.model} agent={agent.id} inherited={agent.role !== 'ceo' && settings.defaultCli === 'opencode' ? settings.defaultModel : undefined} onSelect={(model) => void save(agent.id, { model })} />}
@@ -140,6 +146,7 @@ export function ModelInput({ agent, id, className = 'inline', style }: FieldProp
 }
 
 export function EffortSelect({ agent, id, style }: FieldProps) {
+  const t = useT();
   const settings = useStore((s) => s.settings);
   const defaultEffort = settings.defaultEffort;
   const opencode = workerCli(agent, settings) === 'opencode';
@@ -147,8 +154,8 @@ export function EffortSelect({ agent, id, style }: FieldProps) {
     inherited={agent.role !== 'ceo' && settings.defaultCli === 'opencode' ? settings.defaultModel : undefined}
     onSelect={(model) => void save(agent.id, { model })} />;
   return (
-    <select id={id} value={agent.effort} title={agent.role === 'ceo' ? "The CEO's effort" : 'Their effort'} aria-label={id ? undefined : 'Effort'} style={style} onChange={(e) => void save(agent.id, { effort: e.target.value as EffortLevel | '' })}>
-      {(agent.role !== 'ceo' || !agent.effort) && <option value="">default ({defaultEffort})</option>}
+    <select id={id} value={agent.effort} title={t(agent.role === 'ceo' ? 'The CEO’s effort' : 'Their effort')} aria-label={id ? undefined : t('Effort')} style={style} onChange={(e) => void save(agent.id, { effort: e.target.value as EffortLevel | '' })}>
+      {(agent.role !== 'ceo' || !agent.effort) && <option value="">{t('default ({effort})', { effort: defaultEffort })}</option>}
       {EFFORTS.map((x) => (
         <option key={x} value={x}>
           {x}
@@ -159,10 +166,11 @@ export function EffortSelect({ agent, id, style }: FieldProps) {
 }
 
 export function LookSelect({ agent, id }: FieldProps) {
+  const t = useT();
   return (
-    <select id={id} value={agent.look} title="Character look" aria-label={id ? undefined : 'Drawn as'} style={{ width: 'auto' }} onChange={(e) => void save(agent.id, { look: e.target.value as 'feminine' | 'masculine' })}>
-      <option value="feminine">👩 She</option>
-      <option value="masculine">👨 He</option>
+    <select id={id} value={agent.look} title={t('Character look')} aria-label={id ? undefined : t('Drawn as')} style={{ width: 'auto' }} onChange={(e) => void save(agent.id, { look: e.target.value as 'feminine' | 'masculine' })}>
+      <option value="feminine">{t('👩 She')}</option>
+      <option value="masculine">{t('👨 He')}</option>
     </select>
   );
 }
@@ -186,11 +194,12 @@ const OUTFIT_LABEL: Record<Outfit, string> = { tee: 'T-shirt', hoodie: 'Hoodie',
 const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 function Swatches({ label, colors, value, onPick }: { label: string; colors: readonly string[]; value: string; onPick: (c: string) => void }) {
+  const t = useT();
   const all = colors.includes(value) ? colors : [value, ...colors];
   return (
     <div className="field">
-      <span>{label}</span>
-      <div className="swatches" role="radiogroup" aria-label={label}>
+      <span>{t(label)}</span>
+      <div className="swatches" role="radiogroup" aria-label={t(label)}>
         {all.map((c) => (
           <button key={c} type="button" role="radio" aria-checked={c === value} aria-label={c} title={c} className={`swatch ${c === value ? 'swatch-on' : ''}`} style={{ background: c }} onClick={() => onPick(c)} />
         ))}
@@ -200,14 +209,15 @@ function Swatches({ label, colors, value, onPick }: { label: string; colors: rea
 }
 
 function PickSelect<T extends string>({ label, value, options, labels, onPick, disabled, title }: { label: string; value: T; options: readonly T[]; labels?: Record<T, string>; onPick: (v: T) => void; disabled?: boolean; title?: string }) {
+  const t = useT();
   const id = useId();
   return (
     <label className="field" htmlFor={id}>
-      <span>{label}</span>
+      <span>{t(label)}</span>
       <select id={id} value={value} disabled={disabled} title={title} onChange={(e) => onPick(e.target.value as T)}>
         {options.map((o) => (
           <option key={o} value={o}>
-            {labels?.[o] ?? capital(o)}
+            {t(labels?.[o] ?? capital(o))}
           </option>
         ))}
       </select>
@@ -220,14 +230,15 @@ function PickSelect<T extends string>({ label, value, options, labels, onPick, d
  * look seeded from their id. Their character in the office follows at once.
  */
 export function LookEditor({ agent }: { agent: Agent }) {
+  const t = useT();
   const look = useMemo(() => appearanceFor(agent), [agent]);
   const pick = (patch: AgentStyle) => void save(agent.id, { style: { ...agent.style, ...patch } });
   const tall = TALL_HAIR.includes(look.hair);
   return (
     <fieldset className="look-editor">
-      <legend>Look</legend>
+      <legend><T>Look</T></legend>
       <div className="look-body">
-        <LookPreview id={agent.id} label={`${agent.name} as they'll look`} />
+        <LookPreview id={agent.id} label={t('{name} as they’ll look', { name: agent.name })} />
         <div className="look-fields">
           <PickSelect label="Hair" value={look.hair} options={HAIR_STYLES} labels={HAIR_LABEL} onPick={(hair) => pick({ hair })} />
           <PickSelect label="Facial hair" value={look.facialHair} options={FACIAL_HAIR} onPick={(facialHair) => pick({ facialHair })} />
@@ -237,13 +248,13 @@ export function LookEditor({ agent }: { agent: Agent }) {
             value={look.headwear}
             options={HEADWEAR}
             disabled={tall}
-            title={tall ? `A hat doesn't fit over ${HAIR_LABEL[look.hair].toLowerCase()} hair` : undefined}
+            title={tall ? t('A hat doesn’t fit over {hair} hair', { hair: t(HAIR_LABEL[look.hair]).toLowerCase() }) : undefined}
             onPick={(headwear) => pick({ headwear })}
           />
           {agent.role === 'ceo' ? (
             <div className="field">
-              <span>Outfit</span>
-              <span className="muted small">Blazer and lanyard (uniform)</span>
+              <span><T>Outfit</T></span>
+              <span className="muted small"><T>Blazer and lanyard (uniform)</T></span>
             </div>
           ) : (
             <PickSelect label="Outfit" value={look.outfit} options={OUTFITS} labels={OUTFIT_LABEL} onPick={(outfit) => pick({ outfit })} />
@@ -256,12 +267,12 @@ export function LookEditor({ agent }: { agent: Agent }) {
       </div>
       <div className="row wrap">
         <button type="button" className="btn btn-small" onClick={() => void save(agent.id, { style: randomStyle(agent) })}>
-          🎲 Shuffle
+          <T>🎲 Shuffle</T>
         </button>
         <button type="button" className="btn btn-small btn-ghost" disabled={!agent.style} onClick={() => void save(agent.id, { style: null })}>
-          ↺ Back to their seeded look
+          <T>↺ Back to their seeded look</T>
         </button>
-        <span className="muted small">Accent: glasses frames, hats and the stripe.</span>
+        <span className="muted small"><T>Accent: glasses frames, hats and the stripe.</T></span>
       </div>
     </fieldset>
   );
@@ -272,6 +283,7 @@ export function LookEditor({ agent }: { agent: Agent }) {
  * <placeholders> for each task's details. Fetched when opened and again whenever something in it changes.
  */
 export function PromptPreview({ agent }: { agent: Agent }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [prompt, setPrompt] = useState<AgentPromptView | null>(null);
   const [failed, setFailed] = useState(false);
@@ -298,22 +310,22 @@ export function PromptPreview({ agent }: { agent: Agent }) {
   }, [open, agent.id, agent.name, agent.cli, context]);
   return (
     <details className="prompt-preview" onToggle={(e) => setOpen(e.currentTarget.open)}>
-      <summary>What they're told</summary>
-      {failed && !prompt && <p className="muted small">Couldn't load their prompt.</p>}
-      {!prompt && !failed && <p className="muted small">Loading…</p>}
+      <summary><T>What they’re told</T></summary>
+      {failed && !prompt && <p className="muted small"><T>Couldn’t load their prompt.</T></p>}
+      {!prompt && !failed && <p className="muted small"><T>Loading…</T></p>}
       {prompt && (
         <>
           <p className="muted small">
-            {prompt.kind === 'ceo'
-              ? "The CEO's instructions for every job. They're all the office's own."
-              : "The office's workflow and safety rules for each kind of task, the same for every agent and sent with every session; <placeholders> are filled in per task."}
+            {t(prompt.kind === 'ceo'
+              ? 'The CEO’s instructions for every job. They’re all the office’s own.'
+              : 'The office’s workflow and safety rules for each kind of task, the same for every agent and sent with every session; <placeholders> are filled in per task.')}
           </p>
           {prompt.parts.map((p) => (
             <Fragment key={p.label}>
               <p className="small">
-                <b>{p.label}</b> <span className="muted">· {p.text.length.toLocaleString()} characters</span>
+                <b>{p.label}</b> <span className="muted">· {t('{count} characters', { count: p.text.length.toLocaleString() })}</span>
               </p>
-              <pre className="prompt-text" tabIndex={0} aria-label={`${agent.name}'s prompt: ${p.label}`}>
+              <pre className="prompt-text" tabIndex={0} aria-label={t('{name}’s prompt: {label}', { name: agent.name, label: p.label })}>
                 {p.text}
               </pre>
             </Fragment>
@@ -326,58 +338,59 @@ export function PromptPreview({ agent }: { agent: Agent }) {
 
 /** The ⚙️ Setup section of an agent's panel, including the CEO's own coding agent. */
 export function AgentSetup({ agent }: { agent: Agent }) {
+  const t = useT();
   const terminal = useStore((s) => s.settings.runtime === 'terminal');
   const id = useId();
   const ceo = agent.role === 'ceo';
   return (
-    <section className="card agent-setup" aria-label={`${agent.name}'s setup`}>
+    <section className="card agent-setup" aria-label={t('{name}’s setup', { name: agent.name })}>
       <div className="row wrap">
-        <h3 className="grow">⚙️ Setup</h3>
+        <h3 className="grow"><T>⚙️ Setup</T></h3>
         {isBusy(agent) && (
           <span className="chip chip-warn" role="status">
-            Applies from their next task
+            <T>Applies from their next task</T>
           </span>
         )}
       </div>
       <div className="setup-grid">
         {!ceo && (
           <label className="field" htmlFor={`${id}-name`}>
-            <span>Name</span>
+            <span><T>Name</T></span>
             <NameInput agent={agent} id={`${id}-name`} className="" />
           </label>
         )}
         {!ceo && (
           <label className="field" htmlFor={`${id}-look`}>
-            <span>Drawn as</span>
+            <span><T>Drawn as</T></span>
             <LookSelect agent={agent} id={`${id}-look`} />
           </label>
         )}
         {(terminal || agent.host === 'box') && (
           <label className="field" htmlFor={`${id}-cli`}>
-            <span>Coding agent</span>
+            <span><T>Coding agent</T></span>
             <CliSelect agent={agent} id={`${id}-cli`} />
           </label>
         )}
         {!ceo && (
           <label className="field" htmlFor={`${id}-host`}>
             <span>
-              Works on{agent.host === 'box' && agent.cloud && <span className="muted"> · {CLOUD_STATE[agent.cloud]}</span>}
+              <T>Works on</T>{agent.host === 'box' && agent.cloud && <span className="muted"> · {t(CLOUD_STATE[agent.cloud])}</span>}
             </span>
             <HostSelect agent={agent} id={`${id}-host`} />
           </label>
         )}
         <label className="field" htmlFor={`${id}-model`}>
-          <span>Model</span>
+          <span><T>Model</T></span>
           <ModelInput agent={agent} id={`${id}-model`} className="" />
         </label>
         <label className="field" htmlFor={`${id}-effort`}>
-          <span>Effort</span>
+          <span><T>Effort</T></span>
           <EffortSelect agent={agent} id={`${id}-effort`} />
         </label>
       </div>
       <LookEditor agent={agent} />
       <PromptPreview agent={agent} />
-      <p className="muted small">Name and model save when you leave them; the rest, and looks, as you pick them. Running sessions aren't restarted.</p>
+      <p className="muted small"><T>Name and model save when you leave them; the rest, and looks, as you pick them. Running sessions aren’t restarted.</T></p>
     </section>
   );
 }
