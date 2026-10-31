@@ -7,6 +7,7 @@ import { addToGallery, here } from './gallery';
 import { officeCanvas } from './gate';
 import { download } from './media';
 import { fileName } from './shots';
+import { translate } from '../../../shared/i18n';
 import { createRing, heldBytes, heldMs, pushChunk, replayParts, type WebmRing } from './webmRing';
 
 export const REPLAY_MS = 15_000;
@@ -85,9 +86,10 @@ export function replayState() {
 /** Saves the last 15 seconds as a download and into the gallery. */
 export async function saveReplay(): Promise<{ name: string; bytes: number; seconds: number } | null> {
   const r = run;
+  const t = (key: string, values?: Record<string, string | number>) => translate(useStore.getState().settings.language, key, values);
   const toast = useStore.getState().pushToast;
   if (!r) {
-    toast('error', error ?? 'Instant replay is not running.');
+    toast('error', error ? t(error) : t('Instant replay is not running.'));
     return null;
   }
   // flush what the encoder holds, so the replay ends now
@@ -98,7 +100,7 @@ export async function saveReplay(): Promise<{ name: string; bytes: number; secon
   });
   const parts = replayParts(r.ring, REPLAY_MS);
   if (!parts) {
-    toast('info', r.ring.failed ? `Instant replay can't read this browser's recording (${r.ring.failed}).` : 'Nothing to replay yet: give it a second.');
+    toast('info', r.ring.failed ? t('Instant replay can’t read this browser’s recording ({error}).', { error: r.ring.failed }) : t('Nothing to replay yet: give it a second.'));
     return null;
   }
   const blob = new Blob(parts as BlobPart[], { type: 'video/webm' });
@@ -107,6 +109,6 @@ export async function saveReplay(): Promise<{ name: string; bytes: number; secon
   const canvas = officeCanvas();
   const item = addToGallery(blob, { kind: 'replay', name, width: canvas?.width ?? 0, height: canvas?.height ?? 0, seconds });
   download(item.url, name);
-  toast('success', `🎬 Saved the last ${Math.round(seconds)} s as ${name}`);
+  toast('success', t('🎬 Saved the last {seconds} s as {name}', { seconds: Math.round(seconds), name }));
   return { name, bytes: blob.size, seconds };
 }

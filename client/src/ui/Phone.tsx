@@ -731,20 +731,20 @@ export function Phone({ tab: initialTab, requestId }: { tab?: PhoneTab; requestI
         <div className="phone-hint">
           {tab === 'chat' && (
             <>
-              <kbd>Shift</kbd>+<kbd>Enter</kbd> new line ·{' '}
+              <kbd>Shift</kbd>+<kbd>Enter</kbd> {t('new line')} ·{' '}
               {listenOn && (
                 <>
-                  <Key action="talk" /> to talk ·{' '}
+                  <Key action="talk" /> {t('to talk')} ·{' '}
                 </>
               )}
             </>
           )}
           {tab === 'games' && game && (
             <>
-              <kbd>Backspace</kbd> games ·{' '}
+              <kbd>Backspace</kbd> {t('games')} ·{' '}
             </>
           )}
-          <Key action="phone" /> or <kbd>Esc</kbd> to put it away
+          <Key action="phone" /> {t('or')} <kbd>Esc</kbd> {t('to put it away')}
         </div>
       </div>
     </div>

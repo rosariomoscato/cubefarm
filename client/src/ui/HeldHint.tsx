@@ -6,6 +6,7 @@ import { decorName } from '../world/decor/actions';
 import { SNACKS } from '../world/fridge';
 import { Key } from './Key';
 import { PongHud } from './PongHud';
+import { T, useT } from '../i18n';
 
 /** The throw meter under the crosshair. Animates itself while charging; hidden during the first moments of a tap. */
 function ChargeMeter({ at }: { at: number }) {
@@ -32,6 +33,7 @@ function ChargeMeter({ at }: { at: number }) {
 
 /** What you can do with what's in your hands. */
 export function HeldHint() {
+  const t = useT();
   const held = useStore((s) => s.held);
   const chargeAt = useStore((s) => s.chargeAt);
   if (!held) return null;
@@ -39,23 +41,23 @@ export function HeldHint() {
   if (held.kind === 'sausage') {
     return (
       <div className="hud-hint hud-held">
-        🌭 {held.bites} {held.bites === 1 ? 'bite' : 'bites'} left{held.charred ? ' (a bit charred)' : ''} · <Key action="interact" /> eat · <Key action="drop" /> drop
+        🌭 {t(held.bites === 1 ? '{count} bite left' : '{count} bites left', { count: held.bites })}{held.charred ? t(' (a bit charred)') : ''} · <Key action="interact" /> <T>eat</T> · <Key action="drop" /> <T>drop</T>
       </div>
     );
   }
   if (held.kind === 'snack') {
     const s = SNACKS[held.snack];
-    const unit = s.kind === 'drink' ? 'sip' : 'bite';
+    const key = s.kind === 'drink' ? (held.left === 1 ? '{count} sip left' : '{count} sips left') : (held.left === 1 ? '{count} bite left' : '{count} bites left');
     return (
       <div className="hud-hint hud-held">
-        {s.emoji} {s.name} · {held.left} {held.left === 1 ? unit : `${unit}s`} left · <Key action="interact" /> {s.kind === 'drink' ? 'drink' : 'eat'} · <Key action="drop" /> drop
+        {s.emoji} {t(s.name)} · {t(key, { count: held.left })} · <Key action="interact" /> {t(s.kind === 'drink' ? 'drink' : 'eat')} · <Key action="drop" /> <T>drop</T>
       </div>
     );
   }
   if (held.kind === 'decor') {
     return (
       <div className="hud-hint hud-held">
-        📦 Carrying the {decorName(held.item).toLowerCase()} · <Key action="interact" /> on a glowing spot places it · <Key action="drop" /> puts it back
+        {t('📦 Carrying the {item}', { item: t(decorName(held.item)).toLowerCase() })} · <Key action="interact" /> <T>on a glowing spot places it</T> · <Key action="drop" /> <T>puts it back</T>
       </div>
     );
   }
@@ -63,14 +65,14 @@ export function HeldHint() {
   if (held.kind === 'sticky') {
     return (
       <div className="hud-hint hud-held">
-        📌 {held.pr ? `PR #${held.number}` : `#${held.number}`} · {held.pr ? "take it to a free agent's desk to have them test it" : "take it to a free agent's desk"} and press <Key action="interact" /> · <Key action="drop" /> elsewhere puts it back
+        📌 {held.pr ? `PR #${held.number}` : `#${held.number}`} · {t(held.pr ? 'take it to a free agent’s desk to have them test it' : 'take it to a free agent’s desk')} <T>and press</T> <Key action="interact" /> · <Key action="drop" /> <T>elsewhere puts it back</T>
       </div>
     );
   }
   if (held.kind === 'mug') {
     return (
       <div className="hud-hint hud-held">
-        ☕ {held.sips > 0 ? `${held.sips} ${held.sips === 1 ? 'sip' : 'sips'} left` : 'Empty mug'} · <Key action="drop" /> drop
+        ☕ {held.sips > 0 ? t(held.sips === 1 ? '{count} sip left' : '{count} sips left', { count: held.sips }) : t('Empty mug')} · <Key action="drop" /> <T>drop</T>
       </div>
     );
   }
@@ -78,7 +80,7 @@ export function HeldHint() {
     <>
       {chargeAt !== null && <ChargeMeter at={chargeAt} />}
       <div className="hud-hint hud-held">
-        <kbd>Click</kbd> / <Key action="throw" /> throw · hold to charge · <Key action="drop" /> drop
+        <kbd>Click</kbd> / <Key action="throw" /> <T>throw · hold to charge</T> · <Key action="drop" /> <T>drop</T>
       </div>
     </>
   );

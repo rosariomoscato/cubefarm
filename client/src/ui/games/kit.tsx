@@ -1,6 +1,7 @@
 import { useEffect, useRef, type PointerEvent, type ReactNode } from 'react';
 import { isConfirmOpen } from '../Confirm';
 import { isKey } from '../controls';
+import { T, useT } from '../../i18n';
 
 // Shared plumbing for the phone games: a canvas that fits the phone and redraws every frame, keyboard input that
 // doesn't leak into the office, and touch buttons that repeat while held.
@@ -111,10 +112,11 @@ export function useGameKeys(handle: (e: KeyboardEvent) => boolean) {
 
 /** The strip above a game: back to the game list, the game's name, and whatever the game puts on the right. */
 export function GameHeader({ title, color, onBack, children }: { title: string; color: string; onBack: () => void; children?: ReactNode }) {
+  const t = useT();
   return (
     <div className="game-head" style={{ ['--game' as string]: color }}>
-      <button type="button" className="game-back" onClick={onBack} title="Back to the games (Backspace)">
-        ‹ Games
+      <button type="button" className="game-back" onClick={onBack} title={t('Back to the games (Backspace)')}>
+        <T>‹ Games</T>
       </button>
       <b className="game-title">{title}</b>
       <span className="game-head-right">{children}</span>

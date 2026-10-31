@@ -5,6 +5,7 @@ import { randomSeed } from './rng';
 import { blip } from './sounds';
 import { bestScore, recordScore } from './storage';
 import { COLS, ROWS, dropDistance, dropMs, hardDrop, move, newTetris, pieceCells, previewCells, rotate, softDrop, tick, type PieceType, type TetrisState } from './tetris';
+import { T, useT } from '../../i18n';
 
 // Cubetris on the phone: falling office blocks in the floors' colours, with a line-clear confetti pop.
 
@@ -31,6 +32,7 @@ export const tetrisInProgress = () => saved !== null;
 const CLEAR_WORDS = ['', 'Shipped!', 'Double ship!', 'Triple ship!', 'CUBETRIS!'];
 
 export function Tetris({ onBack }: { onBack: () => void }) {
+  const t = useT();
   const [status, setStatusState] = useState<Status>(saved ? 'paused' : 'ready');
   const st = useRef({
     game: saved ?? newTetris(randomSeed()),
@@ -67,13 +69,13 @@ export function Tetris({ onBack }: { onBack: () => void }) {
           burst(s.particles, BX + BW / 2, BY + y * C + C / 2, FLOOR, 10, 150);
         }
         const midY = BY + (next.cleared.reduce((a, b) => a + b, 0) / n) * C;
-        popText(s.particles, BX + BW / 2, midY - 14, CLEAR_WORDS[n], n === 4 ? '#ffc93c' : '#ffffff', n === 4 ? 26 : 20);
+        popText(s.particles, BX + BW / 2, midY - 14, t(CLEAR_WORDS[n]), n === 4 ? '#ffc93c' : '#ffffff', n === 4 ? 26 : 20);
         popText(s.particles, BX + BW / 2, midY + 12, `+${gained}`, '#80ed99', 16);
         if (n === 4) s.shake = 0.35;
       } else blip.land();
       if (next.level > prev.level) {
         blip.levelUp();
-        popText(s.particles, BX + BW / 2, BY + BH / 3, `Level ${next.level}!`, '#4fb3e8', 24);
+        popText(s.particles, BX + BW / 2, BY + BH / 3, t('Level {level}!', { level: next.level }), '#4fb3e8', 24);
       }
       if (next.over) {
         s.newBest = recordScore('tetris', next.score);
@@ -218,7 +220,7 @@ export function Tetris({ onBack }: { onBack: () => void }) {
 
     // side panel: what's next and the numbers
     card(ctx, SIDE, BY, 92, 110, '#ffffff', 10);
-    text(ctx, 'NEXT', SIDE + 46, BY + 13, 11, MUTED, 700);
+    text(ctx, t('NEXT'), SIDE + 46, BY + 13, 11, MUTED, 700);
     g.queue.slice(0, 3).forEach((t, i) => {
       const size = i === 0 ? 14 : 9;
       const cells = previewCells(t);
@@ -232,7 +234,7 @@ export function Tetris({ onBack }: { onBack: () => void }) {
     });
     const stat = (label: string, value: string, y: number, color = INK) => {
       card(ctx, SIDE, y, 92, 46, '#ffffff', 10);
-      text(ctx, label, SIDE + 46, y + 13, 10, MUTED, 700);
+      text(ctx, t(label), SIDE + 46, y + 13, 10, MUTED, 700);
       text(ctx, value, SIDE + 46, y + 31, 17, color, 700);
     };
     stat('SCORE', g.score.toLocaleString(), BY + 122);
@@ -243,44 +245,44 @@ export function Tetris({ onBack }: { onBack: () => void }) {
     drawParticles(ctx, s.particles, dt);
 
     if (s.status !== 'playing') {
-      const hint = s.status === 'ready' ? 'Space or tap to start' : s.status === 'paused' ? 'Space or tap to resume' : 'Space or tap to play again';
-      if (s.status === 'ready') messageCard(ctx, W, H, 'Cubetris', ['Stack the blocks.', 'Fill a row to ship it!', hint], TETRIS_COLOR);
-      else if (s.status === 'paused') messageCard(ctx, W, H, 'Coffee break ☕', [`Score ${g.score.toLocaleString()}`, hint], TETRIS_COLOR);
-      else messageCard(ctx, W, H, 'Stack overflow!', [`Score ${g.score.toLocaleString()}`, s.newBest ? '🏆 New best!' : `Best ${s.best.toLocaleString()}`, hint], '#f25f5c');
+      const hint = t(s.status === 'ready' ? 'Space or tap to start' : s.status === 'paused' ? 'Space or tap to resume' : 'Space or tap to play again');
+      if (s.status === 'ready') messageCard(ctx, W, H, 'Cubetris', [t('Stack the blocks.'), t('Fill a row to ship it!'), hint], TETRIS_COLOR);
+      else if (s.status === 'paused') messageCard(ctx, W, H, t('Coffee break ☕'), [t('Score {score}', { score: g.score.toLocaleString() }), hint], TETRIS_COLOR);
+      else messageCard(ctx, W, H, t('Stack overflow!'), [t('Score {score}', { score: g.score.toLocaleString() }), s.newBest ? t('🏆 New best!') : t('Best {score}', { score: s.best.toLocaleString() }), hint], '#f25f5c');
     } else if (g.score === 0 && g.locks === 0) {
-      outlinedText(ctx, 'Go!', BX + BW / 2, BY + BH / 2, 30 + Math.sin(now / 120) * 2, '#80ed99');
+      outlinedText(ctx, t('Go!'), BX + BW / 2, BY + BH / 2, 30 + Math.sin(now / 120) * 2, '#80ed99');
     }
   };
 
   return (
     <div className="game">
       <GameHeader title="Cubetris" color={TETRIS_COLOR} onBack={onBack}>
-        <button type="button" className="game-mini" tabIndex={-1} onPointerDown={(e) => e.preventDefault()} onClick={() => (status === 'playing' ? pause() : start())} title={status === 'playing' ? 'Pause (Enter)' : 'Play (Space)'}>
+        <button type="button" className="game-mini" tabIndex={-1} onPointerDown={(e) => e.preventDefault()} onClick={() => (status === 'playing' ? pause() : start())} title={t(status === 'playing' ? 'Pause (Enter)' : 'Play (Space)')}>
           {status === 'playing' ? '⏸' : '▶'}
         </button>
       </GameHeader>
-      <GameCanvas width={W} height={H} frame={frame} label="Cubetris board" onPointer={(kind) => kind === 'down' && pad(() => turn(1))()} />
+      <GameCanvas width={W} height={H} frame={frame} label={t('Cubetris board')} onPointer={(kind) => kind === 'down' && pad(() => turn(1))()} />
       <div className="game-pads">
-        <PadButton label="Move left" repeat onPress={pad(() => shift(-1))}>
+        <PadButton label={t('Move left')} repeat onPress={pad(() => shift(-1))}>
           ◀
         </PadButton>
-        <PadButton label="Soft drop" repeat onPress={pad(down)}>
+        <PadButton label={t('Soft drop')} repeat onPress={pad(down)}>
           ▼
         </PadButton>
-        <PadButton label="Move right" repeat onPress={pad(() => shift(1))}>
+        <PadButton label={t('Move right')} repeat onPress={pad(() => shift(1))}>
           ▶
         </PadButton>
         <span className="game-pad-gap" />
-        <PadButton label="Rotate" className="game-pad-round" onPress={pad(() => turn(1))}>
+        <PadButton label={t('Rotate')} className="game-pad-round" onPress={pad(() => turn(1))}>
           ⟳
         </PadButton>
-        <PadButton label="Drop" className="game-pad-round game-pad-hot" onPress={pad(drop)}>
+        <PadButton label={t('Hard drop')} className="game-pad-round game-pad-hot" onPress={pad(drop)}>
           ⤓
         </PadButton>
       </div>
       <div className="game-keys">
         <kbd>←</kbd>
-        <kbd>→</kbd> move · <kbd>↑</kbd> turn · <kbd>↓</kbd> down · <kbd>Space</kbd> drop · <kbd>Enter</kbd> pause
+        <kbd>→</kbd> <T>move</T> · <kbd>↑</kbd> <T>turn</T> · <kbd>↓</kbd> <T>down</T> · <kbd>Space</kbd> <T>hard drop</T> · <kbd>Enter</kbd> <T>pause</T>
       </div>
     </div>
   );

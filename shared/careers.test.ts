@@ -6,6 +6,27 @@ const NOW = Date.UTC(2026, 9, 4, 12);
 const career = (c: Partial<CareerView> = {}): CareerView => ({ ...newCareer(NOW), ...c });
 
 describe('career stats', () => {
+  it('localizes ranks and every known-for branch while preserving the English default', () => {
+    for (const [n, en, it] of [[0, 'Rookie', 'Esordiente'], [5, 'Regular', 'Esperto'], [15, 'Veteran', 'Veterano'], [40, 'Legend', 'Leggenda']] as const) {
+      expect(rank(career({ merged: n }))).toBe(en);
+      expect(rank(career({ merged: n }), 'en')).toBe(en);
+      expect(rank(career({ merged: n }), 'it')).toBe(it);
+    }
+    const cases: [Partial<CareerView>, string][] = [
+      [{}, 'Appena entrato nel team: primo incarico in arrivo'], [{ opened: 1 }, 'Prima PR in revisione, dita incrociate'],
+      [{ reviews: 12 }, 'Verifiche QA: 12, e non finisce qui'], [{ best: 3 }, 'QA superati al primo tentativo: 3 consecutivi'],
+      [{ qaPass: 3 }, 'Nessun QA fallito: 3 cicli superati'],
+      [{ merged: 1 }, 'Consegne pulite: 1 PR integrata senza correzioni'], [{ merged: 2 }, 'Consegne pulite: 2 PR integrate senza correzioni'],
+      [{ merged: 1, fixRounds: 1 }, 'Finora 1 PR integrata'], [{ merged: 2, fixRounds: 1 }, 'Finora 2 PR integrate'],
+    ];
+    for (const [data, expected] of cases) {
+      const c = career(data);
+      const before = JSON.stringify(c);
+      expect(knownFor(c, 'it')).toBe(expected);
+      expect(knownFor(c, 'en')).toBe(knownFor(c));
+      expect(JSON.stringify(c)).toBe(before);
+    }
+  });
   it('pass rate and fix rounds wait for data', () => {
     expect(passRate(career())).toBeNull();
     expect(passRate(career({ qaPass: 3, qaFail: 1 }))).toBe(0.75);

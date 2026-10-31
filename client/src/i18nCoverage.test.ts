@@ -10,6 +10,11 @@ import { ACTIONS } from './ui/keymap';
 import { EMOTE_LABEL } from '../../shared/presence';
 import { SNACKS } from './world/fridge';
 import { STATIC_FOCUS } from './ui/focusText';
+import { CATALOGUE, ACHIEVEMENTS } from '../../shared/progress';
+import { FILTER_LABELS } from './photo/filters';
+import { SLOT_NAMES } from './world/decor/decor';
+import { PET_LINES } from './ui/games/petText';
+import { STAGES } from './ui/games/pet';
 import { KIND_WORD, PALETTE_LABELS } from './ui/statusLook';
 import { doingText, floorRows } from './ui/floorRows';
 import { doing } from './pocket/pocketData';
@@ -19,6 +24,10 @@ import type { OfficeUpdateView } from '../../shared/types';
 import type { Agent } from './store';
 
 const surfaces = [
+  'ui/pongText.ts',
+  'photo/PhotoPanel.tsx', 'photo/photoMode.ts', 'photo/instantReplay.ts',
+  'ui/Catalogue.tsx', 'ui/CareerCard.tsx', 'ui/CoinChip.tsx', 'ui/HeldHint.tsx', 'ui/RoofHud.tsx', 'ui/BlasterHud.tsx', 'ui/PongHud.tsx',
+  'ui/games/Games.tsx', 'ui/games/TetrisGame.tsx', 'ui/games/SnakeGame.tsx', 'ui/games/PetGame.tsx', 'ui/games/kit.tsx', 'ui/games/petText.ts',
   'ui/Overlays.tsx', 'ui/ControlsSettings.tsx', 'ui/HUD.tsx', 'ui/WorkersPanel.tsx',
   'ui/CameraHud.tsx', 'ui/PresenceHud.tsx', 'ui/VisitorsList.tsx', 'ui/VisitorRow.tsx',
   'ui/MissionConsole.tsx', 'ui/TimeLapse.tsx', 'ui/operationText.ts',
@@ -31,6 +40,7 @@ const surfaces = [
 describe('Italian interface coverage', () => {
   it('has translations for literal messages explicitly marked on the covered surfaces', () => {
     const keys = new Set<string>();
+    let surface = '';
     type Node = { type?: string; [key: string]: unknown };
     const literals = (node: Node | undefined) => {
       if (node?.type === 'Literal' && typeof node.value === 'string' && node.value) keys.add(node.value);
@@ -40,12 +50,12 @@ describe('Italian interface coverage', () => {
       }
     };
     const visit = (node: Node) => {
-      if (node.type === 'VariableDeclarator' && ['COLUMNS', 'FIXES', 'SPEED_NOTE', 'SOUND_GROUP_LABELS', 'SOUND_GROUP_TITLES', 'CHATTER_LABELS', 'DAY_MODE_LABELS', 'GRAPHICS_LABELS', 'GROUPS', 'tip'].includes(String((node.id as Node)?.name))) {
+      if (node.type === 'VariableDeclarator' && ['COLUMNS', 'FIXES', 'SPEED_NOTE', 'SOUND_GROUP_LABELS', 'SOUND_GROUP_TITLES', 'CHATTER_LABELS', 'DAY_MODE_LABELS', 'GRAPHICS_LABELS', 'GROUPS', 'tip', 'CLEAR_WORDS', 'ENDS', 'LOST', 'moodText'].includes(String((node.id as Node)?.name))) {
         const collect = (value: unknown): void => {
           if (!value || typeof value !== 'object') return;
           const n = value as Node;
           if (n.type === 'ArrowFunctionExpression' || n.type === 'FunctionExpression') return;
-          if (n.type === 'Literal' && typeof n.value === 'string') keys.add(n.value);
+          if (n.type === 'Literal' && typeof n.value === 'string' && n.value) keys.add(n.value);
           for (const [key, child] of Object.entries(n)) {
             if (key === 'key') continue;
             if (Array.isArray(child)) child.forEach(collect);
@@ -55,7 +65,15 @@ describe('Italian interface coverage', () => {
         collect(node.init);
       }
       const callee = node.callee as Node | undefined;
-      if (node.type === 'CallExpression' && (callee?.name === 't' || (callee?.type === 'MemberExpression' && (callee.property as Node)?.name === 't'))) literals((node.arguments as Node[])[0]);
+      if (node.type === 'CallExpression' && (callee?.name === 't' || callee?.name === 'tr' || callee?.name === 'stat' || (callee?.type === 'MemberExpression' && (callee.property as Node)?.name === 't'))) literals((node.arguments as Node[])[0]);
+      if (node.type === 'CallExpression' && callee?.name === 'pad') literals((node.arguments as Node[])[2]);
+      if (node.type === 'Property' && ['label', 'title', 'what'].includes(String((node.key as Node)?.name))) literals(node.value as Node);
+      if (surface === 'photo/photoMode.ts' && node.type === 'Property' && (node.key as Node)?.name === 'key') literals(node.value as Node);
+      if (node.type === 'JSXElement' && ['Stat', 'Card'].includes(String(((node.openingElement as Node).name as Node)?.name))) {
+        for (const attr of (node.openingElement as Node).attributes as Node[]) {
+          if (['label', 'what', 'title'].includes(String((attr.name as Node)?.name))) literals(attr.value as Node);
+        }
+      }
       if (node.type === 'JSXElement' && ((node.openingElement as Node).name as Node)?.name === 'T') {
         for (const child of node.children as Node[]) {
           if (child.type === 'JSXText') keys.add((child.value as string).replace(/\s+/g, ' ').trim());
@@ -69,6 +87,7 @@ describe('Italian interface coverage', () => {
       }
     };
     for (const file of surfaces) {
+      surface = file;
       const source = readFileSync(new URL(file, import.meta.url), 'utf8');
       const parsed = parseSync(file, source);
       expect(parsed.errors, file).toEqual([]);
@@ -86,6 +105,9 @@ describe('Italian interface coverage', () => {
       ...ACTIONS.map((a) => a.label), ...ACTIONS.map((a) => a.group),
       ...Object.values(EMOTE_LABEL), ...Object.values(SNACKS).map((s) => s.short),
       ...Object.values(STATIC_FOCUS).flat(),
+      ...CATALOGUE.flatMap((c) => [c.name, c.blurb]), ...ACHIEVEMENTS.flatMap((a) => [a.name, a.blurb]),
+      ...Object.values(FILTER_LABELS), ...Object.values(SLOT_NAMES), ...PET_LINES, ...STAGES.map((s) => s.title),
+      ...Object.values(SNACKS).map((s) => s.name),
       ...[...BUILDS, ...FACIAL_HAIR, ...GLASSES, ...HEADWEAR].map((value) => value[0].toUpperCase() + value.slice(1)),
     ];
     for (const key of keys) expect(Object.hasOwn(italian, key), key).toBe(true);

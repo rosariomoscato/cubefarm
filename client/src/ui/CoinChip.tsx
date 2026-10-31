@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { repoOnFloor, useStore } from '../store';
 import { pling, watchCoffees } from '../world/decor/actions';
 import { onReward } from '../world/decor/rewards';
+import { useT } from '../i18n';
 
 const SHOW_MS = 1800;
 
 export function CoinChip() {
+  const t = useT();
   const coins = useStore((s) => {
     const repo = s.floor === 0 ? null : repoOnFloor(s.repos, s.floor);
     return repo ? (s.progress.floors[repo.id]?.coins ?? 0) : Object.values(s.progress.floors).reduce((n, f) => n + f.coins, 0);
@@ -31,7 +33,7 @@ export function CoinChip() {
     return () => clearTimeout(t);
   }, [gain]);
   return (
-    <button className="pill coin-pill" title="Coins: merges earn them, the lobby kiosk spends them on decorations" onClick={() => openOverlay({ kind: 'catalogue', repoId: repoOnFloor(useStore.getState().repos, useStore.getState().floor)?.id })}>
+    <button className="pill coin-pill" title={t('Coins: merges earn them, the lobby kiosk spends them on decorations')} onClick={() => openOverlay({ kind: 'catalogue', repoId: repoOnFloor(useStore.getState().repos, useStore.getState().floor)?.id })}>
       🪙 {coins}
       {gain && (
         <span key={gain.at} className="coin-gain">

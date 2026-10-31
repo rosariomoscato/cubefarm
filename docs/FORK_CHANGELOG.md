@@ -23,6 +23,26 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### PR #6: fotografia, giochi, catalogo, carriere e HUD specializzati
+
+**Stato:** quarto blocco sul branch della [PR #6](https://github.com/rosariomoscato/cubefarm/pull/6), senza merge né aggiornamento dell’ufficio reale.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Fotografia | Localizzazione | Pannello, filtri, galleria, controlli foto/clip/replay istantaneo e messaggi generati. Le note mantengono il testo inglese originale per i consumatori esistenti e affiancano metadati strutturati per il cambio lingua; nomi dei file, didascalie esportate ed errori tecnici restano letterali. |
+| Giochi | Localizzazione | Menu, controlli accessibili e testi canvas di Cubetris, Cable Snake e Desk Pet. I riquadri dei messaggi adattano il corpo del testo alla larghezza disponibile; nessuna modifica alle meccaniche o ai formati di salvataggio. Il cucciolo traduce solo frasi canoniche, saluto col nome corrente e promozioni note; messaggi storici e personalizzati restano invariati. |
+| Catalogo e carriere | Localizzazione | Nomi e descrizioni delle decorazioni/trofei integrati, scatola, spazi di collocazione, monete, schede e tabella delle carriere, anzianità, gradi e risultati. Titoli delle PR, nomi degli agenti, dettagli storici e ID sono preservati. |
+| HUD specializzati | Localizzazione | Indicazioni per cibo, bevande, decorazioni e schede trasportate, dardi/ricarica, terrazza e ping-pong. I messaggi di ping-pong sono isolati in una funzione pura, con inglese predefinito invariato. |
+| Evidenze | Verifica | [Cubetris IT](screenshots/italian-ui/specialized-cubetris-it.png), [foto mobile IT](screenshots/italian-ui/specialized-photo-it-mobile.png), [carriere IT](screenshots/italian-ui/specialized-careers-it.png), solo demo con identità fittizie. |
+
+**Verifiche del quarto blocco:** **108 test passati su 12 file**, inclusi giochi, fotografia pura, gradi/rami delle carriere in EN/IT, tutti i motivi dei punti nel ping-pong, frasi del cucciolo, preservazione di nomi/file/errori e controllo notifier client/server. TypeScript e build client/server superati, con i consueti avvisi bundle/Rapier e nessun cambio alle soglie. Edge/Playwright nella demo isolata: menu/canvas EN/IT, avvio e pausa dei due giochi, ripresa dopo chiusura del telefono, apertura/cura del cucciolo, foto PNG a dimensioni corrette, galleria e cambio lingua della nota già visibile, catalogo, tabella e scheda carriera con titoli PR invariati. Nessun errore console nel passaggio finale senza registrazione video; nessun overflow orizzontale nelle viste foto/cucciolo a 390 px in EN/IT. Lingua della demo ripristinata; salvataggi del cucciolo e preferenze cambiati soltanto nel browser temporaneo. Acquisto/collocazione delle decorazioni e interazioni 3D degli HUD non esercitati end-to-end in questo blocco.
+
+**Limite video emerso durante la prova:** Edge headless ha prodotto clip WebM di zero byte sia a 1 s sia a 4 s, con errore `ERR_REQUEST_RANGE_NOT_SATISFIABLE` nell’anteprima blob. I messaggi di salvataggio cambiano lingua, ma ciò **non valida l’export video**. Nessun confronto conclusivo con la baseline: non viene attribuito con certezza all’ambiente o a un difetto preesistente. Nessuna modifica al registratore per aggirare il problema; resta da verificare separatamente in browser interattivo. I tentativi browser hanno inoltre richiesto correzioni dei selettori e una ripetizione dopo timeout; il passaggio finale è distinto dai tentativi falliti.
+
+**CI:** il terzo blocco `df67d0e` ha superato [41198204965](https://github.com/rosariomoscato/cubefarm/actions/runs/41198204965). Il quarto richiede la propria CI dopo il push; nessuna nuova suite completa locale, con i limiti storici conservati sotto.
+
+**Residui:** alcune indicazioni dinamiche 3D/bersagli, viste e azioni delle schede e messaggi demo/server non coperti; identificatori tecnici e contenuti dell’utente intenzionalmente letterali. Il controllo delle chiavi esplicite non rileva ogni stringa inglese non marcata: nessuna dichiarazione di traduzione completa dell’applicazione.
+
 ### PR #6: guida, comandi e indicatori principali
 
 **Stato:** terzo blocco sul branch della [PR #6](https://github.com/rosariomoscato/cubefarm/pull/6), senza merge né aggiornamento dell’ufficio reale.

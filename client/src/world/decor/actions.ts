@@ -6,6 +6,7 @@ import { api } from '../../api';
 import { repoOnFloor, useStore, type Focus } from '../../store';
 import { noise, tone, type Vec3 } from '../../ui/sfx';
 import { placement } from './decor';
+import { languageTag, translate } from '../../../../shared/i18n';
 
 type DecorationAction = Extract<Focus['action'], { kind: 'decoration' } | { kind: 'trophy' }>;
 
@@ -105,8 +106,9 @@ export function showTrophy(id: string) {
   const def = achievementDef(id);
   const got = s.progress.achievements.find((a) => a.id === id);
   if (!def || !got) return;
-  const when = new Date(got.at).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  s.pushToast('success', `${def.icon} ${def.name}: ${def.blurb}. Won ${when}${got.detail ? ` · ${got.detail}` : ''}`);
+  const t = (key: string, values?: Record<string, string | number>) => translate(s.settings.language, key, values);
+  const when = new Date(got.at).toLocaleString(languageTag(s.settings.language), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  s.pushToast('success', `${def.icon} ${t(def.name)}: ${t(def.blurb)}. ${t('Won {time}', { time: when })}${got.detail ? ` · ${got.detail}` : ''}`);
 }
 
 // ---------- coffees ----------
