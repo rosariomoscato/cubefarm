@@ -7,6 +7,7 @@ import {
   NIGHT_OFF,
   NIGHT_ON,
   SCORE_MOODS,
+  SCORE_BARS,
   STREAK,
   STREAK_WINDOW,
   barSeconds,
@@ -133,7 +134,8 @@ describe('scoreBar', () => {
     expect(p.filter((x) => x === 'pad')).toHaveLength(4);
     expect(p).toContain('bass');
     expect(p).not.toContain('ostinato');
-    expect(p.filter((x) => x === 'keys').length).toBeLessThanOrEqual(1);
+    expect(p.filter((x) => x === 'keys').length).toBeGreaterThan(0);
+    expect(p.filter((x) => x === 'keys').length).toBeLessThan(parts('busy').filter((x) => x === 'keys').length);
   });
 
   it('busy: a gentle pulse joins', () => {
@@ -159,11 +161,12 @@ describe('scoreBar', () => {
     expect(parts('night')).not.toContain('bass');
   });
 
-  it('keeps one progression going round every four bars, whatever the mood', () => {
+  it('keeps an eight-bar phrase with a distinct second half and bounded notes in every mood', () => {
     for (const mood of SCORE_MOODS) {
-      expect(scoreBar(mood, 4)).toEqual(scoreBar(mood, 0));
-      expect(scoreBar(mood, -1)).toEqual(scoreBar(mood, 3));
-      for (let b = 0; b < 4; b++) {
+      expect(scoreBar(mood, SCORE_BARS)).toEqual(scoreBar(mood, 0));
+      expect(scoreBar(mood, 4)).not.toEqual(scoreBar(mood, 0));
+      expect(scoreBar(mood, -1)).toEqual(scoreBar(mood, SCORE_BARS - 1));
+      for (let b = 0; b < SCORE_BARS; b++) {
         for (const n of scoreBar(mood, b)) {
           expect(n.at).toBeGreaterThanOrEqual(0), expect(n.at).toBeLessThan(4);
           expect(n.len).toBeGreaterThan(0);
