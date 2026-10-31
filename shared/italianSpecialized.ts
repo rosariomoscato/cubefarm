@@ -1,5 +1,8 @@
 /** Photography, games, decorations and career UI. Names, save formats and repository content remain literal. */
 export const italianSpecialized: Readonly<Record<string, string>> = {
+  'Take coffee': 'Prendi il caffè', 'Take mug': 'Prendi la tazza',
+  '☕ Put a mug under the machine first': '☕ Metti prima una tazza sotto la macchina',
+  '☕ Your coffee is ready: take the mug': '☕ Il caffè è pronto: prendi la tazza',
   'Open the fridge': 'Apri il frigorifero', 'Close the fridge': 'Chiudi il frigorifero',
   'Grab the {snack}': 'Prendi: {snack}', 'Out of {snack}': 'Esaurito: {snack}',
   '🥡 “{label}”. Best leave it.': '🥡 “{label}”. Meglio lasciarlo stare.',

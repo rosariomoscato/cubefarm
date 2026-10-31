@@ -8,7 +8,7 @@ describe('navigation framing and content boundaries', () => {
   it('localizes static prompts only for their verified interaction kinds', () => {
     for (const [kind, labels] of Object.entries(STATIC_FOCUS)) {
       for (const label of labels) {
-        const focus = { id: 'test', label, action: { kind } } as Focus;
+        const focus = { id: 'test', label, action: kind === 'fridge' ? { kind, op: 'door' } : { kind } } as Focus;
         expect(focusText(focus, 'en')).toBe(label);
         expect(focusText(focus, 'it')).not.toBe(label);
       }

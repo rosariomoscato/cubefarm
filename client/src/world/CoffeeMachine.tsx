@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useStore } from '../store';
+import { translate } from '../../../shared/i18n';
 import { noise, tone, type Vec3 } from '../ui/sfx';
 import { playerAt } from './camera/rig';
 import { PLAYER, type Mug, type Slot } from './coffeeBreak';
@@ -71,6 +72,7 @@ export type CoffeeOp = 'place' | 'brew' | 'take';
 /** Aim at the machine and press E: put your mug under the spout, press the button, or take the mug. */
 export function coffeeAction(op: CoffeeOp) {
   const s = useStore.getState();
+  const t = (key: string) => translate(s.settings.language, key);
   const now = performance.now();
   set(tick(state, now));
   if (op === 'place') {
@@ -86,7 +88,7 @@ export function coffeeAction(op: CoffeeOp) {
     if (r.result === 'busy') return; // already brewing: the button does nothing
     if (r.result !== 'started') {
       sounds.nope();
-      s.pushToast('info', r.result === 'noMug' ? '☕ Put a mug under the machine first' : '☕ Your coffee is ready: take the mug');
+      s.pushToast('info', t(r.result === 'noMug' ? '☕ Put a mug under the machine first' : '☕ Your coffee is ready: take the mug'));
       return;
     }
     set(r.state);

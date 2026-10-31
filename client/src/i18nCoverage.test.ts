@@ -24,6 +24,7 @@ import type { OfficeUpdateView } from '../../shared/types';
 import type { Agent } from './store';
 
 const surfaces = [
+  'world/CoffeeMachine.tsx',
   'ui/focusText.ts', 'world/fridgeState.ts',
   'ui/pongText.ts',
   'photo/PhotoPanel.tsx', 'photo/photoMode.ts', 'photo/instantReplay.ts',

@@ -5,6 +5,15 @@ import { translate } from '../../../shared/i18n';
 import type { Focus } from '../store';
 
 describe('fridge interaction localization', () => {
+  it('localizes coffee pickup and ready notices without changing unrelated labels', () => {
+    for (const [label, expected] of [['Take coffee', 'Prendi il caffè'], ['Take mug', 'Prendi la tazza']]) {
+      const focus: Focus = { id: 'coffee:slot', label, action: { kind: 'coffee', op: 'take' } };
+      expect(focusText(focus, 'it')).toBe(expected);
+      expect(focusText(focus, 'en')).toBe(label);
+      expect(focusText({ ...focus, action: { kind: 'fridge', op: 'lunch' } }, 'it')).toBe(label);
+    }
+    expect(translate('it', '☕ Your coffee is ready: take the mug')).toBe('☕ Il caffè è pronto: prendi la tazza');
+  });
   it('translates canonical grab and sold-out prompts for every snack, with English unchanged', () => {
     for (const snack of SNACK_IDS) {
       for (const left of [0, 1, 4]) {

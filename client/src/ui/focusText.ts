@@ -7,7 +7,7 @@ export const STATIC_FOCUS: Partial<Record<Focus['action']['kind'], readonly stri
   manager: ["Open the manager's console", 'Mission control: open it in the console', 'Time-lapse: replay the office’s day'],
   elevator: ['Use the elevator', 'Choose a floor', 'Floor directory — take the elevator'],
   kanban: ['Open the Kanban board'], phone: ['See every team change on your phone'],
-  hire: ['Add an agent at this desk'], coffee: ['Put mug under the machine', 'Brew coffee'],
+  hire: ['Add an agent at this desk'], coffee: ['Put mug under the machine', 'Brew coffee', 'Take coffee', 'Take mug'],
   pickup: ['Take a blaster', 'Pick up blaster', 'Take a mug', 'Pick up mug', 'Pick up ball'],
   pong: ['Play ping-pong'], poke: ['Bang the gong'],
   roof: ['Sit back in the deck chair', 'Look through the telescope'],
