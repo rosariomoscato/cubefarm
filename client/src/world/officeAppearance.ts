@@ -11,3 +11,10 @@ export const OFFICE = {
   petrol: '#17485c',
   ceiling: '#dce3e5',
 };
+
+/** Muted project pigment for 3D finishes only; never changes the saved project colour. */
+export function projectAccent(color: string): string {
+  const rgb = Number.parseInt(color.slice(1), 16);
+  const neutral = [146, 153, 154];
+  return '#' + neutral.map((n, i) => Math.round(((rgb >> (16 - i * 8)) & 255) * 0.55 + n * 0.45).toString(16).padStart(2, '0')).join('');
+}
