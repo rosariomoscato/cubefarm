@@ -67,7 +67,7 @@ export function IssueForm({ repoId, agents, onDone }: { repoId: string; agents: 
 function Frame({ embedded, ...props }: Parameters<typeof Panel>[0] & { embedded?: boolean }) {
   if (!embedded) return <Panel {...props} />;
   return (
-    <section className="kanban-embedded" style={{ ['--accent' as string]: props.accent }}>
+    <section className={`kanban-embedded ${props.className ?? ''}`} style={{ ['--accent' as string]: props.accent }}>
       <h2 className="kanban-embedded-title">{props.title}</h2>
       {props.children}
     </section>
@@ -209,9 +209,10 @@ export function KanbanView({ repoId, embedded }: { repoId: string; embedded?: bo
     <Frame
       embedded={embedded}
       wide
-      accent={repo.color}
+      className="cyan-panel"
+      accent="#65d8ef"
       title={
-        <span>
+        <span style={{ borderLeft: `4px solid ${repo.color}`, paddingLeft: 8 }}>
           📋 {repo.fullName}{' '}
           <a className="small" href={repo.url} target="_blank" rel="noreferrer">
             GitHub ↗
