@@ -20,20 +20,21 @@ const pickOther = <T,>(list: T[], current: T) => {
   return rest[Math.floor(Math.random() * rest.length)];
 };
 
-/** A little portrait of the CEO in their suit, drawn to match the 3D office. */
+/** Decorative robot portrait; the existing identity and colour settings remain unchanged. */
 function CeoPortrait({ color, look }: { color: string; look: 'feminine' | 'masculine' }) {
   return (
     <svg viewBox="0 0 120 120" className="ceo-portrait" aria-hidden="true">
-      <circle cx="60" cy="60" r="58" fill="#e6dcff" stroke="#1f1d2b" strokeWidth="3" />
-      {look === 'feminine' && <ellipse cx="60" cy="58" rx="27" ry="32" fill="#2b2118" stroke="#1f1d2b" strokeWidth="2.5" />}
-      <path d="M22 118 C24 88 40 80 60 80 C80 80 96 88 98 118 Z" fill="#2b2d42" stroke="#1f1d2b" strokeWidth="3" />
-      <path d="M50 81 L60 96 L70 81 Z" fill="#f8f9fa" />
-      <path d="M57 84 L63 84 L65 108 L60 113 L55 108 Z" fill={color} stroke="#1f1d2b" strokeWidth="1.5" />
-      <circle cx="60" cy="52" r="22" fill="#f1c27d" stroke="#1f1d2b" strokeWidth="3" />
-      <path d="M38 50 C38 30 82 30 82 50 C74 40 46 40 38 50 Z" fill="#2b2118" stroke="#1f1d2b" strokeWidth="2" />
-      <circle cx="52" cy="54" r="2.6" fill="#1f1d2b" />
-      <circle cx="68" cy="54" r="2.6" fill="#1f1d2b" />
-      <path d="M53 62 Q60 68 67 62" fill="none" stroke="#1f1d2b" strokeWidth="2.4" strokeLinecap="round" />
+      <circle cx="60" cy="60" r="58" fill="#dceef2" stroke="#17485c" strokeWidth="3" />
+      <path d="M60 26V14" stroke="#202b38" strokeWidth="4" />
+      <circle cx="60" cy="12" r="5" fill={color} stroke="#202b38" strokeWidth="2" />
+      <rect x="34" y="82" width="52" height="31" rx="12" fill="#faf8f5" stroke="#202b38" strokeWidth="3" />
+      <rect x="48" y="90" width="24" height="12" rx="4" fill={color} />
+      <rect x="20" y="40" width="12" height="28" rx="6" fill={color} stroke="#202b38" strokeWidth="2" />
+      <rect x="88" y="40" width="12" height="28" rx="6" fill={color} stroke="#202b38" strokeWidth="2" />
+      <rect x="27" y="25" width="66" height="61" rx="20" fill="#faf8f5" stroke="#202b38" strokeWidth="3" />
+      <rect x="33" y="35" width="54" height="43" rx="14" fill="#121824" />
+      <path d="M43 54Q48 43 53 54M67 54Q72 43 77 54M53 65Q60 71 67 65" fill="none" stroke="#54dfff" strokeWidth="3.5" strokeLinecap="round" />
+      {look === 'feminine' && <path d="M42 30H78" stroke={color} strokeWidth="3" strokeLinecap="round" />}
     </svg>
   );
 }

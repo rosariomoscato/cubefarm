@@ -7,5 +7,7 @@ export const OFFICE = {
   amber: '#ffbb66',
   orange: '#e99743',
   floor: '#cdd5d8',
+  rug: '#718797',
+  petrol: '#17485c',
   ceiling: '#dce3e5',
 };
