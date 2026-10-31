@@ -23,6 +23,23 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### PR #6: guida, comandi e indicatori principali
+
+**Stato:** terzo blocco sul branch della [PR #6](https://github.com/rosariomoscato/cubefarm/pull/6), senza merge né aggiornamento dell’ufficio reale.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Guida estesa | Localizzazione | Tradotti i 33 paragrafi di aiuto, titoli, pulsanti e impostazioni audio, chiacchiere, giorno/notte e grafica. I paragrafi inglesi originali restano nel JSX; quelli italiani reinseriscono esplicitamente gli stessi tasti, enfasi e pulsanti. Test di corrispondenza uno-a-uno dei controlli e fallback sicuro se cambia la struttura. Nessuna sostituzione DOM o traduzione dei rapporti prestazioni. |
+| Comandi | Localizzazione | Etichette delle azioni, sensibilità, gamepad, istruzioni, conflitti, riassegnazione e ripristino. I messaggi di riassegnazione già visibili seguono il cambio lingua. Codici e nomi dei tasti restano tecnici; nessuna modifica alle regole di assegnazione. |
+| HUD e navigazione | Localizzazione | Stato connessione/riproduzione, riepiloghi dei piani, sessioni, telefono, avvisi di utilizzo, indicazioni principali, panoramica/edificio, elenco di agenti e visitatori ed espressioni. Tradotti solo prompt statici verificati per tipo di interazione: titoli di schede, nomi, output e formati sconosciuti restano letterali. |
+| Evidenze | Verifica | [Guida IT](screenshots/italian-ui/guide-it.png), [comandi mobile IT](screenshots/italian-ui/controls-it-mobile.png), [comandi mobile EN](screenshots/italian-ui/controls-en-mobile.png), solo demo con identità fittizie. |
+
+**Verifiche del terzo blocco:** **126 test passati su 14 file**, inclusi controlli i18n, separazione client/server del notifier, comandi, testi della diagnostica, visitatori e preservazione dei contenuti; TypeScript e build superati. Edge/Playwright nella demo isolata: guida e comandi IT/EN, cambio lingua senza ricaricare il messaggio di riassegnazione, assegnazione di un tasto, scambio per conflitto, ripristino e panoramica/edificio superati. Nessun errore console né overflow orizzontale nelle viste guida/comandi a 390 px; prova anche a 1440 px. La lingua della demo è ripristinata al termine; le preferenze dei tasti sono state modificate solo nel browser temporaneo di test. Nessuna nuova suite completa locale; i timeout del primo blocco rimangono documentati. La build conserva gli avvisi su dimensione dei bundle/import di Rapier, senza cambiare soglie o configurazione.
+
+**Stato CI precedente:** [41194674870](https://github.com/rosariomoscato/cubefarm/actions/runs/41194674870) superata su `d1215c8`, dopo lo spostamento del test nel server. Non valida questo terzo blocco, che richiede una nuova CI sul proprio head.
+
+**Copertura ancora residua:** HUD specializzati degli oggetti in mano e dei minigiochi, alcune indicazioni dinamiche 3D (bersagli, nomi e messaggi tecnici preservati), fotografia, giochi, catalogo/carriere, alcune viste delle schede e messaggi demo/server. Non si dichiara completa la localizzazione dell’applicazione. La demo resta aperta sulla 4431; il servizio reale sulla 4423 e i suoi dati non sono modificati.
+
 ### PR #6: centro di controllo e riepilogo della giornata
 
 **Stato:** secondo blocco sullo stesso branch della [PR #6](https://github.com/rosariomoscato/cubefarm/pull/6), senza merge né aggiornamento dell’ufficio reale.

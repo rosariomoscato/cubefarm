@@ -6,6 +6,10 @@ import { NOTIFY_EVENTS } from '../../shared/notify';
 import { THEME_INFO } from '../../shared/themes';
 import { BUILDS, FACIAL_HAIR, GLASSES, HEADWEAR } from '../../shared/looks';
 import { QA_BADGE } from './ui/channels';
+import { ACTIONS } from './ui/keymap';
+import { EMOTE_LABEL } from '../../shared/presence';
+import { SNACKS } from './world/fridge';
+import { STATIC_FOCUS } from './ui/focusText';
 import { KIND_WORD, PALETTE_LABELS } from './ui/statusLook';
 import { doingText, floorRows } from './ui/floorRows';
 import { doing } from './pocket/pocketData';
@@ -15,6 +19,8 @@ import type { OfficeUpdateView } from '../../shared/types';
 import type { Agent } from './store';
 
 const surfaces = [
+  'ui/Overlays.tsx', 'ui/ControlsSettings.tsx', 'ui/HUD.tsx', 'ui/WorkersPanel.tsx',
+  'ui/CameraHud.tsx', 'ui/PresenceHud.tsx', 'ui/VisitorsList.tsx', 'ui/VisitorRow.tsx',
   'ui/MissionConsole.tsx', 'ui/TimeLapse.tsx', 'ui/operationText.ts',
   'ui/ManagerConsole.tsx', 'ui/KanbanView.tsx', 'ui/TerminalView.tsx', 'ui/AgentSettings.tsx',
   'ui/AccessibilitySettings.tsx', 'ui/ProfileSettings.tsx', 'ui/OutsideSettings.tsx',
@@ -34,7 +40,7 @@ describe('Italian interface coverage', () => {
       }
     };
     const visit = (node: Node) => {
-      if (node.type === 'VariableDeclarator' && ['COLUMNS', 'FIXES', 'SPEED_NOTE'].includes(String((node.id as Node)?.name))) {
+      if (node.type === 'VariableDeclarator' && ['COLUMNS', 'FIXES', 'SPEED_NOTE', 'SOUND_GROUP_LABELS', 'SOUND_GROUP_TITLES', 'CHATTER_LABELS', 'DAY_MODE_LABELS', 'GRAPHICS_LABELS', 'GROUPS', 'tip'].includes(String((node.id as Node)?.name))) {
         const collect = (value: unknown): void => {
           if (!value || typeof value !== 'object') return;
           const n = value as Node;
@@ -69,7 +75,7 @@ describe('Italian interface coverage', () => {
       visit(parsed.program as unknown as Node);
     }
     expect(keys.size).toBeGreaterThan(200);
-    for (const key of keys) expect(Object.hasOwn(italian, key), key).toBe(true);
+    expect([...keys].filter((key) => !Object.hasOwn(italian, key))).toEqual([]);
   });
 
   it('covers the settings labels supplied by shared data', () => {
@@ -77,6 +83,9 @@ describe('Italian interface coverage', () => {
       ...NOTIFY_EVENTS.map((event) => event.label), ...Object.values(PALETTE_LABELS), ...Object.values(KIND_WORD),
       ...Object.values(THEME_INFO).flatMap((theme) => [theme.name, theme.when]),
       ...Object.values(QA_BADGE),
+      ...ACTIONS.map((a) => a.label), ...ACTIONS.map((a) => a.group),
+      ...Object.values(EMOTE_LABEL), ...Object.values(SNACKS).map((s) => s.short),
+      ...Object.values(STATIC_FOCUS).flat(),
       ...[...BUILDS, ...FACIAL_HAIR, ...GLASSES, ...HEADWEAR].map((value) => value[0].toUpperCase() + value.slice(1)),
     ];
     for (const key of keys) expect(Object.hasOwn(italian, key), key).toBe(true);
