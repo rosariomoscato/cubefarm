@@ -11,6 +11,7 @@ import { roundRect, SANS } from '../draw';
 import { useCanvasTexture, useInteractable } from '../interact';
 import { DECOR_BOX } from '../layout';
 import { glass, shade } from '../materials';
+import { projectAccent } from '../officeAppearance';
 import { decorName } from './actions';
 import { decorSize, openSlots, placement } from './decor';
 import * as M from './models';
@@ -101,7 +102,7 @@ function drawPoster(ctx: CanvasRenderingContext2D, w: number, h: number, item: D
     return;
   }
   if (item === 'poster-repo') {
-    ctx.fillStyle = repo.color;
+    ctx.fillStyle = projectAccent(repo.color);
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = 'rgba(255,255,255,0.18)';
     ctx.beginPath();
@@ -168,9 +169,9 @@ function Neon({ repo }: { repo: RepoView }) {
       let size = 150;
       ctx.font = `700 ${size}px ${SANS}`;
       while (size > 40 && ctx.measureText(name).width > 880) ctx.font = `700 ${(size -= 8)}px ${SANS}`;
-      ctx.shadowColor = repo.color;
+      ctx.shadowColor = projectAccent(repo.color);
       ctx.shadowBlur = 40;
-      ctx.strokeStyle = repo.color;
+      ctx.strokeStyle = projectAccent(repo.color);
       ctx.lineWidth = 14;
       ctx.strokeText(name, 512, 154);
       ctx.shadowBlur = 0;
@@ -313,10 +314,10 @@ function ItemLook({ item, slot, repo, floor }: { item: DecorItem; slot: string; 
     case 'pingpong':
       return <mesh geometry={M.pingpongModel()} material={vertexToon} castShadow receiveShadow />;
     case 'arcade':
-      return <Arcade accent={repo.color} />;
+      return <Arcade accent={projectAccent(repo.color)} />;
     case 'rug': {
       const s = decorSize('rug', slot);
-      return <mesh geometry={M.rugModel(s.w, s.d, shade(repo.color, 0.12))} material={vertexToon} receiveShadow />;
+      return <mesh geometry={M.rugModel(s.w, s.d, shade(projectAccent(repo.color), 0.12))} material={vertexToon} receiveShadow />;
     }
     default:
       return null; // drawn by Repeated
@@ -434,7 +435,7 @@ export function Decorations({ repo }: { repo: RepoView }) {
   return (
     <group>
       <DecorBox repo={repo} floor={floor} carrying={held?.item ?? null} />
-      <Repeated placed={shown} accent={repo.color} />
+      <Repeated placed={shown} accent={projectAccent(repo.color)} />
       {Object.entries(shown).map(([slot, item]) => (
         <Placed key={slot} slot={slot} item={item} repo={repo} floor={floor} carrying={!!held} />
       ))}

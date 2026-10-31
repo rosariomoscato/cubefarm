@@ -233,7 +233,7 @@ export function Shell({ kind, accent, floorColor }: { kind: FloorKind; accent: s
             <boxGeometry args={[w, 0.12, 0.04]} />
           </mesh>
           <mesh position={[0, 0.95, 0]} material={toon(accent)}>
-            <boxGeometry args={[w, 0.12, 0.03]} />
+            <boxGeometry args={[w, kind === 'office' ? 0.06 : 0.12, 0.03]} />
           </mesh>
           <Inlay at={[0, 0.98, 0.018]} size={[w, 0.018, 0.006]} />
           <mesh position={[0, WALL_H - 0.22, 0]} material={toon(OFFICE.graphite)}>

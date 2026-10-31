@@ -28,7 +28,7 @@ import { OfficeRituals } from './Rituals';
 import { PongTable } from './PongTable';
 import { Shell } from './Shell';
 import { Toys } from './toys';
-import { OFFICE } from './officeAppearance';
+import { OFFICE, projectAccent } from './officeAppearance';
 
 export function WallSign({
   position,
@@ -72,12 +72,13 @@ export const OfficeFloor = memo(function OfficeFloor({ repo }: { repo: RepoView 
   const { alarm, ref: signRef } = useFloorAlarm(repo.id);
   const name = repo.fullName.split('/')[1] ?? repo.fullName;
   const rugColor = OFFICE.rug;
+  const accent = projectAccent(repo.color);
   // whose lunch the tupperware in the fridge might be
   const lunchNames = agents.filter((a) => a.role !== 'ceo').map((a) => a.name).join('\n');
 
   return (
     <group>
-      <Shell kind="office" accent={repo.color} floorColor={OFFICE.floor} />
+      <Shell kind="office" accent={accent} floorColor={OFFICE.floor} />
       {DESK_RUGS.map((r) => (
         <Rug key={r.minZ} position={[(r.minX + r.maxX) / 2, 0.004, (r.minZ + r.maxZ) / 2]} size={[r.maxX - r.minX, r.maxZ - r.minZ]} color={rugColor} />
       ))}
@@ -88,7 +89,7 @@ export const OfficeFloor = memo(function OfficeFloor({ repo }: { repo: RepoView 
         <Desk
           key={slot}
           agent={bySlot.get(slot) ?? null}
-          accent={repo.color}
+          accent={accent}
           repoId={repo.id}
           position={position}
           rotationY={deskRotation(slot)}
@@ -108,7 +109,7 @@ export const OfficeFloor = memo(function OfficeFloor({ repo }: { repo: RepoView 
       <Decorations repo={repo} />
       <Gong repoId={repo.id} />
       <PongTable repoId={repo.id} />
-      <Elevator floorLabel={`▲ ${repo.floor} · ${name}`} accent={repo.color} />
+      <Elevator floorLabel={`▲ ${repo.floor} · ${name}`} accent={accent} />
       <Toys floor="office" />
       <ErrandDirector floor="office" agents={agents} leavers={leavers} onGone={gone} repoId={repo.id} />
       <OfficeRituals repo={repo} agents={agents} />
@@ -120,7 +121,7 @@ export const OfficeFloor = memo(function OfficeFloor({ repo }: { repo: RepoView 
         position={[-4.6, 1.95, HALF_D - 0.03]}
         size={[4.2, 1.3]}
         px={[1024, 317]}
-        draw={(ctx) =>
+        draw={(ctx) => {
           drawSign(
             ctx,
             1024,
@@ -130,9 +131,11 @@ export const OfficeFloor = memo(function OfficeFloor({ repo }: { repo: RepoView 
               { text: repo.fullName, size: 74 },
               { text: repo.description || 'no description', size: 36, weight: 500, color: 'rgba(255,255,255,0.85)' },
             ],
-            repo.color,
-          )
-        }
+            OFFICE.petrol,
+          );
+          ctx.fillStyle = accent;
+          ctx.fillRect(20, 24, 12, 269);
+        }}
         deps={[repo.floor, repo.fullName, repo.description, repo.color]}
       />
       <group ref={signRef}>

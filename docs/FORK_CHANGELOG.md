@@ -23,6 +23,25 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### Accenti di progetto più delicati nel piano 3D
+
+**Autorizzazione:** il manager ha approvato commit, push e apertura PR sul solo fork `rosariomoscato/cubefarm` per `feat/soft-project-accents`, dalla PR #10 integrata. Merge e aggiornamento reale richiedono autorizzazione distinta.
+
+- Colore del progetto attenuato nella sola resa 3D, mescolando 55% del colore originale e 45% di grigio neutro. Applicato a fascia parete, dettagli scrivanie/monitor, luci colorate delle postazioni e dello schermo app, pulsanti ascensore e decorazioni che seguono il progetto.
+- Fascia decorativa delle pareti ufficio dimezzata in altezza, senza cambiare pareti, percorsi o collisioni. Insegna progetto su fondo petrolio, con piccolo indicatore nel colore attenuato e testi conservati.
+- Pavimento neutro, colori salvati, interfacce 2D, robot, indicatori semantici e colori vivaci dei festeggiamenti merge preservati.
+- TypeScript e build client/server superati. Demo separata con progetto arancione: screenshot di giorno/sera, insegna e postazioni verificati; impostazioni, colore progetto e automazioni confrontati prima/dopo e conservati. Nessun errore console/pagina, script concluso regolarmente. Nessuna operazione AI o modifica a progetti reali; suite globale non ripetuta, quattro fallimenti storici invariati.
+
+**Evidenze:** [piano di giorno](screenshots/soft-project-accents/office-day.png), [insegna progetto](screenshots/soft-project-accents/project-sign.png), [postazioni](screenshots/soft-project-accents/workstations.png), [piano di sera](screenshots/soft-project-accents/office-evening.png).
+
+### PR #10 integrata e installazione reale aggiornata
+
+**Autorizzazione:** merge e aggiornamento reale approvati esplicitamente dal manager. [PR #10](https://github.com/rosariomoscato/cubefarm/pull/10) integrata nel solo fork con merge `182fbbe`; CI [41246324848](https://github.com/rosariomoscato/cubefarm/actions/runs/41246324848) superata su Ubuntu, job Windows/macOS saltati dal workflow.
+
+**Aggiornamento:** backup `cyan-panels-20261031-PR10` nella home reale, con bundle Git verificato, build precedente, launcher e dati copiati a server fermo (esclusi backup precedenti e junction). Checkout reale aggiornato in fast-forward da `59bad4e` a `182fbbe`; TypeScript e build client/server superati, riavvio tramite launcher originale.
+
+**Verifiche:** HTTP/HTTPS 200 e nuovo asset client confermato. Impostazioni, identità degli agenti e tutti i messaggi precedenti conservati; automazioni dei repository disabilitate, launcher invariato. Il confronto iniziale dei messaggi in PowerShell aveva una differenza di decodifica UTF-8; ricontrollati con Node e UTF-8 esplicito. Nel frattempo è arrivato un nuovo messaggio manager: verificata la conservazione dello storico senza richiedere l’assenza di nuovi messaggi. Nessuna richiesta AI inviata dal collaudo. Nota di deploy registrata localmente nella copia di sviluppo; le note sottostanti sull’attesa di autorizzazione descrivono le fasi precedenti.
+
 ### Console Manager e Kanban coordinati
 
 **Autorizzazione:** approvati commit, push e PR sul solo fork per `feat/cyan-manager-kanban`, includendo la successiva richiesta di coordinare anche la chat CEO. Merge e aggiornamento reale richiedono conferma distinta.
