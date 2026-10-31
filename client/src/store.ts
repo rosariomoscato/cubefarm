@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { translate, type Language } from '../../shared/i18n';
 import { CEO_ID, DEFAULT_DOG_NAME, DEFAULT_MAX_AGENTS, type AgentView, type CeoInfo, type CliView, type CloudView, type DoctorFinding, type HireRequestView, type LogLine, type NotifyChannelsView, type OfficeUpdateView, type OpsView, type PhoneMessage, type PongRow, type PrPreviewView, type QaView, type RepoView, type ServerEvent, type SwarmSettings, type TickerItem, type UsageView, type VisitorView, type VoiceCacheView, type WorldSnapshot } from '../../shared/types';
 import { blockers } from '../../shared/issues';
 import { latestListed } from '../../shared/watch';
@@ -654,7 +655,7 @@ export interface KanbanColumns {
  * Sort a floor's GitHub state and QA pipeline into the five office Kanban columns. With `usage`, backlog issues
  * auto-assign would start but Claude's usage holds back say so ("⏸ paced").
  */
-export function kanbanFor(repo: RepoView, agents: Agent[], qaRecords: Record<string, QaView>, usage?: Pick<UsageView, 'state'>): KanbanColumns {
+export function kanbanFor(repo: RepoView, agents: Agent[], qaRecords: Record<string, QaView>, usage?: Pick<UsageView, 'state'>, language?: Language): KanbanColumns {
   const openPulls = repo.pulls.filter((p) => p.state === 'OPEN');
   const byId = new Map(agents.map((a) => [a.id, a]));
   const workers = agents.filter((a) => a.role !== 'ceo');
@@ -674,7 +675,7 @@ export function kanbanFor(repo: RepoView, agents: Agent[], qaRecords: Record<str
       number: a.issueNumber,
       title: a.issueTitle ?? '',
       agent: a,
-      note,
+      note: translate(language, note),
       tone: a.status === 'error' ? 'bad' : a.status === 'stopped' || a.status === 'done' ? 'warn' : undefined,
     });
   }
@@ -686,7 +687,7 @@ export function kanbanFor(repo: RepoView, agents: Agent[], qaRecords: Record<str
     const dev = (rec?.devAgentId ? byId.get(rec.devAgentId) : undefined) ?? authorOf(p.number, p.headRefName);
     const tester = rec?.qaAgentId ? byId.get(rec.qaAgentId) : undefined;
     const base = { key: `pr-${p.number}`, number: p.number, prNumber: p.number, title: p.title, url: p.url, qa: rec };
-    const card = { ...base, ...qaCardNote(rec, p, repo.autoMerge) };
+    const card = { ...base, ...qaCardNote(rec, p, repo.autoMerge, language) };
     if (rec?.status === 'passed') ready.push({ ...card, agent: dev });
     else qa.push({ ...card, agent: rec?.status === 'testing' ? tester : dev });
   }
@@ -694,7 +695,7 @@ export function kanbanFor(repo: RepoView, agents: Agent[], qaRecords: Record<str
   const claimed = new Set<number>([...progress.map((c) => c.number), ...openPulls.flatMap((p) => p.closesIssues)]);
   const open = new Set(repo.issues.map((i) => i.number));
   const held = new Map((repo.held ?? []).map((h) => [h.issue, h.pr]));
-  const paced = repo.autoAssign && usage && usage.state !== 'normal' ? (usage.state === 'paused' ? '⏸ paused' : '⏸ paced') : '';
+  const paced = repo.autoAssign && usage && usage.state !== 'normal' ? translate(language, usage.state === 'paused' ? '⏸ paused' : '⏸ paced') : '';
   const backlog: KanbanCard[] = repo.issues
     .filter((i) => !claimed.has(i.number))
     .map((i) => {
@@ -702,8 +703,8 @@ export function kanbanFor(repo: RepoView, agents: Agent[], qaRecords: Record<str
       const labels = i.labels.slice(0, 2).join(', ');
       const card = { key: `i-${i.number}`, number: i.number, title: i.title, url: i.url };
       // Its PR was closed: it waits for the manager rather than going back to auto-assign.
-      if (held.has(i.number)) return { ...card, note: `⏸ PR #${held.get(i.number)} closed · assign by hand`, tone: 'warn' as const };
-      return { ...card, note: (waits.length ? `⏳ after #${waits.join(', #')}` : [paced, labels].filter(Boolean).join(' · ')) || undefined };
+      if (held.has(i.number)) return { ...card, note: translate(language, '⏸ PR #{number} closed · assign by hand', { number: held.get(i.number)! }), tone: 'warn' as const };
+      return { ...card, note: (waits.length ? translate(language, '⏳ after #{numbers}', { numbers: waits.join(', #') }) : [paced, labels].filter(Boolean).join(' · ')) || undefined };
     });
 
   const merged: KanbanCard[] = repo.pulls

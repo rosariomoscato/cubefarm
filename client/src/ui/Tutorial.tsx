@@ -3,6 +3,7 @@ import { api } from '../api';
 import { useStore } from '../store';
 import { CEO_ID } from '../../../shared/types';
 import { Key, MoveKeys } from './Key';
+import { T, useT } from '../i18n';
 
 // The first-run tour: a coach card in the corner that moves on by itself as you try each thing,
 // with Next and Skip always there. Progress lives in settings.tutorialStep, so a refresh resumes it.
@@ -10,6 +11,7 @@ import { Key, MoveKeys } from './Key';
 type S = ReturnType<typeof useStore.getState>;
 
 interface Ctx {
+  t: ReturnType<typeof useT>;
   ceo: string;
   company: string;
   repo: string | null; // first project's short name
@@ -27,8 +29,7 @@ const STEPS: Step[] = [
     title: 'Look around',
     body: () => (
       <>
-        Click the view to grab the mouse and look around, then walk with <MoveKeys />. Hold <Key action="run" /> to run. <kbd>Esc</kbd> gives you the mouse back. <Key action="overview" /> shows the whole floor
-        from above.
+        <T>Click the view to grab the mouse and look around, then walk with</T> <MoveKeys />. <T>Hold</T> <Key action="run" /> <T>to run.</T> <kbd>Esc</kbd> <T>gives you the mouse back.</T> <Key action="overview" /> <T>shows the whole floor from above.</T>
       </>
     ),
     done: (s) => s.locked,
@@ -38,7 +39,7 @@ const STEPS: Step[] = [
     title: 'Pull out your phone',
     body: (c) => (
       <>
-        Press <Key action="phone" />. Your phone is how you talk to {c.ceo} from anywhere in the building.
+        <T>Press</T> <Key action="phone" />{c.t('. Your phone is how you talk to {name} from anywhere in the building.', { name: c.ceo })}
       </>
     ),
     done: (s) => s.overlay?.kind === 'phone',
@@ -47,7 +48,7 @@ const STEPS: Step[] = [
     title: 'Your phone',
     body: (c) => (
       <>
-        💬 {c.ceo} texts you here, and you can text back. 👥 <b>Team</b> shows the CEO's team changes waiting for your OK. 📊 <b>Company</b> is every project at a glance. Put it away with <Key action="phone" />.
+        {c.t('💬 {name} texts you here, and you can text back.', { name: c.ceo })} 👥 <b><T>Team</T></b> <T>shows the CEO’s team changes waiting for your OK.</T> 📊 <b><T>Company</T></b> <T>is every project at a glance. Put it away with</T> <Key action="phone" />.
       </>
     ),
     done: (s) => s.overlay?.kind !== 'phone',
@@ -57,7 +58,7 @@ const STEPS: Step[] = [
     title: 'Visit the CEO',
     body: (c) => (
       <>
-        {c.ceo}'s corner office is at the back right of the lobby, under the purple sign. Walk in and press <Key action="interact" /> or click the desk to see what {c.ceo} is up to.
+        {c.t('{name}’s corner office is at the back right of the lobby, under the purple sign. Walk in and press', { name: c.ceo })} <Key action="interact" /> {c.t('or click the desk to see what {name} is up to.', { name: c.ceo })}
       </>
     ),
     done: (s) => (s.overlay?.kind === 'terminal' && s.overlay.agentId === CEO_ID) || (s.overlay?.kind === 'manager' && s.overlay.tab === 'ceo'),
@@ -66,8 +67,7 @@ const STEPS: Step[] = [
     title: 'New agents',
     body: (c) => (
       <>
-        When {c.ceo} wants a bigger team, each new agent waits on the green chairs along the east wall. Press <Key action="interact" /> or click one to see why, change their coding agent, model or effort if
-        you like, then hire or decline. It all works from your phone too.
+        {c.t('When {name} wants a bigger team, each new agent waits on the green chairs along the east wall. Press', { name: c.ceo })} <Key action="interact" /> <T>or click one to see why, change their coding agent, model or effort if you like, then hire or decline. It all works from your phone too.</T>
       </>
     ),
     done: (s) => s.requests.some((r) => r.status !== 'pending' && r.decidedBy === 'manager'),
@@ -77,11 +77,11 @@ const STEPS: Step[] = [
     body: (c) =>
       c.repo ? (
         <>
-          {c.repo} has its own floor. Walk into the elevator in the middle of the south wall and press <Key action="interact" /> on its panel, or press <Key action="interact" /> or click the directory beside it.
+          {c.t('{repo} has its own floor. Walk into the elevator in the middle of the south wall and press', { repo: c.repo })} <Key action="interact" /> <T>on its panel, or press</T> <Key action="interact" /> <T>or click the directory beside it.</T>
         </>
       ) : (
         <>
-          Every project gets its own floor. Add one in your office (the glass room at the back left), then take the elevator in the middle of the south wall.
+          <T>Every project gets its own floor. Add one in your office (the glass room at the back left), then take the elevator in the middle of the south wall.</T>
         </>
       ),
     done: (s) => s.floor > 0,
@@ -90,7 +90,7 @@ const STEPS: Step[] = [
     title: 'The whiteboard',
     body: () => (
       <>
-        The whiteboard at the front of every floor is its Kanban board. Press <Key action="interact" /> or click it to hand out issues, send pull requests to QA and merge them.
+        <T>The whiteboard at the front of every floor is its Kanban board. Press</T> <Key action="interact" /> <T>or click it to hand out issues, send pull requests to QA and merge them.</T>
       </>
     ),
     done: (s) => s.overlay?.kind === 'kanban',
@@ -99,7 +99,7 @@ const STEPS: Step[] = [
     title: 'Watch the team',
     body: () => (
       <>
-        Walk up behind anyone to watch their screen, or press <Key action="interact" /> or click a desk for their full terminal. Every pull request is tested by an agent before you merge it.
+        <T>Walk up behind anyone to watch their screen, or press</T> <Key action="interact" /> <T>or click a desk for their full terminal. Every pull request is tested by an agent before you merge it.</T>
       </>
     ),
     done: (s) => s.overlay?.kind === 'terminal' && s.overlay.agentId !== CEO_ID,
@@ -108,18 +108,19 @@ const STEPS: Step[] = [
     title: 'Your office',
     body: (c) => (
       <>
-        Your glass office in the lobby (back left) has the manager's console: projects, the team, and the CEO's settings. Press <Key action="help" /> any time for help. Enjoy running {c.company}!
+        <T>Your glass office in the lobby (back left) has the manager’s console: projects, the team, and the CEO’s settings. Press</T> <Key action="help" /> {c.t('any time for help. Enjoy running {company}!', { company: c.company })}
       </>
     ),
   },
 ];
 
 export function Tutorial() {
+  const t = useT();
   const step = useStore((s) => s.settings.tutorialStep);
   const setupDone = useStore((s) => s.settings.setupDone);
   const started = useStore((s) => s.started);
   const company = useStore((s) => s.settings.companyName);
-  const ceo = useStore((s) => s.agents[CEO_ID]?.name ?? 'the CEO');
+  const ceo = useStore((s) => s.agents[CEO_ID]?.name) ?? t('the CEO');
   const repo = useStore((s) => s.repos[0]?.fullName.split('/')[1] ?? null);
   const [cheer, setCheer] = useState(false);
   const moving = useRef(false);
@@ -181,24 +182,24 @@ export function Tutorial() {
     <div className={`tour ${cheer ? 'tour-cheer' : ''}`}>
       <div className="tour-head">
         <span className="tour-count">
-          🧭 Tour · {step + 1}/{STEPS.length}
+          <T>🧭 Tour</T> · {step + 1}/{STEPS.length}
         </span>
         <span className="spacer" />
         <button className="linkish small" onClick={() => go(STEPS.length)}>
-          Skip tour
+          <T>Skip tour</T>
         </button>
       </div>
-      <div className="tour-title">{cheer ? `✅ ${s.title}` : s.title}</div>
-      <div className="tour-body">{s.body({ ceo, company: company || 'the company', repo })}</div>
+      <div className="tour-title">{cheer ? `✅ ${t(s.title)}` : t(s.title)}</div>
+      <div className="tour-body">{s.body({ ceo, company: company || t('the company'), repo, t })}</div>
       <div className="tour-nav">
         {step > 0 && (
           <button className="btn btn-small btn-ghost" onClick={() => go(step - 1)}>
-            ← Back
+            <T>← Back</T>
           </button>
         )}
         <span className="spacer" />
         <button className="btn btn-small btn-good" onClick={() => go(step + 1)}>
-          {last ? 'Finish the tour' : s.done ? 'Skip this step' : 'Next →'}
+          {t(last ? 'Finish the tour' : s.done ? 'Skip this step' : 'Next →')}
         </button>
       </div>
     </div>

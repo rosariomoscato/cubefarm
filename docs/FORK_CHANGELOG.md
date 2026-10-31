@@ -23,6 +23,29 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-10-31
 
+### Traduzione italiana: console, impostazioni e flusso operativo
+
+**Stato:** primo blocco sul branch `feat/complete-italian-ui`, non ancora integrato in `main`. Nessun rilascio npm o aggiornamento dell’ufficio reale.
+
+| Feature | Tipo | Breve descrizione |
+| --- | --- | --- |
+| Console e progetti | Localizzazione | Tradotti testi descrittivi, conferme e campi della console manager, collegamento/creazione dei progetti, configurazione degli agenti e lista dei piani. Il selettore EN/IT esistente è mantenuto. |
+| Kanban e anteprime | Localizzazione | Tradotti comandi, colonne, conferme di merge/chiusura/rinvio, stati delle anteprime e pannello QA. Titoli, descrizioni, rapporti QA, comandi, modelli, branch e output dei processi non vengono tradotti. |
+| Impostazioni | Localizzazione | Coperti testi e controlli per accessibilità, profilo, cloud, notifiche, voce, meteo e festività, incluse etichette accessibili, placeholder e valori descrittivi dei cataloghi. Nessun cambiamento alle automazioni o ai segreti. |
+| Telefono e modalità tascabile | Localizzazione | Tradotti riepiloghi aziendali, richieste sul team, avvisi, campi di chat, stato degli agenti e conferme delle approvazioni. Nomi e contenuti del manager/CEO sono conservati letteralmente. |
+| Visita guidata e stati dinamici | Localizzazione | Tradotti i nove passaggi della visita guidata, le relative azioni, i riepiloghi dell’aggiornamento e le note generate dal Kanban/QA. Dettagli tecnici e note preesistenti restano letterali; nessun cambiamento alle decisioni del flusso di lavoro. |
+| Regressioni | Verifica | Aggiunto controllo AST delle chiavi esplicitamente marcate nelle superfici coperte, controllo dei cataloghi condivisi e casi di conservazione letterale di nomi, titoli e identificatori. Rimane il test globale sui placeholder del dizionario. |
+
+**Copertura residua esplicita:** questo blocco non completa l’intera applicazione. Restano da localizzare guida estesa, controlli, HUD e testi 3D, centro di controllo, time-lapse, fotografia, giochi/catalogo/carriere e alcune viste delle schede. Il fallback inglese resta attivo; la presenza di una chiave nel dizionario non implica che tutte le relative viste la usino.
+
+**Verifiche intermedie:** gruppi mirati da 21 e poi 62 test superati; build/TypeScript successivamente superati dopo la correzione di due errori nei dati dei nuovi test. Prima prova browser su demo isolata superata in Edge headless: cambio EN/IT su impostazioni desktop e modalità tascabile, modulo nuova issue e nessun overflow orizzontale nella schermata mobile verificata; nessun errore console rilevato. Il browser integrato non ha risposto ai comandi di apertura/navigazione; la prova è stata quindi eseguita direttamente con Playwright e il browser già installato, senza nuove installazioni.
+
+**Limiti della suite completa:** la prima esecuzione ha superato il limite del comando dopo timeout nelle simulazioni 3D. La seconda, con due worker, è terminata con 2.549 test passati e 16 falliti su 234 file (224 passati, 10 falliti): timeout/soglie di prestazione 3D, scala, Git/workspace, test asincroni del server e due controlli della copertura i18n. Questa esecuzione è partita prima della conclusione delle modifiche; le chiavi segnalate dai controlli i18n sono presenti nell’albero finale, ma un run durante l’evoluzione dei sorgenti non può validare l’albero finale. I gruppi mirati successivi non sostituiscono una suite completa. Nessuna soglia o configurazione dei test modificata; gli esiti successivi sono riportati sotto. Non si dichiara la suite completa superata.
+
+**Verifica sequenziale dell’albero finale:** 62 test passati su sei file, build/TypeScript superati e prova Edge/Playwright EN/IT superata. Verificati impostazioni a 390 px e 1.440 px, modulo issue del Kanban e testo della visita guidata, senza creazione di issue o avvio di agenti reali. Nessun errore console e nessun overflow orizzontale nella schermata mobile verificata. [Screenshot desktop IT](screenshots/italian-ui/desktop-it-settings.png), [desktop EN](screenshots/italian-ui/desktop-en-settings.png), [mobile IT](screenshots/italian-ui/pocket-it-settings.png), [mobile EN](screenshots/italian-ui/pocket-en-settings.png). Solo demo con percorsi fittizi nelle immagini. Demo arrestata; ufficio reale ancora attivo, senza incarichi e con automazioni disattivate.
+
+**Confronto con il main invariato:** lo stesso ambiente ha riprodotto la soglia di prestazione dei percorsi e i timeout di simulazioni eventi, luce e lanci anche sul main (`20c3897`); il gruppo di sette file sul main è terminato con 71 test passati e cinque falliti, incluso un ulteriore timeout nel controllo dei sorgenti delle notifiche. Questo dimostra la riproducibilità di alcuni problemi sulla baseline, non la causa di tutti i fallimenti. Ultimo run completo sull’albero finale avviato con un solo worker, senza modificare i sorgenti durante l’esecuzione; esito ancora in attesa.
+
 ### PR #5 integrata: consolidamento dipendenze e rifiniture del manager
 
 **Riferimenti e stato:** [PR #5 del fork](https://github.com/rosariomoscato/cubefarm/pull/5), integrata con conferma esplicita del manager; merge commit `7b93a118bdbc24d071e4f48d892efa3bbe8a4e6c`. Checkout locale riportato su `main` e aggiornato in fast-forward, branch di lavoro conservati. Nessun incarico AI, modifica al progetto di prova o rilascio npm in questa operazione.

@@ -1,34 +1,34 @@
 // The office's own update, in plain words for the console and the HUD, and the reload that brings in the new client.
 import type { OfficeUpdateView } from '../../shared/types';
+import { translate, type Language } from '../../shared/i18n';
 
 /** The server stops the sessions still running this long after it started draining (#37). */
 export const DRAIN_TIMEOUT_MS = 20 * 60_000;
 
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
-
 /** One line for the console's Office row, e.g. "3 updates ready" or "Waiting for 2 sessions to finish". */
-export function officeUpdateText(u: OfficeUpdateView): string {
+export function officeUpdateText(u: OfficeUpdateView, language?: Language): string {
+  const t = (text: string, values?: Record<string, string | number>) => translate(language, text, values);
   switch (u.state) {
     case 'none':
-      return 'Up to date';
+      return t('Up to date');
     case 'available':
-      return u.behind > 0 ? `${plural(u.behind, 'update')} ready` : 'An update is ready';
+      return u.behind > 0 ? t(u.behind === 1 ? '{count} update ready' : '{count} updates ready', { count: u.behind }) : t('An update is ready');
     case 'waiting':
     case 'draining':
-      return u.running > 0 ? `Waiting for ${plural(u.running, 'session')} to finish` : 'Updating shortly…';
+      return u.running > 0 ? t(u.running === 1 ? 'Waiting for {count} session to finish' : 'Waiting for {count} sessions to finish', { count: u.running }) : t('Updating shortly…');
     case 'updating':
-      return 'Updating…';
+      return t('Updating…');
     case 'failed':
-      return `Last update failed: ${u.detail || 'unknown error'}`;
+      return t('Last update failed: {detail}', { detail: u.detail || t('unknown error') });
   }
 }
 
 /** The HUD chip while an update is on its way; null when there's nothing to show. */
-export function officeUpdateChip(u: OfficeUpdateView | undefined): string | null {
+export function officeUpdateChip(u: OfficeUpdateView | undefined, language?: Language): string | null {
   if (!u) return null;
-  if (u.state === 'updating') return '⟳ Updating the office…';
+  if (u.state === 'updating') return translate(language, '⟳ Updating the office…');
   if (u.state !== 'waiting' && u.state !== 'draining') return null;
-  return u.running > 0 ? `⟳ Updating the office after ${plural(u.running, 'session')} finish${u.running === 1 ? 'es' : ''}` : '⟳ Updating the office shortly';
+  return u.running > 0 ? translate(language, u.running === 1 ? '⟳ Updating the office after {count} session finishes' : '⟳ Updating the office after {count} sessions finish', { count: u.running }) : translate(language, '⟳ Updating the office shortly');
 }
 
 /** When a drain gives up on the sessions still running, or null when it isn't draining. */

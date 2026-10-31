@@ -16,6 +16,7 @@ import { Games, type GameId } from './games/Games';
 import { HolidayStrip } from './HolidayStrip';
 import { replayKind } from './voiceQueue';
 import { CLAUDE_MODELS, effectiveModel, modelSuggestions } from '../../../shared/models';
+import { translate } from '../../../shared/i18n';
 
 // The manager's phone: text the CEO, decide on team changes, see the whole company at a glance
 // without walking anywhere, and play a game while the team works. Press P anywhere in the office.
@@ -67,11 +68,13 @@ export const hireOverrides = (r: HireRequestView, s: HireSetup) => ({ name: s.na
 /** "Claude Code · claude-opus-5-5 · medium effort": what they'll run, the office defaults filled in. */
 export function setupLine(s: Pick<HireSetup, 'cli' | 'model' | 'effort'>, settings: SwarmSettings, clis: CliView[]) {
   const cli = hireCli(s.cli, settings);
-  return `${cliLabel(clis, cli)} · ${effectiveModel(s.model, cli, settings, CLAUDE_MODELS[0]) || 'its default model'} · ${s.effort || settings.defaultEffort} effort`;
+  const t = (text: string, values?: Record<string, string | number>) => translate(settings.language, text, values);
+  return `${cliLabel(clis, cli)} · ${effectiveModel(s.model, cli, settings, CLAUDE_MODELS[0]) || t('its default model')} · ${t('{effort} effort', { effort: s.effort || settings.defaultEffort })}`;
 }
 
 /** A new agent's settings, edited before they're created: the lobby's card and the phone's both use these. */
 export function HireSetupFields({ value, onChange, disabled, repo }: { value: HireSetup; onChange: (v: HireSetup) => void; disabled?: boolean; repo?: string }) {
+  const t = useT();
   const settings = useStore((s) => s.settings);
   const clis = useStore((s) => s.clis);
   const id = useId();
@@ -91,16 +94,16 @@ export function HireSetupFields({ value, onChange, disabled, repo }: { value: Hi
           id={`${id}-cli`}
           value={sdk ? '' : value.cli}
           disabled={disabled || sdk}
-          title={sdk ? 'The Agent SDK runs Claude Code for every agent (Settings → How agents run)' : undefined}
+          title={sdk ? t('The Agent SDK runs Claude Code for every agent (Settings → How agents run)') : undefined}
           onChange={(e) => set({ cli: e.target.value as AgentCli | '' })}
         >
-          <option value="">{sdk ? 'Claude Code' : `${cliLabel(clis, settings.defaultCli)} (default)`}</option>
+          <option value="">{sdk ? 'Claude Code' : `${cliLabel(clis, settings.defaultCli)} ${t('(default)')}`}</option>
           {[...clis]
             .sort((a, b) => Number(b.installed) - Number(a.installed))
             .map((c) => (
               <option key={c.id} value={c.id} disabled={!c.installed || !!c.problem} title={c.problem}>
                 {c.label}
-                {!c.installed ? ' (not installed)' : c.problem ? ' (incompatible version)' : ''}
+                {t(!c.installed ? ' (not installed)' : c.problem ? ' (incompatible version)' : '')}
               </option>
             ))}
         </select>
@@ -112,8 +115,8 @@ export function HireSetupFields({ value, onChange, disabled, repo }: { value: Hi
           list={`${id}-models`}
           value={value.model}
           disabled={disabled}
-          placeholder={effectiveModel('', cli, settings, CLAUDE_MODELS[0]) || 'agent default'}
-          title="Empty: the default for their coding agent"
+          placeholder={effectiveModel('', cli, settings, CLAUDE_MODELS[0]) || t('agent default')}
+          title={t('Empty: the default for their coding agent')}
           onChange={(e) => set({ model: e.target.value })}
         />
         <datalist id={`${id}-models`}>
@@ -124,9 +127,9 @@ export function HireSetupFields({ value, onChange, disabled, repo }: { value: Hi
       </label>
       {cli === 'opencode' && <OpenCodeModelPicker value={value.model} repo={repo} disabled={disabled} inherited={settings.defaultCli === 'opencode' ? settings.defaultModel : undefined} onSelect={(model) => set({ model })} />}
       <label className="field" htmlFor={`${id}-effort`}>
-        <span>{cli === 'opencode' ? 'Variant' : 'Effort'}</span>
+        <span>{t(cli === 'opencode' ? 'Variant' : 'Effort')}</span>
         {cli === 'opencode' ? <OpenCodeVariantSelect id={`${id}-effort`} value={value.model} repo={repo} disabled={disabled} inherited={settings.defaultCli === 'opencode' ? settings.defaultModel : undefined} onSelect={(model) => set({ model })} /> : <select id={`${id}-effort`} value={value.effort} disabled={disabled} onChange={(e) => set({ effort: e.target.value as EffortLevel | '' })}>
-          <option value="">default ({settings.defaultEffort})</option>
+          <option value="">{t('default ({effort})', { effort: settings.defaultEffort })}</option>
           {EFFORTS.map((x) => (
             <option key={x} value={x}>
               {x}
@@ -136,12 +139,12 @@ export function HireSetupFields({ value, onChange, disabled, repo }: { value: Hi
       </label>
       {(cloudKey || value.host === 'box') && (
         <label className="field" htmlFor={`${id}-host`}>
-          <span>Works on</span>
+          <span><T>Works on</T></span>
           <select id={`${id}-host`} value={value.host} disabled={disabled} onChange={(e) => set({ host: e.target.value as MachineHost | '' })}>
-            <option value="">{settings.cloud.machineKind === 'box' ? '☁️ Upstash Box' : '🖥️ This computer'} (default)</option>
-            <option value="local">🖥️ This computer</option>
+            <option value="">{settings.cloud.machineKind === 'box' ? '☁️ Upstash Box' : t('🖥️ This computer')} {t('(default)')}</option>
+            <option value="local">{t('🖥️ This computer')}</option>
             <option value="box" disabled={cli === 'opencode'}>
-              ☁️ Upstash Box{cli === 'opencode' ? " (OpenCode can't run there)" : ''}
+              ☁️ Upstash Box{cli === 'opencode' ? t(' (OpenCode can’t run there)') : ''}
             </option>
           </select>
         </label>
@@ -155,6 +158,7 @@ export function HireSetupFields({ value, onChange, disabled, repo }: { value: Hi
  * change it before hiring them, or an agent the CEO would let go. The CEO's reason either way.
  */
 export function Resume({ req, highlight }: { req: HireRequestView; highlight?: boolean }) {
+  const t = useT();
   const repo = useStore((s) => s.repos.find((r) => r.id === req.repoId));
   const settings = useStore((s) => s.settings);
   const clis = useStore((s) => s.clis);
@@ -181,16 +185,16 @@ export function Resume({ req, highlight }: { req: HireRequestView; highlight?: b
       <div className="resume-head">
         <Avatar name={name} color={req.color} size={42} />
         <div className="grow">
-          <div className="resume-name">{hire ? name : `Let ${req.name} go?`}</div>
-          <div className="resume-title">{hire ? 'A new agent' : 'Leaving the team'}</div>
+          <div className="resume-name">{hire ? name : t('Let {name} go?', { name: req.name })}</div>
+          <div className="resume-title">{t(hire ? 'A new agent' : 'Leaving the team')}</div>
         </div>
-        {!pending && <span className={`chip ${req.status === 'approved' ? 'chip-good' : ''}`}>{outcome}</span>}
+        {!pending && <span className={`chip ${req.status === 'approved' ? 'chip-good' : ''}`}>{t(outcome)}</span>}
       </div>
       <div className="resume-meta">
         <span className="chip" style={{ background: repo?.color }}>
-          Floor {repo?.floor ?? '?'}
+          {t('Floor {floor}', { floor: repo?.floor ?? '?' })}
         </span>
-        <span className="muted small">{repo?.fullName.split('/')[1] ?? 'removed floor'}</span>
+        <span className="muted small">{repo?.fullName.split('/')[1] ?? t('removed floor')}</span>
       </div>
       {req.reason && <Markdown className="resume-reason" text={req.reason} />}
       {hire && (
@@ -198,21 +202,21 @@ export function Resume({ req, highlight }: { req: HireRequestView; highlight?: b
           <span className="grow">⚙️ {setupLine(pending ? setup : req, settings, clis)}</span>
           {pending && (
             <button className="linkish small" aria-expanded={editing} onClick={() => setEditing(!editing)}>
-              {editing ? 'Done' : 'Change'}
+              {t(editing ? 'Done' : 'Change')}
             </button>
           )}
         </div>
       )}
       {hire && pending && editing && <HireSetupFields value={setup} onChange={setSetup} disabled={busy} repo={repo?.id} />}
-      {!pending && req.note && <div className="muted small">Your note: “{req.note}”</div>}
+      {!pending && req.note && <div className="muted small">{t('Your note: “{note}”', { note: req.note })}</div>}
       {pending && !declining && (
         <div className="row">
           <button className="btn btn-small btn-ghost" disabled={busy} onClick={() => setDeclining(true)}>
-            {hire ? 'Decline' : 'Keep them'}
+            {t(hire ? 'Decline' : 'Keep them')}
           </button>
           <span className="spacer" />
           <button className="btn btn-small btn-good" disabled={busy} onClick={() => act(() => api.approveRequest(req.id, hire ? hireOverrides(req, setup) : {}))}>
-            {hire ? `Hire ${name}` : `Let ${req.name} go`}
+            {t(hire ? 'Hire {name}' : 'Let {name} go', { name: hire ? name : req.name })}
           </button>
         </div>
       )}
@@ -224,9 +228,9 @@ export function Resume({ req, highlight }: { req: HireRequestView; highlight?: b
             void act(() => api.rejectRequest(req.id, note));
           }}
         >
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Why not? (optional, the CEO reads it)" autoFocus />
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('Why not? (optional, the CEO reads it)')} autoFocus />
           <button className="btn btn-small btn-bad" disabled={busy}>
-            {hire ? 'Decline' : 'Keep'}
+            {t(hire ? 'Decline' : 'Keep')}
           </button>
         </form>
       )}
@@ -236,6 +240,7 @@ export function Resume({ req, highlight }: { req: HireRequestView; highlight?: b
 
 /** New agents waiting in the lobby to be set up and hired, with a way down to meet them (unless you're there already). */
 function LobbyNudge() {
+  const t = useT();
   const n = useStore((s) => pendingRequests(s.requests).filter((r) => r.kind === 'hire').length);
   const inLobby = useStore((s) => s.floor === 0);
   const goToFloor = useStore((s) => s.goToFloor);
@@ -244,11 +249,11 @@ function LobbyNudge() {
     <div className="phone-nudge" role="status">
       <span>🪑</span>
       <span className="grow">
-        {n} new agent{n === 1 ? ' is' : 's are'} waiting in the lobby
+        {t(n === 1 ? '{count} new agent waiting in the lobby' : '{count} new agents waiting in the lobby', { count: n })}
       </span>
       {!inLobby && (
         <button className="btn btn-small" onClick={() => goToFloor(0)}>
-          Meet them
+          <T>Meet them</T>
         </button>
       )}
     </div>
@@ -262,8 +267,8 @@ function TeamChanges({ focusId }: { focusId?: string }) {
   const decided = requests.filter((r) => r.status !== 'pending').slice(-8).reverse();
   return (
     <div className="phone-scroll">
-      <h3 className="phone-h">👥 Waiting on you {pending.length > 0 && <span className="badge">{pending.length}</span>}</h3>
-      {pending.length === 0 && <p className="muted small phone-empty">Nothing waiting. When the CEO wants a floor's team to grow or shrink, the change shows up here for your OK.</p>}
+      <h3 className="phone-h"><T>👥 Waiting on you</T> {pending.length > 0 && <span className="badge">{pending.length}</span>}</h3>
+      {pending.length === 0 && <p className="muted small phone-empty"><T>Nothing waiting. When the CEO wants a floor’s team to grow or shrink, the change shows up here for your OK.</T></p>}
       {pending.map((r) => (
         <Resume key={r.id} req={r} highlight={r.id === focusId} />
       ))}
@@ -271,16 +276,16 @@ function TeamChanges({ focusId }: { focusId?: string }) {
         <div className="row wrap">
           <span className="muted small">Demo:</span>
           <button className="btn btn-small btn-ghost" onClick={() => void attempt(() => api.demoPropose('hire'))}>
-            👥 Grow a floor
+            <T>👥 Grow a floor</T>
           </button>
           <button className="btn btn-small btn-ghost" onClick={() => void attempt(() => api.demoPropose('let-go'))}>
-            ✉️ Shrink a floor
+            <T>✉️ Shrink a floor</T>
           </button>
         </div>
       )}
       {decided.length > 0 && (
         <>
-          <h3 className="phone-h">Earlier</h3>
+          <h3 className="phone-h"><T>Earlier</T></h3>
           {decided.map((r) => (
             <Resume key={r.id} req={r} />
           ))}
@@ -294,6 +299,7 @@ function TeamChanges({ focusId }: { focusId?: string }) {
 
 /** Replays a CEO message from its saved clip (or the browser's voice); stops it while it plays. */
 function ReplayButton({ m }: { m: PhoneMessage }) {
+  const t = useT();
   const saved = useStore((s) => s.voiceCache.saved.includes(m.id));
   const playing = useStore((s) => s.voiceSpeaking === m.id);
   const kind = replayKind(m, saved, typeof speechSynthesis !== 'undefined');
@@ -304,8 +310,8 @@ function ReplayButton({ m }: { m: PhoneMessage }) {
       type="button"
       className={`bubble-play ${playing ? 'bubble-play-on' : ''}`}
       disabled={gone && !playing}
-      title={gone ? 'Audio no longer saved' : undefined}
-      aria-label={playing ? 'Stop this message' : 'Play this message'}
+      title={gone ? t('Audio no longer saved') : undefined}
+      aria-label={t(playing ? 'Stop this message' : 'Play this message')}
       onClick={() => void import('./voiceMessages').then((v) => (playing ? v.stopSpeaking() : kind !== 'gone' && v.replayMessage(m, kind)))}
     >
       {playing ? '⏹' : '▶'}
@@ -317,6 +323,7 @@ const QUICK = ["What's everyone working on?", 'Should a team grow?', 'Plan the n
 
 /** The hands-free conversation's switch: after the CEO's spoken reply, the phone listens for up to 8 s. */
 function HandsFreeToggle({ ceoName }: { ceoName: string }) {
+  const t = useT();
   const listen = useStore((s) => s.settings.listen);
   useStore((s) => `${s.voiceKeySet}:${s.settings.voice.provider}`); // handsFreeProblem() follows the key and the voice
   if (!listen || listen.provider === 'off') return null;
@@ -327,10 +334,10 @@ function HandsFreeToggle({ ceoName }: { ceoName: string }) {
       type="button"
       className={`hands-free ${on ? 'hands-free-on' : ''}`}
       aria-pressed={on}
-      title={on ? `Hands-free is on: after ${ceoName}'s spoken reply the phone listens for up to 8 s and sends what you say. Esc or M closes the mic.` : why || `Hands-free: talk with ${ceoName} without touching anything`}
+      title={on ? t('Hands-free is on: after {name}’s spoken reply the phone listens for up to 8 s and sends what you say. Esc or M closes the mic.', { name: ceoName }) : why || t('Hands-free: talk with {name} without touching anything', { name: ceoName })}
       onClick={() => void setHandsFree(!on, ceoName)}
     >
-      🎧 {on ? 'Hands-free on' : 'Hands-free'}
+      🎧 {t(on ? 'Hands-free on' : 'Hands-free')}
     </button>
   );
 }
@@ -388,15 +395,15 @@ export function Chat({ autoFocus = true }: { autoFocus?: boolean }) {
   const presence =
     ceo.status === 'working'
       ? replying
-        ? 'typing…'
-        : `busy: ${info.job?.label ?? 'working'}`
+        ? t('typing…')
+        : t('busy: {job}', { job: info.job?.label ?? t('working') })
       : chatQueued
         ? settings.sessionLimit && running >= settings.sessionLimit
-          ? `will reply when a session slot frees up (${running}/${settings.sessionLimit} busy)`
-          : 'reading your message…'
+          ? t('will reply when a session slot frees up ({running}/{max} busy)', { running, max: settings.sessionLimit })
+          : t('reading your message…')
         : info.queue.length
-          ? `next up: ${info.queue[0].label}`
-          : 'available';
+          ? t('next up: {job}', { job: info.queue[0].label })
+          : t('available');
 
   return (
     <div className="phone-chat">
@@ -408,10 +415,10 @@ export function Chat({ autoFocus = true }: { autoFocus?: boolean }) {
         </div>
         <HandsFreeToggle ceoName={ceo.name} />
       </div>
-      <div className="chat-log" ref={scroller} aria-label={`Messages with ${ceo.name}`} tabIndex={0}>
+      <div className="chat-log" ref={scroller} aria-label={t('Messages with {name}', { name: ceo.name })} tabIndex={0}>
         {messages.length === 0 && (
           <p className="muted small phone-empty">
-            Say hi to {ceo.name}. Ask how things are going, hand over a project brief, or ask whether a team should grow. Replies land here, and the phone buzzes when {ceo.name} needs you.
+            {t('Say hi to {name}. Ask how things are going, hand over a project brief, or ask whether a team should grow. Replies land here, and the phone buzzes when {name} needs you.', { name: ceo.name })}
           </p>
         )}
         {messages.map((m) => (
@@ -454,6 +461,7 @@ export function Chat({ autoFocus = true }: { autoFocus?: boolean }) {
 // ---------- company at a glance ----------
 
 function useCompany() {
+  const t = useT();
   const repos = useStore((s) => s.repos);
   const agents = useStore((s) => s.agents);
   const qa = useStore((s) => s.qa);
@@ -489,74 +497,76 @@ function useCompany() {
     if (readyList.length)
       report.push({
         icon: '✅',
-        text: `${sum('ready')} pull request${sum('ready') === 1 ? ' passed' : 's passed'} QA and ${sum('ready') === 1 ? 'is' : 'are'} ready for you to merge (${readyList.map((f) => `${f.repo.fullName.split('/')[1]}: ${f.ready}`).join(', ')}).`,
+        text: t(sum('ready') === 1 ? '{count} pull request passed QA and is ready for you to merge ({projects}).' : '{count} pull requests passed QA and are ready for you to merge ({projects}).', { count: sum('ready'), projects: readyList.map((f) => `${f.repo.fullName.split('/')[1]}: ${f.ready}`).join(', ') }),
         tone: 'good',
       });
-    if (sum('stuck')) report.push({ icon: '⚠️', text: `${sum('stuck')} pull request${sum('stuck') === 1 ? '' : 's'} need${sum('stuck') === 1 ? 's' : ''} your call: the team can't move ${sum('stuck') === 1 ? 'it' : 'them'} on alone.`, tone: 'warn' });
-    if (pending) report.push({ icon: '👥', text: `${pending} team change${pending === 1 ? ' is' : 's are'} waiting in Team.`, tone: 'warn' });
+    if (sum('stuck')) report.push({ icon: '⚠️', text: t(sum('stuck') === 1 ? '{count} pull request needs your call: the team can’t move it on alone.' : '{count} pull requests need your call: the team can’t move them on alone.', { count: sum('stuck') }), tone: 'warn' });
+    if (pending) report.push({ icon: '👥', text: t(pending === 1 ? '{count} team change is waiting in Team.' : '{count} team changes are waiting in Team.', { count: pending }), tone: 'warn' });
     report.push({
       icon: '⚙️',
       text: settings.sessionLimit
         ? running
-          ? `${running} of ${settings.sessionLimit} session slots are busy right now.`
-          : `Nobody is working at the moment (${settings.sessionLimit} session slots free).`
+          ? t('{running} of {max} session slots are busy right now.', { running, max: settings.sessionLimit })
+          : t('Nobody is working at the moment ({max} session slots free).', { max: settings.sessionLimit })
         : running
-          ? `${running} session${running === 1 ? ' is' : 's are'} running right now.`
-          : 'Nobody is working at the moment.',
+          ? t(running === 1 ? '{count} session is running right now.' : '{count} sessions are running right now.', { count: running })
+          : t('Nobody is working at the moment.'),
     });
     for (const f of floors) {
       if (f.issues > 0 && !f.repo.autoAssign && f.working === 0 && f.idle > 0) {
-        report.push({ icon: '💤', text: `${f.repo.fullName.split('/')[1]} has ${f.issues} open issue${f.issues === 1 ? '' : 's'} and free agents, but auto-assign is off.` });
+        report.push({ icon: '💤', text: t('{repo} has {count} open issues and free agents, but auto-assign is off.', { repo: f.repo.fullName.split('/')[1], count: f.issues }) });
       }
     }
     const busiest = [...floors].sort((a, b) => b.issues + b.prs - (a.issues + a.prs))[0];
     if (busiest && busiest.issues + busiest.prs > 0 && floors.length > 1) {
-      report.push({ icon: '🔥', text: `Most work in flight: ${busiest.repo.fullName.split('/')[1]} (${busiest.issues} issues, ${busiest.prs} PRs).` });
+      report.push({ icon: '🔥', text: t('Most work in flight: {repo} ({issues} issues, {pulls} PRs).', { repo: busiest.repo.fullName.split('/')[1], issues: busiest.issues, pulls: busiest.prs }) });
     }
     if (ceo) {
       report.push({
         icon: '🧠',
         text:
           ceo.status === 'working'
-            ? `${ceo.name} is ${(info.job?.label ?? 'working').replace(/^\w/, (c) => c.toLowerCase())}.`
+            ? t('{name} is {job}.', { name: ceo.name, job: (info.job?.label ?? t('working')).replace(/^\w/, (c) => c.toLowerCase()) })
             : info.nextReviewAt
-              ? `${ceo.name} reviews the company next at ${clock(info.nextReviewAt)}.`
-              : `${ceo.name}'s periodic reviews are off.`,
+              ? t('{name} reviews the company next at {time}.', { name: ceo.name, time: clock(info.nextReviewAt) })
+              : t('{name}’s periodic reviews are off.', { name: ceo.name }),
       });
     }
-    if (floors.length === 0) report.splice(0, report.length, { icon: '👋', text: "No projects yet. Connect a repo in the manager's office (lobby, back left) and the CEO will staff it." });
+    if (floors.length === 0) report.splice(0, report.length, { icon: '👋', text: t('No projects yet. Connect a repo in the manager’s office (lobby, back left) and the CEO will staff it.') });
     return { floors, staff: staff.length, running, max: settings.sessionLimit, issues: sum('issues'), prs: sum('prs'), report };
-  }, [repos, agents, qa, requests, settings, info]);
+  }, [repos, agents, qa, requests, settings, info, t]);
 }
 
 /** Every panel, a key press away: the phone is where keyboard and screen reader users reach the rest of the office. */
 function Shortcuts() {
+  const t = useT();
   const openOverlay = useStore((s) => s.openOverlay);
   const repoId = useStore((s) => s.repos.find((r) => r.floor === s.floor)?.id);
   return (
-    <nav className="phone-links" aria-label="Open a panel">
+    <nav className="phone-links" aria-label={t('Open a panel')}>
       <button className="btn btn-small" onClick={() => openOverlay({ kind: 'manager' })}>
-        🧑‍💼 Console
+        <T>🧑‍💼 Console</T>
       </button>
       {repoId && (
         <button className="btn btn-small" onClick={() => openOverlay({ kind: 'kanban', repoId })}>
-          📋 Kanban
+          <T>📋 Kanban</T>
         </button>
       )}
       <button className="btn btn-small" onClick={() => openOverlay({ kind: 'floorList' })}>
-        👥 Floor list
+        <T>👥 Floor list</T>
       </button>
       <button className="btn btn-small" onClick={() => openOverlay({ kind: 'help' })}>
-        ❓ Help
+        <T>❓ Help</T>
       </button>
       <button className="btn btn-small" onClick={() => openOverlay({ kind: 'manager', tab: 'access' })}>
-        ♿ Accessibility
+        <T>♿ Accessibility</T>
       </button>
     </nav>
   );
 }
 
 function Company() {
+  const t = useT();
   const c = useCompany();
   const goToFloor = useStore((s) => s.goToFloor);
   const tiles: [string, string | number, string][] = [
@@ -574,12 +584,12 @@ function Company() {
             <div className="tile-value">
               {icon} {value}
             </div>
-            <div className="tile-label">{label}</div>
+            <div className="tile-label">{t(label)}</div>
           </div>
         ))}
       </div>
       <Shortcuts />
-      <h3 className="phone-h">Today's report</h3>
+      <h3 className="phone-h"><T>Today’s report</T></h3>
       <ul className="report">
         {c.report.map((r, i) => (
           <li key={i} className={r.tone ? `report-${r.tone}` : ''}>
@@ -588,7 +598,7 @@ function Company() {
           </li>
         ))}
       </ul>
-      {c.floors.length > 0 && <h3 className="phone-h">Projects</h3>}
+      {c.floors.length > 0 && <h3 className="phone-h"><T>Projects</T></h3>}
       {c.floors.map((f) => (
         <div key={f.repo.id} className="proj" style={{ ['--accent' as string]: f.repo.color }}>
           <div className="row">
@@ -598,13 +608,13 @@ function Company() {
               <div className="muted small proj-sum">{f.repo.summary || f.repo.description || f.repo.fullName}</div>
             </div>
             <button className="btn btn-small" onClick={() => goToFloor(f.repo.floor)}>
-              Go
+              <T>Go</T>
             </button>
           </div>
           <div className="proj-stats small">
             <span>
               👥 {f.team}
-              {f.working ? ` (${f.working} busy)` : ''}
+              {f.working ? t(' ({count} busy)', { count: f.working }) : ''}
             </span>
             <span>📋 {f.issues}</span>
             <span>🔍 {f.inQa}</span>
@@ -699,7 +709,7 @@ export function Phone({ tab: initialTab, requestId }: { tab?: PhoneTab; requestI
           {tab === 'company' && <Company />}
           {tab === 'games' && <Games game={game} onGame={setGame} />}
         </div>
-        <nav className="phone-tabs" role="tablist" aria-label="Phone">
+        <nav className="phone-tabs" role="tablist" aria-label={t('Phone')}>
           {tabs.map(([k, icon, label, badge]) => (
             // Tapping Games again while in a game goes back to the list.
             <button

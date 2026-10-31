@@ -69,10 +69,10 @@ export function TerminalView({ agentId }: { agentId: string }) {
   useEffect(
     () =>
       loadScreenshot(agentId, shotTime, (img) => {
-        img.alt = 'Latest browser screenshot from the agent';
+        img.alt = t('Latest browser screenshot from the agent');
         setShot({ agentId, img });
       }),
-    [agentId, shotTime],
+    [agentId, shotTime, t],
   );
   useEffect(() => {
     shotView.current?.replaceChildren(...(shot?.agentId === agentId ? [shot.img] : []));
@@ -91,8 +91,8 @@ export function TerminalView({ agentId }: { agentId: string }) {
 
   if (!agent || !repo) {
     return (
-      <Panel title="Terminal">
-        <p className="muted">That agent has left the building.</p>
+      <Panel title={t('Terminal')}>
+        <p className="muted"><T>That agent has left the building.</T></p>
       </Panel>
     );
   }
@@ -130,22 +130,22 @@ export function TerminalView({ agentId }: { agentId: string }) {
             {agent.name[0]}
           </span>
           <span>{agent.name}</span>
-          <span className="chip" title="Their coding agent">
+          <span className="chip" title={t('Their coding agent')}>
             ⌨️ {agentLabel(agent, settings, clis)}
           </span>
           <StatusPill status={agent.status} />
           {signIn && (
-            <span className="chip sign-in-chip" title={`Waiting for you to sign ${signIn} in, in their terminal`}>
-              🔑 needs sign-in
+            <span className="chip sign-in-chip" title={t('Waiting for you to sign {provider} in, in their terminal', { provider: signIn })}>
+              <T>🔑 needs sign-in</T>
             </span>
           )}
-          {working && agent.currentTool && <span className="muted small">{toolVerb(agent.currentTool)}…</span>}
+          {working && agent.currentTool && <span className="muted small">{t(toolVerb(agent.currentTool))}…</span>}
           <span className="spacer" />
-          <button className="btn btn-small" title={`Trail ${agent.name} with the camera wherever they go (a movement key or Esc gives you the controls back)`} onClick={() => followAgent(agent.id)}>
+          <button className="btn btn-small" title={t('Trail {name} with the camera wherever they go (a movement key or Esc gives you the controls back)', { name: agent.name })} onClick={() => followAgent(agent.id)}>
             <T>🎥 Follow</T>
           </button>
           {agent.career && (
-            <button className={`btn btn-small setup-toggle ${showCareer ? 'setup-toggle-on' : ''}`} aria-expanded={showCareer} title={`${agent.name}'s career on the team`} onClick={() => setShowCareer((v) => !v)}>
+            <button className={`btn btn-small setup-toggle ${showCareer ? 'setup-toggle-on' : ''}`} aria-expanded={showCareer} title={t('{name}’s career on the team', { name: agent.name })} onClick={() => setShowCareer((v) => !v)}>
               <T>🏅 Career</T>
             </button>
           )}
@@ -153,7 +153,7 @@ export function TerminalView({ agentId }: { agentId: string }) {
             className={`btn btn-small setup-toggle ${showSetup ? 'setup-toggle-on' : ''}`}
             aria-expanded={showSetup}
             aria-controls="agent-setup"
-            title={`${agent.name}'s name, look, coding agent, model and effort`}
+            title={t('{name}’s name, look, coding agent, model and effort', { name: agent.name })}
             onClick={() => setShowSetup((v) => !v)}
           >
             <T>⚙️ Setup</T>
@@ -164,15 +164,15 @@ export function TerminalView({ agentId }: { agentId: string }) {
       <div className="term-meta">
         {agent.task === 'analysis' ? <span className="chip"><T>🔎 Read-only analysis · no PR expected</T></span> : agent.task === 'qa' && agent.status !== 'idle' ? (
           <a href={agent.prUrl ?? '#'} target="_blank" rel="noreferrer">
-            Testing PR #{agent.prNumber}: {agent.issueTitle}
+            {t('Testing PR #{number}', { number: agent.prNumber ?? '?' })}: {agent.issueTitle}
           </a>
         ) : agent.task === 'fix' && agent.status !== 'idle' ? (
           <a href={agent.prUrl ?? '#'} target="_blank" rel="noreferrer">
-            Fixing PR #{agent.prNumber} after QA: {agent.issueTitle}
+            {t('Fixing PR #{number} after QA', { number: agent.prNumber ?? '?' })}: {agent.issueTitle}
           </a>
         ) : agent.issueNumber && agent.status !== 'idle' ? (
           <a href={issueUrl!} target="_blank" rel="noreferrer">
-            Issue #{agent.issueNumber}: {agent.issueTitle}
+            {t('Issue #{number}', { number: agent.issueNumber })}: {agent.issueTitle}
           </a>
         ) : (
           <span className="muted"><T>Nothing assigned</T></span>
@@ -185,38 +185,38 @@ export function TerminalView({ agentId }: { agentId: string }) {
         {qaRec && agent.status !== 'idle' && (
           <span className={`chip ${qaRec.status === 'passed' ? 'chip-good' : ''}`}>
             QA: {qaRec.status}
-            {qaRec.round > 1 ? ` · round ${qaRec.round}` : ''}
+            {qaRec.round > 1 ? ` · ${t('round {number}', { number: qaRec.round })}` : ''}
           </span>
         )}
         {qaRec?.commentUrl && (
           <a href={qaRec.commentUrl} target="_blank" rel="noreferrer">
-            QA report ↗
+            <T>QA report ↗</T>
           </a>
         )}
         {agent.branch && <code>{agent.branch}</code>}
         <span className="muted">
-          {(agent.role === 'ceo' ? agent.model : effectiveModel(agent.model, cli, settings, 'claude-opus-5-5')) || 'default model'} ·{' '}
-          {cli === 'opencode' ? 'model variant' : `${agent.effort || settings.defaultEffort} effort`}
+          {(agent.role === 'ceo' ? agent.model : effectiveModel(agent.model, cli, settings, 'claude-opus-5-5')) || t('default model')} ·{' '}
+          {cli === 'opencode' ? t('model variant') : t('{effort} effort', { effort: agent.effort || settings.defaultEffort })}
         </span>
         {agent.startedAt && <span className="muted">⏱ {elapsed(agent.startedAt, working ? null : agent.endedAt)}</span>}
-        {agent.turns > 0 && <span className="muted">{agent.turns} turns</span>}
-        {agent.costUsd > 0 && <span className="muted" title="API-equivalent cost reported by the coding agent; subscription usage is billed by plan">≈${agent.costUsd.toFixed(2)}</span>}
+        {agent.turns > 0 && <span className="muted">{t(agent.turns === 1 ? '{count} turn' : '{count} turns', { count: agent.turns })}</span>}
+        {agent.costUsd > 0 && <span className="muted" title={t('API-equivalent cost reported by the coding agent; subscription usage is billed by plan')}>≈${agent.costUsd.toFixed(2)}</span>}
       </div>
       {agent.lastError && agent.status !== 'working' && !signIn && <div className="term-error">⚠️ {agent.lastError}</div>}
       {signIn && (
         <div className="sign-in-note" role="status">
           <span className="grow">
             <b>
-              🔑 Sign {agent.name}'s {signIn} in
+              {t('🔑 Sign {name}’s {provider} in', { name: agent.name, provider: signIn })}
             </b>
             <br />
-            {signIn === 'Codex'
+            {t(signIn === 'Codex'
               ? 'Open the link in their terminal, sign in to ChatGPT there and enter the one-time code the terminal shows.'
-              : 'Open the link in their terminal, approve it with your Claude account, then paste the code the page gives you into the terminal and press Enter.'}{' '}
-            Their cloud machine keeps the sign-in{agent.task && isBusy(agent) ? ', and their task starts once it’s done' : ''}.
+              : 'Open the link in their terminal, approve it with your Claude account, then paste the code the page gives you into the terminal and press Enter.')}{' '}
+            {t(agent.task && isBusy(agent) ? 'Their cloud machine keeps the sign-in, and their task starts once it’s done.' : 'Their cloud machine keeps the sign-in.')}
           </span>
-          <button className="btn btn-small" disabled={busy} title="Close this sign-in and show a new link" onClick={() => run(() => api.signIn(agent.id))}>
-            ↻ Start over
+          <button className="btn btn-small" disabled={busy} title={t('Close this sign-in and show a new link')} onClick={() => run(() => api.signIn(agent.id))}>
+            <T>↻ Start over</T>
           </button>
         </div>
       )}
@@ -241,20 +241,20 @@ export function TerminalView({ agentId }: { agentId: string }) {
               stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
             }}
           >
-            {log.length === 0 && <div className="term-line term-system">(no output yet)</div>}
+            {log.length === 0 && <div className="term-line term-system"><T>(no output yet)</T></div>}
             {log.map((l) => (
               <div key={l.id} className={`term-line term-${l.kind}`}>
                 {l.text || ' '}
               </div>
             ))}
-            {working && <div className="term-line term-spin">✻ {agent.status === 'preparing' ? (agent.currentTool ?? 'Setting up worktree') : toolVerb(agent.currentTool) || 'Thinking'}… ({elapsed(agent.startedAt, null)})</div>}
+            {working && <div className="term-line term-spin">✻ {t(agent.status === 'preparing' ? (agent.currentTool ?? 'Setting up worktree') : toolVerb(agent.currentTool) || 'Thinking')}… ({elapsed(agent.startedAt, null)})</div>}
           </div>
         )}
         {agent.hasScreenshot && (
           <div className="browser">
             <div className="browser-bar">🔒 {agent.browserUrl ?? 'about:blank'}</div>
             <div className="browser-view" ref={shotView} />
-            <div className="muted small">Latest Playwright screenshot{agent.screenshotAt ? ` · ${new Date(agent.screenshotAt).toLocaleTimeString()}` : ''}</div>
+            <div className="muted small"><T>Latest Playwright screenshot</T>{agent.screenshotAt ? ` · ${new Date(agent.screenshotAt).toLocaleTimeString()}` : ''}</div>
           </div>
         )}
       </div>
@@ -270,14 +270,14 @@ export function TerminalView({ agentId }: { agentId: string }) {
         <MessageBox
           value={text}
           onChange={setText}
-          aria-label={`Message ${agent.name}`}
-          title="Enter sends · Shift+Enter adds a new line"
+          aria-label={t('Message {name}', { name: agent.name })}
+          title={t('Enter sends · Shift+Enter adds a new line')}
           placeholder={
             working
-              ? `Tell ${agent.name} something while they work${agent.terminal ? ' (typed into their terminal)' : ''}…`
+              ? t(agent.terminal ? 'Tell {name} something while they work (typed into their terminal)…' : 'Tell {name} something while they work…', { name: agent.name })
               : canMessage
-                ? `Ask ${agent.name} for a follow-up (resumes their session)…`
-                : `Give ${agent.name} an issue or a PR to test to get them started`
+                ? t('Ask {name} for a follow-up (resumes their session)…', { name: agent.name })
+                : t('Give {name} an issue or a PR to test to get them started', { name: agent.name })
           }
           disabled={!canMessage}
           autoFocus={!agent.terminal}
@@ -304,13 +304,13 @@ export function TerminalView({ agentId }: { agentId: string }) {
           </button>
         ) : (
           <>
-            <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label="Work to give them">
-              <option value="">{choices.length ? 'Pick an issue to build or a PR to test…' : 'Nothing to pick up'}</option>
+            <select value={pick} onChange={(e) => setPick(e.target.value)} aria-label={t('Work to give them')}>
+              <option value="">{t(choices.length ? 'Pick an issue to build or a PR to test…' : 'Nothing to pick up')}</option>
               {(['issue', 'qa'] as const).map((kind) => {
                 const group = choices.filter((c) => c.kind === kind);
                 return (
                   group.length > 0 && (
-                    <optgroup key={kind} label={kind === 'qa' ? 'Pull requests to test' : 'Issues to build'}>
+                    <optgroup key={kind} label={t(kind === 'qa' ? 'Pull requests to test' : 'Issues to build')}>
                       {group.map((c) => (
                         <option key={c.key} value={c.key}>
                           {kind === 'qa' ? 'PR ' : ''}#{c.number} {c.title}

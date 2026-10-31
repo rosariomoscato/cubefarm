@@ -3,6 +3,7 @@
 // PR the CEO is triaging first is amber too, until the CEO hands it to the manager.
 
 import type { PullInfo, QaView } from '../../shared/types';
+import { translate, type Language } from '../../shared/i18n';
 
 export { needsManager } from '../../shared/ops';
 
@@ -17,9 +18,11 @@ export function qaCardNote(
   rec: Pick<QaView, 'status' | 'round' | 'mergeNote' | 'ceoLooking' | 'managerRequested'> | null | undefined,
   pr: Pick<PullInfo, 'isDraft' | 'mergeable' | 'checks'>,
   autoMerge: boolean,
+  language?: Language,
 ): { note: string; tone?: CardTone } {
+  const t = (text: string, values?: Record<string, string | number>) => translate(language, text, values);
   if (rec?.managerRequested && (rec.status === 'failed' || rec.status === 'fixing')) {
-    return { note: '✏️ manager-requested changes', tone: 'warn' };
+    return { note: t('✏️ manager-requested changes'), tone: 'warn' };
   }
   switch (rec?.status) {
     case 'passed':
@@ -27,27 +30,27 @@ export function qaCardNote(
         note: rec.mergeNote
           ? `QA ✓ · ${rec.mergeNote}`
           : pr.mergeable === 'CONFLICTING'
-            ? 'QA ✓ · conflicts'
+            ? t('QA ✓ · conflicts')
             : pr.checks === 'failing'
-              ? 'QA ✓ · CI failing'
+              ? t('QA ✓ · CI failing')
               : autoMerge && pr.checks === 'pending'
-                ? 'QA ✓ · waiting for checks'
-                : '✅ QA passed',
+                ? t('QA ✓ · waiting for checks')
+                : t('✅ QA passed'),
         tone: pr.mergeable === 'CONFLICTING' || pr.checks === 'failing' ? 'warn' : 'good',
       };
     case 'needs-human':
-      if (rec.ceoLooking) return { note: '🧭 CEO is looking', tone: 'warn' };
-      return { note: `⚠️ needs you${rec.mergeNote ? ` · ${rec.mergeNote}` : ''}`, tone: 'bad' };
+      if (rec.ceoLooking) return { note: t('🧭 CEO is looking'), tone: 'warn' };
+      return { note: `${t('⚠️ needs you')}${rec.mergeNote ? ` · ${rec.mergeNote}` : ''}`, tone: 'bad' };
     case 'failed':
-      return { note: '🔧 back to the developer', tone: 'warn' };
+      return { note: t('🔧 back to the developer'), tone: 'warn' };
     case 'fixing':
-      return { note: `🔧 fixing · round ${rec.round}`, tone: 'warn' };
+      return { note: t('🔧 fixing · round {number}', { number: rec.round }), tone: 'warn' };
     case 'testing':
-      return { note: `🔍 testing · round ${rec.round}` };
+      return { note: t('🔍 testing · round {number}', { number: rec.round }) };
     case 'queued':
-      return { note: `waiting for QA${rec.round > 1 ? ` · round ${rec.round}` : ''}` };
+      return { note: `${t('waiting for QA')}${rec.round > 1 ? ` · ${t('round {number}', { number: rec.round })}` : ''}` };
     default:
-      return { note: pr.isDraft ? 'draft' : 'not tested yet', tone: 'warn' };
+      return { note: t(pr.isDraft ? 'draft' : 'not tested yet'), tone: 'warn' };
   }
 }
 

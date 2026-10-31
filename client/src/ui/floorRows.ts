@@ -4,6 +4,7 @@
 import type { AgentCli, AgentStatus, CliView, SwarmSettings } from '../../../shared/types';
 import type { Agent } from '../store';
 import { KIND_ICON, STATUS_KIND, type StatusKind } from './statusLook';
+import { translate } from '../../../shared/i18n';
 
 export interface FloorRow {
   id: string;
@@ -30,7 +31,7 @@ const STATUS_WORDS: Record<AgentStatus, string> = {
 /** The coding agents' names until the office has listed them (CliView.label). */
 const CLI_NAMES: Record<AgentCli, string> = { claude: 'Claude Code', codex: 'Codex', opencode: 'OpenCode' };
 
-type Runtime = Pick<SwarmSettings, 'runtime' | 'defaultCli'>;
+type Runtime = Pick<SwarmSettings, 'runtime' | 'defaultCli'> & Partial<Pick<SwarmSettings, 'language'>>;
 
 /** The coding agent someone runs: their own pick in Real terminals; the Agent SDK is Claude Code for everyone. */
 export const workerCli = (a: Pick<Agent, 'cli' | 'role'>, settings: Runtime): AgentCli =>
@@ -52,14 +53,16 @@ export function signInFor(a: Pick<Agent, 'cli' | 'role' | 'host' | 'needsSignIn'
 }
 
 /** What someone is on, in words. */
-export function doingText(a: Pick<Agent, 'role' | 'status' | 'task' | 'issueNumber' | 'issueTitle' | 'prNumber'>): string {
-  if (a.role === 'ceo') return a.status === 'working' ? (a.issueTitle ?? 'Working') : 'Free for a chat';
-  if (a.status === 'idle') return 'Nothing assigned';
-  if (a.task === 'analysis') return 'Read-only analysis';
-  if (a.task === 'qa') return a.prNumber ? `Testing PR #${a.prNumber}${a.issueTitle ? `: ${a.issueTitle}` : ''}` : 'Testing';
-  if (a.task === 'fix' && a.prNumber) return `Fixing PR #${a.prNumber}${a.issueTitle ? `: ${a.issueTitle}` : ''}`;
-  if (a.issueNumber) return `Issue #${a.issueNumber}${a.issueTitle ? `: ${a.issueTitle}` : ''}`;
-  return a.issueTitle ?? 'Working';
+export function doingText(a: Pick<Agent, 'role' | 'status' | 'task' | 'issueNumber' | 'issueTitle' | 'prNumber'>, language?: SwarmSettings['language']): string {
+  const t = (text: string, values?: Record<string, string | number>) => translate(language, text, values);
+  if (a.role === 'ceo') return a.status === 'working' ? (a.issueTitle ?? t('Working')) : t('Free for a chat');
+  if (a.status === 'idle') return t('Nothing assigned');
+  if (a.task === 'analysis') return t('Read-only analysis');
+  const title = a.issueTitle ? `: ${a.issueTitle}` : '';
+  if (a.task === 'qa') return a.prNumber ? t('Testing PR #{number}', { number: a.prNumber }) + title : t('Testing');
+  if (a.task === 'fix' && a.prNumber) return t('Fixing PR #{number}', { number: a.prNumber }) + title;
+  if (a.issueNumber) return t('Issue #{number}', { number: a.issueNumber }) + title;
+  return a.issueTitle ?? t('Working');
 }
 
 /** One row per person, in the order given (agentsOnRepo: by desk). */
@@ -71,10 +74,10 @@ export function floorRows(agents: Agent[], settings: Runtime, clis: CliView[]): 
       id: a.id,
       name: a.name,
       agent: agentLabel(a, settings, clis),
-      status: signIn ? 'Needs you to sign in' : STATUS_WORDS[a.status],
+      status: translate(settings.language, signIn ? 'Needs you to sign in' : STATUS_WORDS[a.status]),
       kind,
       icon: KIND_ICON[kind],
-      doing: signIn ? `Waiting for ${signIn} to be signed in${a.status === 'idle' ? '' : ` · ${doingText(a)}`}` : doingText(a),
+      doing: signIn ? `${translate(settings.language, 'Waiting for {provider} to be signed in', { provider: signIn })}${a.status === 'idle' ? '' : ` · ${doingText(a, settings.language)}`}` : doingText(a, settings.language),
       signIn,
     };
   });

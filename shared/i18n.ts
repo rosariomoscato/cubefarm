@@ -1,4 +1,5 @@
 import { SAMPLE_LINE } from './speech.ts';
+import { italianUi } from './italianUi.ts';
 
 /** Office language. English keys double as readable, safe fallback strings. Never translate user content or IDs. */
 export type Language = 'en' | 'it';
@@ -6,6 +7,7 @@ export const languageOf = (value: unknown): Language => value === 'it' ? 'it' : 
 export const languageTag = (value: unknown) => languageOf(value) === 'it' ? 'it-IT' : 'en-US';
 
 export const italian: Readonly<Record<string, string>> = {
+  ...italianUi,
   'Request changes': 'Richiedi modifiche',
   'Manager-requested changes': 'Modifiche richieste dal manager',
   'Request changes on PR #{number}?': 'Richiedere modifiche alla PR #{number}?',
