@@ -48,7 +48,7 @@ try {
   assert.equal(state.usage.resources.find((r) => r.agentIds.includes('ceo')).state, 'pacing');
   assert(state.usage.resources.filter((r) => !r.agentIds.includes('ceo')).every((r) => r.state === 'normal'));
   browser = await chromium.launch({ ...(process.platform === 'win32' ? { executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' } : {}), args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, hasTouch: true });
   page.setDefaultTimeout(45000); page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(origin + '/?pocket=1');
   await page.getByRole('button', { name: 'Settings and notifications', exact: true }).click();
@@ -59,6 +59,10 @@ try {
   await expect(card.getByText(/^Input tokens:/).first()).toBeVisible();
   await page.screenshot({ path: path.join(home, 'usage-desktop-en.png') });
   await card.getByRole('button', { name: 'Resume this quota', exact: true }).filter({ visible: true }).first().click();
+  await page.getByRole('alertdialog').screenshot({ path: path.join(home, 'confirmation-desktop-en.png') });
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.getByRole('alertdialog').screenshot({ path: path.join(home, 'confirmation-mobile-en.png') });
+  await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole('button', { name: 'Resume full speed', exact: true }).click();
   await expect(card.getByRole('button', { name: 'Resume this quota', exact: true }).first()).toBeDisabled();
   await request('/api/settings', 'PATCH', { language: 'it' });
@@ -68,6 +72,10 @@ try {
     await page.screenshot({ path: path.join(home, `usage-${name}-it.png`) });
     assert.equal(await card.evaluate((el) => el.scrollWidth > el.clientWidth + 1), false, name + ' card overflow');
   }
+  await page.locator('.notify-hook').first().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(home, 'pocket-notifications-touch-it.png') });
+  await page.locator('.a11y-slider').first().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(home, 'pocket-accessibility-touch-it.png') });
   await request('/api/usage/simulate', 'POST', { kind: 'limit', agentId: 'fixture-a' });
   state = await request('/api/state');
   assert.equal(state.usage.resources.find((r) => r.agentIds.includes('fixture-a')).state, 'paused');
