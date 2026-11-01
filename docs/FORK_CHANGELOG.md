@@ -23,6 +23,12 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-11-01
 
+### GitHub Sponsors pubblico — collegamenti preparati
+
+Commit, push e apertura PR sul solo fork successivamente autorizzati dal manager. Branch dedicato docs/activate-github-sponsors da main `c62f181`; inclusa la checklist dei cinque punti, con il solo punto 3 in corso. Merge separato; note pregresse e documenti locali esclusi.
+
+Schermata del manager conferma profilo Sponsors approvato/pubblico e Stripe ancora in verifica. Ricontrollati API hasSponsorsListing=true e pagina pubblica https://github.com/sponsors/rosariomoscato raggiungibile con scelta importo. Preparati localmente .github/FUNDING.yml e link reali nei README EN/IT, mantenendo sostegno volontario senza sblocchi. Aggiornato punto 3 nella checklist: profilo attivo, integrazione dei collegamenti ancora da autorizzare, accrediti non verificati. Nessun pagamento, modifica ai livelli, commit/push/PR o deploy eseguito in questa fase; altri quattro punti non avviati.
+
 ### Documentazione post-pubblicazione e preparazione release GitHub
 
 Su richiesta di proseguire autonomamente preparate modifiche locali su `docs/published-npm-beta`, creato da origin/main `803cb9e`. README EN/IT aggiornati con disponibilità npm, comandi next/versione esatta, natura beta anche del dist-tag latest e compatibilità dati. Guida npm aggiornata con bootstrap completato, hash pubblico verificato, gestione dell'elaborazione iniziale e procedura separata per documentare la prima beta su GitHub senza ripubblicarla. Note release EN/IT preparate in Temp/opencode/droidsembly-beta1-release-notes.md; nessuna release GitHub presente al controllo.

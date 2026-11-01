@@ -159,7 +159,7 @@ Do not use `npx cubefarm@latest` to update this fork: it targets the original np
 
 Droidsembly is free and open source. If it helps you, you can support its development by starring the repository, sharing it, reporting reproducible issues or contributing improvements.
 
-**Voluntary financial support is planned through GitHub Sponsors.** The profile is not yet activated; a link will be added when it is available. No donation is required to use the app or unlock agents. Technical limits and AI-provider quotas still apply.
+**You can support development voluntarily through [GitHub Sponsors](https://github.com/sponsors/rosariomoscato).** No donation is required to use the app or unlock agents. Technical limits and AI-provider quotas still apply.
 
 ## Documentation
 
