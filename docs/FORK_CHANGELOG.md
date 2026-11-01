@@ -25,6 +25,10 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ### Droidsembly: marchio approvato integrato nella copia di sviluppo
 
+**Seguito CI PR #15:** il job Ubuntu del run `41289028805` ha superato 244 file di test (2.604 test passati, 2 saltati) e poi fallito nello smoke del pacchetto, che cercava ancora `<title>cubefarm</title>`. Aggiornata l’aspettativa al titolo Droidsembly; allineata anche l’aspettativa E2E sul prefisso dei nuovi download fotografici. Nessuna modifica alla logica dell’app, alle soglie o ai test saltati. Il risultato Ubuntu non dichiara risolti i fallimenti storici locali. Correzione da validare nuovamente in CI.
+
+La ripetizione della demo ha superato le asserzioni, incluso titolo browser, e scritto il report in `Temp/opencode/droidsembly-qa-EG6PZn`; il comando è poi scaduto durante la chiusura dopo 240 s, quindi non è riportato come esecuzione interamente riuscita. Verificata successivamente l’assenza di listener demo sulla porta 4419. Lo smoke del pacchetto completo sarà verificato dal nuovo run CI; la suite E2E fotografica non è stata rieseguita localmente per la sola aspettativa del prefisso.
+
 **Pubblicazione autorizzata:** dopo approvazione delle schermate e prova interattiva il manager ha autorizzato commit, push e apertura PR sul solo fork `rosariomoscato/cubefarm`. Merge e aggiornamento reale richiedono autorizzazioni separate. La nota locale del precedente deploy PR #14 e i documenti `PerChatGPT.md` e `docs/STACK_E_ARCHITETTURA.md` restano esclusi dal commit.
 
 **Esito prova interattiva:** il manager ha provato la demo e confermato che la resa va bene. Fermato soltanto il server demo PID `11876`, dopo confronto di ora di avvio, comando e proprietario della porta; confermata porta 4419 libera. Conservati dati temporanei e profilo Chrome. Commit, push e PR ancora da autorizzare.

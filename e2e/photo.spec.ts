@@ -47,7 +47,7 @@ test('K freezes the office for a 2× shot and K again puts everything back', asy
   const size = page.viewportSize()!;
   expect(shot).toMatchObject({ width: size.width * 2, height: size.height * 2 });
   expect([png.width, png.height]).toEqual([size.width * 2, size.height * 2]);
-  await expect(page.getByText(/Saved cubefarm-.*\.png/)).toBeVisible();
+  await expect(page.getByText(/Saved droidsembly-.*\.png/)).toBeVisible();
 
   await page.keyboard.press('k');
   await expect(page.getByRole('complementary', { name: 'Photo mode' })).toBeHidden();
