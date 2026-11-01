@@ -135,8 +135,8 @@ export function commandFor(id: AgentCli): { file: string; args: string[] } | nul
 export function openCodeVersionProblem(version: string | null): string | null {
   const text = version?.split(/\r?\n/)[0].trim() ?? '';
   const match = text.match(/^(?:opencode\s+)?v?(\d+)\.\d+\.\d+(?:[-+][\w.-]+)?$/i);
-  if (!match) return 'Could not verify the OpenCode version. CubeFarm requires OpenCode 2.x. Check opencode --version before trying again.';
-  return Number(match[1]) === 2 ? null : `OpenCode ${text} is not supported. CubeFarm requires OpenCode 2.x; install V2 before starting this agent.`;
+  if (!match) return 'Could not verify the OpenCode version. Droidsembly requires OpenCode 2.x. Check opencode --version before trying again.';
+  return Number(match[1]) === 2 ? null : `OpenCode ${text} is not supported. Droidsembly requires OpenCode 2.x; install V2 before starting this agent.`;
 }
 
 /** Probe the actual executable immediately before spawning a new terminal, not just the startup inventory. */
@@ -328,7 +328,7 @@ export function launchArgs(id: AgentCli, ctx: LaunchContext): Launch {
         instructions: [ctx.files.system],
         // A dedicated primary agent also retains a model's explicit #variant (the root model setting doesn't).
         default_agent: 'cubefarm',
-        agents: { cubefarm: { description: 'The CubeFarm office session', mode: 'primary', ...(model ? { model } : {}) } },
+        agents: { cubefarm: { description: 'The Droidsembly office session', mode: 'primary', ...(model ? { model } : {}) } },
         ...opencodeLocal(local),
         ...(Object.keys(servers).length ? { mcp: { servers } } : {}),
       };
@@ -443,7 +443,7 @@ process.stdin.on('end', async () => {
     const out = await res.json();
     process.stdout.write(String(out.statusLine ?? ''));
   } catch {
-    process.stdout.write('cubefarm');
+    process.stdout.write('Droidsembly');
   }
 });
 `;
@@ -485,7 +485,7 @@ export default {
   id: 'cubefarm.office',
   async setup(ctx) {
     const { sessionID, notifyUrl } = ctx.options;
-    if (!sessionID || !notifyUrl) throw new Error('Missing CubeFarm callback configuration');
+    if (!sessionID || !notifyUrl) throw new Error('Missing Droidsembly callback configuration');
     const controller = new AbortController();
     let lastIdle;
     const post = async (body) => {
@@ -494,7 +494,7 @@ export default {
         body: JSON.stringify({ ...body, session_id: sessionID }),
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(5000)]),
       });
-      if (!response.ok) throw new Error('CubeFarm callback failed: ' + response.status);
+      if (!response.ok) throw new Error('Droidsembly callback failed: ' + response.status);
     };
     await ctx.session.hook('prompt', async (event) => {
       if (event.sessionID !== sessionID) return;
@@ -537,7 +537,7 @@ export default {
     };
     void listen().catch((err) => {
       if (!controller.signal.aborted) {
-        console.error('CubeFarm OpenCode integration:', err);
+        console.error('Droidsembly OpenCode integration:', err);
         void post({ hook_event_name: 'TurnError', error: String(err) }).catch(console.error);
       }
     });

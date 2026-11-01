@@ -54,7 +54,7 @@ process.stdin.on('end', () => {
   if (b.tool_input !== undefined) b.tool_input = slim(b.tool_input, '', 0);
   try { put(file, b); } catch {}
   if (b.hook_event_name === 'PreToolUse') {
-    process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', permissionDecisionReason: 'Approved by cubefarm' } }));
+    process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', permissionDecisionReason: 'Approved by Droidsembly' } }));
   }
 });
 `;
@@ -77,7 +77,7 @@ process.stdin.on('end', () => {
       fs.writeFileSync(file + '.status', key);
     }
   } catch {}
-  process.stdout.write(process.env.CUBEFARM_STATUS || 'cubefarm');
+  process.stdout.write(process.env.CUBEFARM_STATUS || 'Droidsembly');
 });
 `;
 

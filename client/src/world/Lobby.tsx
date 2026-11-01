@@ -24,6 +24,7 @@ import { Ball, Box, Cyl } from './Toon';
 import { Toys } from './toys';
 import { OFFICE } from './officeAppearance';
 import { Inlay } from './OfficeFinish';
+import { drawBrandIcon, useBrandReady } from './brand';
 
 const ACCENT = '#ff8a5b';
 const CEO_ACCENT = '#9b5de5';
@@ -58,6 +59,7 @@ function useOfficeStats() {
 }
 
 function ManagerComputer() {
+  const brandReady = useBrandReady();
   const use = useKeyName('interact');
   const stats = useOfficeStats();
   const ref = useInteractable<THREE.Group>({ id: 'manager-console', label: "Open the manager's console", action: { kind: 'manager' } }, 3.2);
@@ -73,7 +75,8 @@ function ManagerComputer() {
       ctx.fillStyle = '#ffd6a5';
       ctx.font = `700 54px ${SANS}`;
       ctx.textBaseline = 'middle';
-      ctx.fillText('✻ Manager Console', 50, 70);
+      drawBrandIcon(ctx, 50, 30, 74);
+      ctx.fillText('Manager Console', 132, 70);
       const rows: [string, string][] = [
         ['Floors (repos)', `${stats.repos}`],
         ['Agents on staff', `${stats.agents}`],
@@ -100,7 +103,7 @@ function ManagerComputer() {
       ctx.font = `600 32px ${SANS}`;
       ctx.fillText(`Press ${use} or click to manage floors, team & issues`, 50, 592);
     },
-    [stats.repos, stats.agents, stats.working, stats.max, stats.issues, stats.inQa, stats.readyToMerge, stats.pending, use],
+    [stats.repos, stats.agents, stats.working, stats.max, stats.issues, stats.inQa, stats.readyToMerge, stats.pending, use, brandReady],
   );
   return (
     <group ref={ref} position={[MANAGER_DESK.x, 0, MANAGER_DESK.z]}>
@@ -297,6 +300,7 @@ function CeoOffice() {
 }
 
 export function Lobby() {
+  const brandReady = useBrandReady();
   const m = MANAGER_ROOM;
   const user = useStore((s) => s.user);
   const managerName = useStore((s) => s.settings.managerName);
@@ -367,13 +371,18 @@ export function Lobby() {
         rotationY={0}
         size={[7, 1.6]}
         px={[1400, 320]}
-        draw={(ctx) =>
-          drawSign(ctx, 1400, 320, [
-            { text: `✻ ${company || 'cubefarm'}`, size: 120 },
-            { text: company ? 'Small droids. Serious software.' : 'a team of AI coding agents', size: 48, weight: 500 },
-          ], OFFICE.petrol)
-        }
-        deps={[company]}
+        draw={(ctx) => {
+          drawSign(ctx, 1400, 320, [], OFFICE.petrol);
+          drawBrandIcon(ctx, 42, 44, 230);
+          ctx.save();
+          ctx.translate(260, 0);
+          drawSign(ctx, 1140, 320, [
+            { text: company || 'Droidsembly', size: 120 },
+            { text: company ? 'Small droids. Serious software.' : 'Software, assembled by agents.', size: 48, weight: 500 },
+          ], OFFICE.petrol);
+          ctx.restore();
+        }}
+        deps={[company, brandReady]}
       />
 
       <MissionControl />

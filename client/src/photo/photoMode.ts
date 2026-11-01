@@ -168,7 +168,7 @@ export function overlayOptions(guides: boolean): OverlayOptions {
   const h = here();
   return {
     frame: GRADES[s.filter].frame,
-    stamp: s.stamp ? useStore.getState().settings.companyName || 'cubefarm' : null,
+    stamp: s.stamp ? useStore.getState().settings.companyName || 'Droidsembly' : null,
     caption: s.caption ? caption(h.label, h.floor, new Date()) : null,
     guides: guides && s.guides,
   };

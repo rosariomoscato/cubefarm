@@ -60,6 +60,6 @@ describe('what the billboards say', () => {
     const boards = boardTexts({ ...n, company: '', issues: 0, floors: 1 });
     expect(boards[2].under).toBe('inbox zero!');
     expect(boards[0].under).toBe('on 1 floor');
-    expect(boards[3].top).toBe('CUBEFARM');
+    expect(boards[3].top).toBe('DROIDSEMBLY');
   });
 });

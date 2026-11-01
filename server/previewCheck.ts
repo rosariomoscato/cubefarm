@@ -25,7 +25,7 @@ export function handlePreviewCheck(req: IncomingMessage, res: ServerResponse, bo
     return true;
   }
   const body = page
-    ? `<!doctype html><html><head>${boot}<meta charset="utf-8"><title>CubeFarm preview transport check</title><link rel="stylesheet" href="${CSS}"><script defer src="${JS}"></script></head><body>Preview transport check</body></html>`
+    ? `<!doctype html><html><head>${boot}<meta charset="utf-8"><title>Droidsembly preview transport check</title><link rel="stylesheet" href="${CSS}"><script defer src="${JS}"></script></head><body>Preview transport check</body></html>`
     : css ? ':root{--cubefarm-preview-check:ready}' : SCRIPT;
   res.writeHead(200, {
     'content-type': page ? 'text/html; charset=utf-8' : css ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8',

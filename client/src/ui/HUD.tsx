@@ -172,7 +172,7 @@ export function HUD() {
       <div className="hud-floor" style={{ ['--accent' as string]: roof ? '#7cc6fe' : (repo?.color ?? '#ff8a5b') }}>
         <div className="floor-num">{roof ? 'R' : repo ? repo.floor : 'G'}</div>
         <div>
-          <div className="floor-name">{repo ? repo.fullName : `${settings.companyName || 'cubefarm'} · ${t(roof ? 'Roof terrace' : 'Lobby')}`}</div>
+          <div className="floor-name">{repo ? repo.fullName : `${settings.companyName || 'Droidsembly'} · ${t(roof ? 'Roof terrace' : 'Lobby')}`}</div>
           <div className="floor-sub">
             {roof
               ? t('deck chairs, the barbecue and the telescope')

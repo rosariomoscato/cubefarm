@@ -767,7 +767,7 @@ function SettingsTab() {
         </label>
         <label className="field">
           <span><T>Company name</T></span>
-          <input defaultValue={settings.companyName} placeholder="cubefarm" onBlur={(e) => e.target.value !== settings.companyName && set({ companyName: e.target.value })} />
+          <input defaultValue={settings.companyName} placeholder="Droidsembly" onBlur={(e) => e.target.value !== settings.companyName && set({ companyName: e.target.value })} />
         </label>
         <label className="field">
           <span><T>The office dog's name</T></span>
@@ -796,7 +796,7 @@ function SettingsTab() {
         </div>
         <h3><T>ℹ️ Environment</T></h3>
         <div className="small">
-          cubefarm: <b>{version ?? t('unknown')}</b>
+          Droidsembly: <b>{version ?? t('unknown')}</b>
           {commit && (
             <>
               {' '}

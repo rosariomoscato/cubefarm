@@ -16,6 +16,7 @@ import { setMode } from './mode';
 import { approvalsBadge, pipelineOf, waitingOnYou, type Pipeline } from './pocketData';
 import { Approvals } from './PocketApprovals';
 import { Team } from './PocketTeam';
+import { BrandIcon } from '../ui/Brand';
 
 // Opened from the Team and Kanban tabs; loaded when first opened (the terminal brings xterm.js).
 const TerminalView = lazy(() => import('../ui/TerminalView').then((m) => ({ default: m.TerminalView })));
@@ -149,7 +150,7 @@ function Company({ go }: { go: (tab: PocketTab, repoId?: string) => void }) {
         <T>🏢 Open the 3D office</T>
       </button>
       {demo && <div className="pk-center small muted"><T>DEMO MODE: fake repos, fake agents</T></div>}
-      {version && <div className="pk-center small muted">cubefarm {version}</div>}
+      {version && <div className="pk-center small muted">Droidsembly {version}</div>}
     </div>
   );
 }
@@ -256,8 +257,8 @@ export default function Pocket() {
     else if (s.overlay?.kind === 'phone') s.openOverlay(null);
   }, [tab]);
   useEffect(() => {
-    document.title = `${company || 'cubefarm'} · pocket`;
-    return () => void (document.title = 'cubefarm');
+    document.title = `${company ? `${company} · ` : ''}Droidsembly · pocket`;
+    return () => void (document.title = 'Droidsembly');
   }, [company]);
 
   const tabs: [PocketTab, string, string, number][] = [
@@ -270,10 +271,8 @@ export default function Pocket() {
   return (
     <div className="pocket">
       <header className="pk-head">
-        <span className="pk-logo" aria-hidden>
-          ✻
-        </span>
-        <b className="pk-title">{company || 'cubefarm'}</b>
+        <BrandIcon />
+        <b className="pk-title">{company || 'Droidsembly'}</b>
         <span className={`pk-dot ${connected ? 'pk-dot-on' : ''}`} title={t(connected ? 'Connected' : 'Not connected')} />
         <span className="spacer" />
         {usage !== 'normal' && <span className="chip chip-warn">{t(usage === 'paused' ? '⏸ paused' : '🐢 pacing')}</span>}

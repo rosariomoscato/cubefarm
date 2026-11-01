@@ -23,6 +23,28 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-11-01
 
+### Droidsembly: marchio approvato integrato nella copia di sviluppo
+
+**Pubblicazione autorizzata:** dopo approvazione delle schermate e prova interattiva il manager ha autorizzato commit, push e apertura PR sul solo fork `rosariomoscato/cubefarm`. Merge e aggiornamento reale richiedono autorizzazioni separate. La nota locale del precedente deploy PR #14 e i documenti `PerChatGPT.md` e `docs/STACK_E_ARCHITETTURA.md` restano esclusi dal commit.
+
+**Esito prova interattiva:** il manager ha provato la demo e confermato che la resa va bene. Fermato soltanto il server demo PID `11876`, dopo confronto di ora di avvio, comando e proprietario della porta; confermata porta 4419 libera. Conservati dati temporanei e profilo Chrome. Commit, push e PR ancora da autorizzare.
+
+**Prova interattiva prima della pubblicazione:** su richiesta del manager avviata demo separata a `http://127.0.0.1:4419/?pocket=0`, con Chrome in profilo dedicato. Home temporanea `Temp/opencode/droidsembly-user-demo-20261101-092202`, PID server `11876` registrato in `process.json`. Verificati backend demo, azienda Soot & Stars, due agenti fittizi, automazioni disabilitate, revisioni CEO a zero e cambi team su approvazione. Demo lasciata attiva per la prova utente, da fermare al termine controllando PID e identità del processo. App reale e preferenze audio personali non modificate.
+
+**Approvazione visiva finale:** il manager ha esaminato e approvato le schermate dell’ingresso italiano, del wizard mobile, della modalità touch e della lobby. Ricontrollati stato Git, destinazione origin e diff (nessun errore `git diff --check`); pubblicazione ancora da autorizzare separatamente.
+
+Approvata dal manager la revisione 02 e autorizzata l’implementazione. Ricostruzione robot-cubo arrotondata con dettaglio laterale allineato; loghi SVG chiaro/scuro con Sora incorporato, font locali con licenza OFL, favicon semplificate, PNG PWA/Apple/maskable e badge monocromatico. Componenti condivisi per marchio statico e assemblaggio singolo di circa 2,2 s, senza audio, con rispetto del movimento ridotto di sistema/app. Sostituiti simboli e diciture di prodotto in ingresso, wizard, touch, console, lobby, screensaver, foto, news/cartelloni e arcade; aggiornati titolo browser, nome PWA e notifiche. Nome prodotto coerente anche nei testi generati lato server e nei prompt, senza cambiare istruzioni operative. Precaching dei nuovi asset e font. Nome aziendale, payoff lobby, identificativi tecnici, storage, dati e launcher conservati.
+
+**Verifiche:** TypeScript/build finali superati; **124 test mirati passati su 13 file**. Demo isolata Chrome/Playwright, porta 4419 verificata libera, nessuna AI reale: ingresso EN/IT desktop/mobile, wizard stretto, touch smartphone/tablet, lobby 3D, animazione singola e movimento ridotto, font e dimensioni export, cache icona, assenza di errori pagina e overflow interno delle schede. Corretto il pulsante italiano del wizard ritagliato su viewport stretta. Soot & Stars conservato; automazioni false, revisioni CEO a zero, cambi team su approvazione, agenti inattivi. Demo finale fermata, artefatti in `Temp/opencode/droidsembly-qa-A22EYG`; inventario, limiti e dettagli in `docs/branding/README.md`.
+
+**Suite globale intermedia non verde:** 2.598 passati / 8 falliti (236/244 file), circa 660 s. Due aspettative obsolete del nome aggiornate e poi passate; CEO runtime e notifier passati nella ripetizione mirata. Restano nel report timeout scale/indoor/throwSim e budget walkways. Run su codice intermedio, in parte concorrente con altre verifiche: non validazione finale né attribuzione automatica alla baseline. I quattro fallimenti storici non sono dichiarati risolti. Nessun commit/push/PR o aggiornamento reale; preservati nota deploy PR #14 e documenti locali preesistenti.
+
+### Droidsembly: inventario del marchio e prima bozza da approvare
+
+Revisione grafica 02 su richiesta del manager: allineati cerchio e lineette del dettaglio laterale secondo la prospettiva; arrotondati gli spigoli e aggiunti volume alle facce, riflesso al visore e sfumature all’antenna. Modifiche limitate alla tavola, ancora in approvazione.
+
+Verificato che i branch precedenti sono già integrati in main con PR #14 (`925f32a`); creato il branch locale `feat/droidsembly-branding`. Preservati nota di deploy e documenti locali preesistenti. Aggiunti `docs/branding/INVENTORY.md` e tavola offline `docs/branding/preview.html`: ricostruzione vettoriale dal riferimento PDF allegato, varianti chiare/scure, icone e proposta di assemblaggio singolo con movimento ridotto statico. Colori indicativi e font temporaneo esplicitati. Asset e rinomina visibile non ancora integrati nell’app, in attesa di approvazione grafica. Nessun commit/push, modifica all’installazione reale o richiesta AI di collaudo.
+
 ### Catalogo decorazioni coordinato alla palette finale
 
 Modifiche su `style/cyan-decoration-catalogue`: intestazione petrolio, pannello avorio, selezione piano e pulsanti acquisto ciano. Colore progetto conservato nel piccolo numero del piano, senza colorare tutta la scheda. Nessuna modifica a prezzi, monete, disponibilità o logica di acquisto. Commit, push e apertura PR sul solo fork autorizzati dal manager; merge e aggiornamento reale richiedono conferma distinta.

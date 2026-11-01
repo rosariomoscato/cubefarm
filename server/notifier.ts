@@ -156,7 +156,7 @@ export class Notifier {
     if (!isChannel(channel)) throw new HttpError(400, `There's no notification channel called "${channel}".`);
     if (isWebhook(channel) && !this.webhooks[channel]) throw new HttpError(409, `Save the ${LABEL[channel]} settings first.`);
     if (channel === 'push' && !this.push.devices.length) throw new HttpError(409, 'No device gets push yet: turn push on on a device first.');
-    const n = note('test', 'Test from cubefarm', channel === 'desktop' ? 'Desktop notifications work in this browser.' : `${LABEL[channel]} notifications from the office work.`);
+    const n = note('test', 'Test from Droidsembly', channel === 'desktop' ? 'Desktop notifications work in this browser.' : `${LABEL[channel]} notifications from the office work.`);
     const results = await this.deliver(n, channel);
     const failed = results.filter((r) => r !== null);
     if (results.length && failed.length === results.length) throw new HttpError(502, `The test didn't arrive: ${failed[0]}.`);

@@ -59,10 +59,10 @@ export function slug(text: string): string {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** cubefarm-acme-web-2026-10-05-143022.png */
+/** droidsembly-acme-web-2026-10-05-143022.png */
 export function fileName(place: string, at: Date, ext: 'png' | 'webm'): string {
   const d = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}-${pad(at.getHours())}${pad(at.getMinutes())}${pad(at.getSeconds())}`;
-  return `cubefarm-${slug(place)}-${d}.${ext}`;
+  return `droidsembly-${slug(place)}-${d}.${ext}`;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

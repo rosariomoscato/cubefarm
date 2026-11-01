@@ -361,7 +361,7 @@ server.listen(PORT, HOST, () => {
   setOfficeUrl(`http://${localAddress(HOST)}:${port}`);
   const scale = DEMO_SCALE ? `, ${DEMO_SCALE.floors} floors × ${DEMO_SCALE.agents} people` : '';
   const shown = localAddress(HOST) === '127.0.0.1' ? 'localhost' : localAddress(HOST);
-  console.log(`\n  🏢 cubefarm ${VERSION} on http://${shown}:${PORT}${DEMO ? `  (DEMO MODE: fake GitHub + fake agents${scale})` : ''}`);
+  console.log(`\n  🏢 Droidsembly ${VERSION} on http://${shown}:${PORT}${DEMO ? `  (DEMO MODE: fake GitHub + fake agents${scale})` : ''}`);
   if (!isLoopback(HOST)) {
     for (const url of networkUrls(HOST, port)) console.log(`     on your network: ${url}`);
     console.log(`     ⚠ listening on ${HOST}: anyone who can reach this machine can use the office and its agents, with no sign-in`);

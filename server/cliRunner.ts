@@ -191,7 +191,7 @@ const IDLE_MS = 30 * 60_000;
 const BOX_IDLE_MS = 5 * 60_000;
 
 /** PreToolUse's answer: nobody may be watching to answer a permission question, so every tool call is approved. */
-const ALLOW = { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', permissionDecisionReason: 'Approved by cubefarm' } };
+const ALLOW = { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', permissionDecisionReason: 'Approved by Droidsembly' } };
 
 const toolInput = (b: Record<string, unknown>) => (b.tool_input && typeof b.tool_input === 'object' ? b.tool_input : {}) as Record<string, unknown>;
 
@@ -284,7 +284,7 @@ export async function reconnectClis(terminalFor: (agentId: string) => AgentTermi
       if (meta.cli === 'codex' && meta.resumeId) void codexThread('archive', meta.resumeId, h.exit === null ? new Promise((r) => setTimeout(r, 5000)) : undefined);
       continue;
     }
-    const l: LiveCli = { agentId: meta.agentId, cli: meta.cli, term, proc: adoptPty(h), token: meta.token, dir: meta.dir, resumeId: meta.resumeId ?? null, statusLine: '🏢 cubefarm', shots: new Set(), session: null };
+    const l: LiveCli = { agentId: meta.agentId, cli: meta.cli, term, proc: adoptPty(h), token: meta.token, dir: meta.dir, resumeId: meta.resumeId ?? null, statusLine: '🏢 Droidsembly', shots: new Set(), session: null };
     wire(l);
     waitAtPrompt(l);
     // Resizing makes the CLI draw its whole screen again, over whatever the saved copy of the terminal missed.
@@ -327,7 +327,7 @@ export async function reconnectBoxClis(kept: KeptBoxCli[], terminalFor: (agentId
         k.record(null); // gone without finishing: the office resumes or requeues its task
         return;
       }
-      const l: LiveCli = { agentId: k.agentId, cli: k.rec.cli, term, proc: null, token: k.rec.token, dir: k.rec.dir, resumeId: k.rec.resumeId, statusLine: '🏢 cubefarm', shots: new Set(), session: null, box: { api: k.api, boxId: k.rec.boxId } };
+      const l: LiveCli = { agentId: k.agentId, cli: k.rec.cli, term, proc: null, token: k.rec.token, dir: k.rec.dir, resumeId: k.rec.resumeId, statusLine: '🏢 Droidsembly', shots: new Set(), session: null, box: { api: k.api, boxId: k.rec.boxId } };
       const p = boxPty(l, { api: k.api, boxId: k.rec.boxId, record: (r) => k.record(r), connection: k.connection }, term.cols, term.rows, readFrom(k.rec));
       l.proc = p;
       wire(l);
@@ -497,7 +497,7 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
   const sessionId = opts.resumeSessionId ?? crypto.randomUUID();
   const dir = box ? boxSessionDir(token) : path.join(SESSIONS_DIR, token);
   const started = Date.now();
-  const statusLine = `🏢 cubefarm${opts.label ? ` · ${opts.label}` : ''}`;
+  const statusLine = `🏢 Droidsembly${opts.label ? ` · ${opts.label}` : ''}`;
   const toolNames = new Map<string, string>();
   const officePrompts: string[] = []; // prompts the office typed, so the ones the manager typed are told apart
   const launched: string[] = []; // every prompt the CLI was given, as given (Codex: finds its main thread)
@@ -881,7 +881,7 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
     effort: opts.effort,
     resumeId: opts.resumeSessionId,
     sessionId,
-    name: opts.label ?? 'cubefarm',
+    name: opts.label ?? 'Droidsembly',
     role: opts.role,
     additionalDirectories: opts.additionalDirectories,
     files,

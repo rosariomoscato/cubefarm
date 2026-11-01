@@ -55,8 +55,8 @@ describe('tiles', () => {
 describe('names and words', () => {
   it('names files safely, with the place and the time', () => {
     const at = new Date(2026, 9, 5, 14, 3, 22);
-    expect(fileName('acme/web', at, 'png')).toBe('cubefarm-acme-web-2026-10-05-140322.png');
-    expect(fileName('???', at, 'webm')).toBe('cubefarm-office-2026-10-05-140322.webm');
+    expect(fileName('acme/web', at, 'png')).toBe('droidsembly-acme-web-2026-10-05-140322.png');
+    expect(fileName('???', at, 'webm')).toBe('droidsembly-office-2026-10-05-140322.webm');
     expect(slug('A'.repeat(100)).length).toBe(40);
   });
 

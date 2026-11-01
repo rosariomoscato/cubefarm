@@ -6,6 +6,7 @@ import { Markdown } from './Markdown';
 import { closeOverlay } from './Panel';
 import { HireSetupFields, cliLabel, hireCli, hireOverrides, setupOf, type HireSetup } from './Phone';
 import { CLAUDE_MODELS, effectiveModel } from '../../../shared/models';
+import { BrandIcon } from './Brand';
 
 // A team change face to face (#227), as an office document: a new agent waiting in the lobby (E on them, world/
 // Candidates.tsx), set up here before they're created (name, coding agent, model, effort), or the CEO's let-go note in
@@ -32,13 +33,13 @@ export function Interview({ requestId }: { requestId: string }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const company = settings.companyName || 'cubefarm';
+  const company = settings.companyName || 'Droidsembly';
   if (!req) {
     return (
       <div className="overlay interview-overlay" onMouseDown={(e) => e.target === e.currentTarget && closeOverlay()}>
         <div className="doc" role="dialog" aria-label="Team change">
           <div className="doc-head">
-            <span>✻ {company} · personnel</span>
+            <span><BrandIcon /> {company} · personnel</span>
           </div>
           <p>This team change no longer exists.</p>
           <div className="doc-actions">
@@ -75,7 +76,7 @@ export function Interview({ requestId }: { requestId: string }) {
     <div className="overlay interview-overlay" onMouseDown={(e) => e.target === e.currentTarget && closeOverlay()}>
       <div className={`doc ${hire ? '' : 'doc-letgo'}`} role="dialog" aria-label={hire ? `Setting up ${name}` : `Letting ${req.name} go`}>
         <div className="doc-head">
-          <span>✻ {company} · personnel</span>
+          <span><BrandIcon /> {company} · personnel</span>
           <span>{hire ? 'New agent' : 'Confidential'}</span>
         </div>
         <div className="doc-who">
