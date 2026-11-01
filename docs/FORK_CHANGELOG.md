@@ -23,6 +23,14 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-11-01
 
+### Palette unificata dei popup — sviluppo locale
+
+Estesa e verificata esplicitamente la schermata Pocket «Dispositivo e notifiche»: intestazione petrolio, pulsanti ciano, checkbox/radio/slider petrolio e focus dei campi coordinato. Accento condiviso nel corpo dei pannelli anche quando il contenitore eredita un colore precedente. Smoke finale con input touch emulato passato, catture notifiche e accessibilità in italiano a 360 px ispezionate; typecheck/build ripassati. Preferenze notifiche e accessibilità non modificate.
+
+**UI / stile**, branch `style/unified-popup-palette`: palette condivisa petrolio `#17485c`, avorio `#faf8f5`, ciano `#65d8ef` e fondo tenue `#dceef2` per tutti i pannelli modali, conferme annidate, documenti di assunzione/rimozione, controlli del telefono, notifiche e guida. Intestazioni dei pannelli uniformate anche fuori dalla console; azioni principali ciano, azioni distruttive petrolio con testo avorio, focus coordinato. Indicatori di stato e colori identificativi dei progetti conservati. Conferme scorrevoli in altezza e pulsanti a capo su schermi stretti.
+
+Typecheck/build client e server superati; smoke demo EN/IT a 1280/820/360 pixel passato, con nuove catture delle conferme desktop/mobile e verifica visiva della versione a 360 px. Ultima build ripassata dopo l’allineamento di notifiche e guida. Nessuna richiesta AI reale. Modifiche locali non pubblicate né installate; documenti e note preesistenti conservati.
+
 ### Utilizzo AI multi-provider — implementazione locale completata
 
 **Feature / scheduler, telemetria e UI**, branch `feat/multi-provider-usage`, non pubblicato. Completato il collegamento Claude SDK/terminale, Codex locale/cloud e OpenCode V2 per CEO e agenti. Scoperta dai provider/connessioni effettivamente osservati, contatori deduplicati, storico persistente, valori ignoti distinti da zero e costi distinti dalla quota. Metadati consentiti senza contenuti delle conversazioni o credenziali; identificatori account opachi per host/strumento.
