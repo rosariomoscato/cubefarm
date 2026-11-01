@@ -25,13 +25,14 @@ const sh = (cmd, cwd) => {
 
 let server;
 try {
-  const packed = JSON.parse(sh(`${npm} pack --ignore-scripts --json --pack-destination "${tmp}"`, root))[0];
-  const paths = packed.files.map((f) => f.path);
-  for (const file of ['LICENSE', 'README.md', 'README.it.md', 'bin/distribution.js', 'dist/icons/Sora-OFL.txt', 'dist-server/index.js']) {
-    assert.ok(paths.includes(file), `missing package file: ${file}`);
+  // Optional retained tarball: validate exactly the artifact that was reviewed.
+  let tarball = process.argv[2] && path.resolve(process.argv[2]);
+  if (!tarball) {
+    const packed = JSON.parse(sh(`${npm} pack --ignore-scripts --json --pack-destination "${tmp}"`, root))[0];
+    const paths = packed.files.map((f) => f.path);
+    assert.ok(!paths.some((f) => /PerChatGPT|STACK_E_ARCHITETTURA|FORK_CHANGELOG|NPM_DISTRIBUTION_PLAN/.test(f)), 'local documents must not be packed');
+    tarball = path.join(tmp, packed.filename);
   }
-  assert.ok(!paths.some((f) => /PerChatGPT|STACK_E_ARCHITETTURA|FORK_CHANGELOG|NPM_DISTRIBUTION_PLAN/.test(f)), 'local documents must not be packed');
-  const tarball = path.join(tmp, packed.filename);
   sh(`${npm} init -y`, tmp);
   sh(`${npm} install --no-audit --no-fund "${tarball}"`, tmp);
   const cli = path.join(tmp, 'node_modules', '.bin', process.platform === 'win32' ? 'droidsembly.cmd' : 'droidsembly');
@@ -43,6 +44,21 @@ try {
   console.log(`droidsembly --version/--help: ${pkg.version}`);
 
   const installed = path.join(tmp, 'node_modules', pkg.name);
+  for (const file of ['LICENSE', 'README.md', 'README.it.md', 'bin/distribution.js', 'dist/icons/Sora-OFL.txt', 'dist-server/index.js', 'dist/third-party-licenses.json', 'dist/THIRD_PARTY_LICENSES.txt']) {
+    assert.ok(fs.existsSync(path.join(installed, file)), `missing package file: ${file}`);
+  }
+  const licenses = JSON.parse(fs.readFileSync(path.join(installed, 'dist/third-party-licenses.json'), 'utf8'));
+  const notices = fs.readFileSync(path.join(installed, 'dist/THIRD_PARTY_LICENSES.txt'), 'utf8');
+  assert.ok(licenses.length > 0, 'empty client license inventory');
+  for (const entry of licenses) {
+    assert.ok(entry.text?.trim(), `missing license text: ${entry.name}`);
+    assert.ok(notices.includes(`${entry.name}@${entry.version}`) && notices.includes(entry.text), `missing readable license: ${entry.name}`);
+    for (const notice of entry.notices) assert.ok(notices.includes(notice.text), `missing additional notice: ${entry.name}/${notice.file}`);
+  }
+  for (const name of ['react', 'three', '@react-three/fiber', '@react-three/rapier', '@dimforge/rapier3d-compat', 'postprocessing']) {
+    assert.ok(licenses.some((entry) => entry.name === name), `missing bundled library: ${name}`);
+  }
+  console.log(`Installed client license texts verified: ${licenses.length} packages`);
   const mcpPkg = createRequire(path.join(installed, 'dist-server', 'index.js')).resolve('@playwright/mcp/package.json');
   const mcp = spawnSync(process.execPath, [path.join(path.dirname(mcpPkg), 'cli.js'), '--version'], { encoding: 'utf8', env });
   if (mcp.status !== 0) throw new Error(`the pinned browser tool does not run:\n${mcp.stdout}\n${mcp.stderr}`);

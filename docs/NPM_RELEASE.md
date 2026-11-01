@@ -20,7 +20,7 @@ PowerShell, dalla copia di sviluppo / from the development checkout:
 
 ```powershell
 npm.cmd run typecheck
-npm.cmd test -- scripts/distribution.test.ts scripts/officeSteps.test.ts server/config.test.ts --maxWorkers=1
+npm.cmd test -- scripts/build-licenses.test.ts scripts/distribution.test.ts scripts/officeSteps.test.ts server/config.test.ts --maxWorkers=1
 npm.cmd run build
 npm.cmd pack --dry-run --ignore-scripts
 $env:RELEASE_TAG = 'droidsembly-v0.4.0-beta.1'
@@ -34,6 +34,8 @@ Su macOS/Linux usare `npm` e la sintassi della shell per le variabili. La suite 
 Lo smoke installa il tarball effettivo in una cartella temporanea, controlla versione/help tramite il comando installato, verifica licenze e avvia solo la demo. `CI=1` disabilita il controllo degli aggiornamenti. Non usa l'ufficio reale né richieste AI. / The smoke installs the actual tarball in a temporary folder, checks the installed command's version/help and license files, and starts only a demo. `CI=1` disables update checks. It does not use the real office or make AI requests.
 
 ## Prima pubblicazione / First publication
+
+Per verificare un artefatto già conservato, passarlo come argomento: `node scripts/smoke-package.mjs "percorso/droidsembly-0.4.0-beta.1.tgz"`. Non viene ricreato. / To validate a retained artifact without repacking it, pass its path as the script's argument.
 
 1. Confermare la disponibilità del nome al momento del rilascio e accedere al proprio account npm con 2FA. Credenziali e codici restano al manager. / Confirm name availability at release time and sign in to the maintainer's npm account with 2FA. Credentials and codes stay with the maintainer.
 2. Integrare la preparazione tramite PR verificata. Concordare separatamente il bootstrap del pacchetto nuovo: prima pubblicazione autenticata o procedura iniziale supportata da npm, prima di poter fare affidamento sul trusted publisher del pacchetto. / Merge the preparation through a verified PR. Separately agree on new-package bootstrap via authenticated first publication or npm's supported initial setup before relying on the package's trusted publisher.
@@ -57,3 +59,7 @@ Se npm ha pubblicato ma la creazione della release GitHub fallisce, non ripubbli
 I README EN/IT usano URL assoluti del fork per immagini e guide, così il tarball non deve includere documenti locali. MIT originale e avviso Sora OFL restano nel pacchetto. Prima della prima pubblicazione completare la verifica delle licenze delle dipendenze e dei componenti incorporati; la presenza di questi due avvisi non costituisce un audit completo. / EN/IT READMEs use absolute fork URLs for images and guides, keeping local documents out of the tarball. Original MIT and Sora OFL notices remain included. Complete the dependency and bundled-component license review before first publication; those two notices alone are not a complete audit.
 
 Fonti / Sources: [npm trusted publishing](https://docs.npmjs.com/trusted-publishers), [public scoped packages](https://docs.npmjs.com/creating-and-publishing-scoped-public-packages).
+
+La build genera `dist/third-party-licenses.json` dai chunk client Vite e `dist/THIRD_PARTY_LICENSES.txt` con i testi originali e ulteriori avvisi dei pacchetti incorporati. I testi mancanti bloccano la build; le eccezioni sono copie upstream locali vincolate alla versione, documentate in [scripts/licenses](../scripts/licenses/README.md). Lo smoke controlla entrambi i file e i relativi contenuti nel pacchetto installato. Le dipendenze server restano esterne: SDK e binari Claude hanno termini Anthropic propri, non MIT.
+
+The build generates `dist/third-party-licenses.json` from Vite client chunks and `dist/THIRD_PARTY_LICENSES.txt` with original texts and additional bundled-package notices. Missing texts fail the build; fallbacks are local, version-pinned upstream copies documented in [scripts/licenses](../scripts/licenses/README.md). The smoke checks both files and their contents in the installed package. Server dependencies remain external: Claude SDK and binaries have their own Anthropic terms, not MIT.

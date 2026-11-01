@@ -18,6 +18,7 @@ export default defineConfig({
     },
   },
   build: {
+    license: { fileName: 'third-party-licenses.json' },
     outDir: '../dist',
     emptyOutDir: true,
     chunkSizeWarningLimit: 2000,
