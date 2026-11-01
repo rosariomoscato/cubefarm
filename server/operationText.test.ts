@@ -53,8 +53,8 @@ describe('structured operation text', () => {
 
   it('localizes usage and reset weekdays without changing fallback English or unknown limits', () => {
     const u: UsageView = { state: 'pacing', until: NOW + 86400000, warning: { limit: null, pct: null, resetsAt: null, at: NOW } };
-    expect(usageMeter(u, NOW).limit).toBe("Claude's usage");
-    expect(usageMeter(u, NOW, 'it').limit).toBe('Utilizzo di Claude');
+    expect(usageMeter(u, NOW).limit).toBe('AI usage');
+    expect(usageMeter(u, NOW, 'it').limit).toBe('Utilizzo AI');
     expect(usageMeter(u, NOW, 'it').state).toBe('Rallentato');
     expect(usageMeter(u, NOW, 'it').resets).toMatch(/^dom /);
     for (const limit of ['5-hour limit', 'weekly limit', 'weekly Opus limit', 'weekly Sonnet limit']) {

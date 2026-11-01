@@ -124,9 +124,10 @@ export const api = {
     return u;
   },
   /** Clears pacing after a usage warning; refused (and toasted) while paused at the limit. */
-  resumeFullSpeed: () => call<UsageView>('POST', '/api/usage/resume'),
+  resumeFullSpeed: (resourceKey?: string) => call<UsageView>('POST', '/api/usage/resume', { resourceKey }),
+  setUsageGroup: (resourceKey: string, group: string) => call<UsageView>('POST', '/api/usage/group', { resourceKey, group }),
   /** The demo only: a usage warning, or the limit, as if a session had reported it. */
-  simulateUsage: (kind: 'warning' | 'limit') => call<UsageView>('POST', '/api/usage/simulate', { kind }),
+  simulateUsage: (kind: 'warning' | 'limit', agentId?: string) => call<UsageView>('POST', '/api/usage/simulate', { kind, agentId }),
   /** The office doctor: a finding's one-click fix, or Ignore. */
   doctorFix: (id: string, fix: DoctorFix) => call<DoctorFinding[]>('POST', '/api/doctor/fix', { id, fix }),
   doctorIgnore: (id: string) => call<DoctorFinding[]>('POST', '/api/doctor/ignore', { id }),

@@ -53,8 +53,8 @@ export const fmtUsd = (n: number) => (n >= 100 ? `$${Math.round(n)}` : `$${n.toF
 export function usageChip(u: UsageView, pacingSessions: number, now: number, language?: Language): string | null {
   if (u.state === 'normal' || u.until === null) return null;
   const until = clock(u.until, now, languageTag(language));
-  if (u.state === 'paused') return translate(language, "⏸ Paused until {time}: at Claude's usage limit, nothing new starts", { time: until });
-  return translate(language, pacingSessions === 1 ? '🐢 Paced until {time}: new issues start when fewer than {count} session run' : '🐢 Paced until {time}: new issues start when fewer than {count} sessions run', { time: until, count: pacingSessions });
+  if (u.state === 'paused') return translate(language, '⏸ AI quota held until {time}; independent resources continue', { time: until });
+  return translate(language, pacingSessions === 1 ? '🐢 AI quota paced until {time}: fewer than {count} session on that quota' : '🐢 AI quota paced until {time}: fewer than {count} sessions on that quota', { time: until, count: pacingSessions });
 }
 
 /** The usage meter's headline and details: the state, and the last warning's limit, fill and reset time. */
@@ -64,7 +64,7 @@ export function usageMeter(u: UsageView, now: number, language?: Language): { st
   return {
     state: translate(language, u.state === 'paused' ? 'Paused' : u.state === 'pacing' ? 'Pacing' : 'Normal'),
     tone: u.state === 'paused' ? 'bad' : u.state === 'pacing' ? 'warn' : 'good',
-    limit: w ? `${w.limit ? localizedLimit(w.limit, language) : translate(language, "Claude's usage")}${w.pct === null ? '' : ` · ${w.pct}%`}` : translate(language, 'No usage warnings'),
+    limit: w ? `${w.limit ? localizedLimit(w.limit, language) : translate(language, 'AI usage')}${w.pct === null ? '' : ` · ${w.pct}%`}` : translate(language, 'No usage warnings'),
     pct: w?.pct ?? null,
     resets: resetsAt ? clock(resetsAt, now, languageTag(language)) : null,
   };

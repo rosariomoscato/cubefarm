@@ -7,11 +7,12 @@ const user = { id: 'user', type: 'user', text: 'Plan the work' };
 const reply = { id: 'reply', type: 'assistant', content: [{ type: 'reasoning', text: 'private reasoning' }, { type: 'text', text: 'The plan is ready.' }] };
 const idle = { id: 'idle', type: 'idle', outcome: 'succeeded' };
 
-async function plugin(events: Record<string, unknown>[], messages: unknown[] = [user, reply, idle], model?: { providerID: string; id: string; variant?: string }) {
+async function plugin(events: Record<string, unknown>[], messages: unknown[] = [user, reply, idle], model?: { providerID: string; id: string; variant?: string }, rejectUsage = false) {
   const posts: Record<string, unknown>[] = [];
   vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
     expect(url).toBe(URL);
     posts.push(JSON.parse(String(init.body)));
+    if (rejectUsage && posts.at(-1)?.hook_event_name === 'AiUsage') return new Response('', { status: 503 });
     return new Response('{}');
   }));
   let signal: AbortSignal | undefined;
@@ -23,6 +24,8 @@ async function plugin(events: Record<string, unknown>[], messages: unknown[] = [
   const dispose = await definition.setup({
     options: { sessionID: SESSION, notifyUrl: URL, model },
     model: { default: defaultModel },
+    provider: { get: async () => ({ integrationID: 'fixture', headers: { authorization: 'secret' } }) },
+    integration: { connection: { active: async () => ({ type: 'credential', id: 'credential-fixture', method: 'oauth', label: 'private account label' }) } },
     session: { context, get: async () => ({ id: SESSION, outcome: 'succeeded' }), hook: promptHook, switchModel },
     event: { subscribe: async function* (options: { signal: AbortSignal }) {
       signal = options.signal;
@@ -35,6 +38,39 @@ async function plugin(events: Record<string, unknown>[], messages: unknown[] = [
 afterEach(() => vi.unstubAllGlobals());
 
 describe('OpenCode V2 turn notifications', () => {
+  it('discovers active metadata for arbitrary providers and forwards 429 without modifying retries or HTTP', async () => {
+    const p = await plugin([]);
+    const hook = (name: string) => p.promptHook.mock.calls.find((call) => call[0] === name)![1];
+    const event = { sessionID: SESSION, model: { providerID: 'future-provider', id: 'future-model' } };
+    await hook('model.request')(event);
+    expect(p.posts[0]).toMatchObject({ hook_event_name: 'AiResource', resource: { provider: 'future-provider', model: 'future-model', account: 'credential-fixture', access: 'unknown' } });
+    const response = new Response('', { status: 429, headers: { 'retry-after': '60', authorization: 'secret' } });
+    const http = { ...event, response };
+    await hook('http.response')(http);
+    expect(http.response).toBe(response);
+    expect(p.posts[1]).toMatchObject({ hook_event_name: 'AiLimit', status: 429 });
+    expect(p.posts[1].resetsAt).toBeGreaterThan(Date.now());
+    const retry = { ...event, error: { status: 429 }, decision: { retry: true, delay: 1000 } };
+    await hook('retry')(retry);
+    expect(retry.decision).toEqual({ retry: true, delay: 1000 });
+    await hook('retry')({ ...retry, sessionID: 'foreign' });
+    expect(p.posts).toHaveLength(3);
+    expect(JSON.stringify(p.posts)).not.toMatch(/secret|private account label|authorization/);
+    p.dispose();
+  });
+  it('reports actual per-message providers without forwarding content or provider credentials', async () => {
+    const messages = [user,
+      { ...reply, id: 'first', time: { created: 10 }, model: { providerID: 'provider-a', id: 'model-a', key: 'secret' }, tokens: { input: 42 } },
+      { ...reply, id: 'second', time: { created: 20 }, model: { providerID: 'provider-b', id: 'model-b' }, cost: 0 }, idle];
+    const p = await plugin([{ type: 'session.execution.succeeded', data: { sessionID: SESSION } }], messages);
+    await vi.waitFor(() => expect(p.posts).toHaveLength(3));
+    const usage = p.posts.filter((v) => v.hook_event_name === 'AiUsage');
+    expect(usage).toHaveLength(2);
+    expect(usage[0]).toMatchObject({ session_id: SESSION, message: { model: { providerID: 'provider-a', id: 'model-a' }, tokens: { input: 42 } } });
+    expect(usage[1]).toMatchObject({ message: { model: { providerID: 'provider-b' }, cost: 0 } });
+    expect(JSON.stringify(usage)).not.toMatch(/secret|private reasoning|content/);
+    p.dispose();
+  });
   it('applies the selected model and variant before admitting a resumed prompt', async () => {
     const model = { providerID: 'openai', id: 'gpt-6.1-sol', variant: 'medium' };
     const p = await plugin([], undefined, model);
@@ -43,6 +79,16 @@ describe('OpenCode V2 turn notifications', () => {
     expect(p.defaultModel).not.toHaveBeenCalled();
     expect(p.posts[0].hook_event_name).toBe('UserPromptSubmit');
     p.dispose();
+  });
+
+  it('still delivers completion when the usage callback is unavailable', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const p = await plugin([{ type: 'session.execution.succeeded', data: { sessionID: SESSION } }], [user, { ...reply, time: { created: 10 } }, idle], undefined, true);
+    await vi.waitFor(() => expect(p.posts.at(-1)?.hook_event_name).toBe('TurnComplete'));
+    expect(p.posts.some((post) => post.hook_event_name === 'TurnError')).toBe(false);
+    expect(warn).toHaveBeenCalled();
+    p.dispose();
+    warn.mockRestore();
   });
 
   it('restores the OpenCode default on resume when the explicit model is cleared', async () => {

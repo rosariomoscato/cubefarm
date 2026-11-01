@@ -690,7 +690,7 @@ function SettingsTab() {
           <input type="number" min={0} placeholder={t('No limit')} defaultValue={settings.sessionLimit || ''} onBlur={(e) => set({ sessionLimit: Number(e.target.value) || 0 })} />
         </label>
         <p className="muted small">
-          <T>Leave empty so every agent with work runs at once. Agents on the same coding agent share its subscription’s usage limits, and each one is its own process on this PC, so set a limit if you hit either.</T>
+          <T>Leave empty so every agent with work runs at once. This is the office-wide session cap; quota limits are tracked separately in AI usage.</T>
         </p>
         <label className="field">
           <span><T>Sessions while pacing</T></span>
@@ -703,7 +703,7 @@ function SettingsTab() {
             onBlur={(e) => Number(e.target.value) !== settings.pacingSessions && set({ pacingSessions: Number(e.target.value) || 3 })}
           />
         </label>
-        <p className="muted small"><T>When Claude warns that usage is getting high, new issues only start while fewer sessions than this are running. QA, fixes and the CEO carry on.</T></p>
+        <p className="muted small"><T>After a usage warning, new issues start only below this session count on the affected quota. QA, fixes and the CEO continue unless that quota reaches a hard limit.</T></p>
         <label className="field">
           <span><T>Most agents per floor</T></span>
           <input

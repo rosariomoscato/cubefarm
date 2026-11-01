@@ -655,7 +655,7 @@ export interface KanbanColumns {
  * Sort a floor's GitHub state and QA pipeline into the five office Kanban columns. With `usage`, backlog issues
  * auto-assign would start but Claude's usage holds back say so ("⏸ paced").
  */
-export function kanbanFor(repo: RepoView, agents: Agent[], qaRecords: Record<string, QaView>, usage?: Pick<UsageView, 'state'>, language?: Language): KanbanColumns {
+export function kanbanFor(repo: RepoView, agents: Agent[], qaRecords: Record<string, QaView>, usage?: Pick<UsageView, 'state' | 'resources'>, language?: Language): KanbanColumns {
   const openPulls = repo.pulls.filter((p) => p.state === 'OPEN');
   const byId = new Map(agents.map((a) => [a.id, a]));
   const workers = agents.filter((a) => a.role !== 'ceo');
@@ -695,7 +695,8 @@ export function kanbanFor(repo: RepoView, agents: Agent[], qaRecords: Record<str
   const claimed = new Set<number>([...progress.map((c) => c.number), ...openPulls.flatMap((p) => p.closesIssues)]);
   const open = new Set(repo.issues.map((i) => i.number));
   const held = new Map((repo.held ?? []).map((h) => [h.issue, h.pr]));
-  const paced = repo.autoAssign && usage && usage.state !== 'normal' ? translate(language, usage.state === 'paused' ? '⏸ paused' : '⏸ paced') : '';
+  const affected = usage?.resources?.filter((r) => r.state !== 'normal' && r.agentIds.some((id) => workers.some((a) => a.id === id && a.repoId === repo.id)));
+  const paced = !repo.autoAssign ? '' : usage?.resources ? (affected?.length ? translate(language, '⏸ Some AI quotas are held') : '') : usage && usage.state !== 'normal' ? translate(language, usage.state === 'paused' ? '⏸ paused' : '⏸ paced') : '';
   const backlog: KanbanCard[] = repo.issues
     .filter((i) => !claimed.has(i.number))
     .map((i) => {

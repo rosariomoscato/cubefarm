@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { AiUsageObservations } from './AiUsageObservations';
+import { AiUsageResources } from './AiUsageResources';
 import { api } from '../api';
 import { fmtDuration, fmtPct, fmtUsd, usageMeter } from '../ops';
 import { useStore } from '../store';
@@ -21,12 +23,16 @@ async function attempt<T>(fn: () => Promise<T>) {
 }
 
 /** "Resume full speed": asks first, then clears pacing. From the console's button and E on the lobby's usage meter. */
-export async function confirmResume() {
+export async function confirmResume(resourceKey?: string) {
   const { usage, settings } = useStore.getState();
   const t = (text: string, values?: Record<string, string | number>) => translate(settings.language, text, values);
-  if (usage.state !== 'pacing') return;
+  const paced = usage.resources?.filter((r) => r.state === 'pacing') ?? [];
+  const selected = resourceKey ? paced.find((r) => r.key === resourceKey) : paced.length === 1 ? paced[0] : undefined;
+  if (!selected) {
+    useStore.getState().openOverlay({ kind: 'manager', tab: 'ops', card: 'usage' });
+    return;
+  }
   if (document.pointerLockElement) document.exitPointerLock();
-  const m = usageMeter(usage, Date.now(), settings.language);
   const ok = await confirmDialog({
     icon: '⏩',
     tone: 'warn',
@@ -34,63 +40,29 @@ export async function confirmResume() {
     body: (
       <>
         <p>
-          {t('Claude warned that usage is getting high{warning}, so until {time} new issues only start while fewer than {count} sessions run.', { warning: usage.warning ? ` (${m.limit})` : '', time: m.resets ?? '—', count: settings.pacingSessions })}
+          {selected.tool} · {selected.provider ?? t('Provider not reported')} · {selected.group ?? selected.model}
         </p>
-        <p>{t('Resume if you’ve topped up or your usage was reset. If Claude still turns a session away at the limit, the office pauses until it resets.')}</p>
+        <p>{t('Resume only this quota. Hard limits cannot be cleared early; other quotas are unchanged.')}</p>
       </>
     ),
     confirm: t('Resume full speed'),
   });
-  if (ok) await attempt(() => api.resumeFullSpeed());
+  if (ok) await attempt(() => api.resumeFullSpeed(selected.key));
 }
 
-function UsageCard({ hot }: { hot: boolean }) {
-  const t = useT();
+export function UsageCard({ hot }: { hot: boolean }) {
   const language = useStore((s) => s.settings.language);
   const usage = useStore((s) => s.usage);
-  const sessions = useStore((s) => s.settings.pacingSessions);
-  const demo = useStore((s) => s.demo);
   const m = usageMeter(usage, Date.now(), language);
-  const why =
-    usage.state === 'pacing'
-      ? t('Until {time}, new issues only start while fewer than {count} sessions run; QA, fixes and the CEO carry on. Topped up, or was your usage reset? Resume full speed.', { time: m.resets ?? '—', count: sessions })
-      : usage.state === 'paused'
-        ? t('Claude turned a session away at the limit, so nothing new starts until {time}. That can’t be cleared early; sessions already running carry on.', { time: m.resets ?? '—' })
-        : t('New work starts at full speed. When Claude warns that usage is getting high, the office paces itself (Settings → Sessions while pacing).');
   return (
     <div id="ops-card-usage" className={`card usage-card usage-${m.tone} ${hot ? 'ops-card-hot' : ''}`}>
       <div className="row wrap">
-        <b><T>🤖 Claude usage</T></b>
+        <b><T>🤖 AI usage</T></b>
         <span className={`pill usage-pill-${m.tone}`}>{m.state}</span>
-        <span className="spacer" />
-        <button
-          className="btn btn-small btn-good"
-          disabled={usage.state !== 'pacing'}
-          title={t(usage.state === 'paused' ? 'A pause at the limit can’t be cleared early' : usage.state === 'normal' ? 'Already at full speed' : 'Stop pacing new issues now')}
-          onClick={() => void confirmResume()}
-        >
-          <T>⏩ Resume full speed</T>
-        </button>
       </div>
-      <div className="usage-gauge" role="meter" aria-label={t('Claude usage at the last warning')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={m.pct ?? 0}>
-        <div style={{ width: `${Math.min(100, m.pct ?? 0)}%`, background: (m.pct ?? 0) >= 90 ? 'var(--bad)' : (m.pct ?? 0) >= 75 ? 'var(--warn)' : 'var(--good)' }} />
-      </div>
-      <div className="small">
-        <b>{m.limit}</b>
-        {m.resets && t(' · resets {time}', { time: m.resets })}
-      </div>
-      <div className="muted small">{why}</div>
-      {demo && (
-        <div className="row wrap">
-          <span className="muted small">Demo:</span>
-          <button className="btn btn-small btn-ghost" onClick={() => void attempt(() => api.simulateUsage('warning'))}>
-            <T>Simulate a usage warning</T>
-          </button>
-          <button className="btn btn-small btn-ghost" onClick={() => void attempt(() => api.simulateUsage('limit'))}>
-            <T>Simulate reaching the limit</T>
-          </button>
-        </div>
-      )}
+      <p className="muted small"><T>Limits apply only to the affected quota. Warnings pace new issues; hard limits also hold QA, fixes and CEO jobs. Running sessions continue. Missing data does not mean unlimited usage.</T></p>
+      <AiUsageResources resume={(key) => void confirmResume(key)} />
+      <AiUsageObservations />
     </div>
   );
 }

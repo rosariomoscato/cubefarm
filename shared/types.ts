@@ -454,6 +454,8 @@ export interface UsageWarningView {
 
 /** Claude's subscription usage: normal, pacing new work after a usage warning, or paused at the limit until `until`. */
 export interface UsageView {
+  resources?: import('./aiUsage.ts').AiResourceView[];
+  observations?: import('./aiUsage.ts').AiUsageObservation[];
   state: 'normal' | 'pacing' | 'paused';
   until: number | null;
   warning: UsageWarningView | null; // the latest since the office started, for the usage meter

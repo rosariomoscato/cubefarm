@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { openCodeUsage, claudeStatusUsage, resourceInput, codexUsage } from '../shared/aiUsage.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -504,7 +505,6 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
   let mainThread: string | null = opts.resumeSessionId ?? null;
   let kept: string | null = opts.resumeSessionId ?? null; // the Claude session the agent has saved to resume
   const usageResets = new Map<string, number | null>();
-  const warned = new Set<string>();
   let done = false;
   let costUsd = 0;
   let turns = 0;
@@ -632,16 +632,22 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
   };
 
   const onStatus = (b: Record<string, unknown>) => {
+    if (cli !== 'claude') return { statusLine };
+    if (typeof b.session_id === 'string') {
+      cb.usage?.(claudeStatusUsage(b.session_id, b, Date.now()));
+      cb.resource?.(resourceInput(cli, { model: (b.model as { id?: unknown } | undefined)?.id }));
+    }
     const cost = Number((b.cost as { total_cost_usd?: unknown } | undefined)?.total_cost_usd);
     if (Number.isFinite(cost)) costUsd = cost;
     const limits = (b.rate_limits ?? {}) as Record<string, { used_percentage?: unknown; resets_at?: unknown } | null>;
     for (const [type, l] of Object.entries(limits)) {
       const used = Number(l?.used_percentage);
       if (!Number.isFinite(used)) continue;
-      const resetsAt = Number(l?.resets_at) > 0 ? Number(l?.resets_at) * 1000 : null;
+      const reset = Number(l?.resets_at);
+      const resetsAt = Number.isFinite(reset) && reset > 0 ? reset * 1000 : null;
+      if (resetsAt !== null && resetsAt <= Date.now()) continue;
       usageResets.set(type, used >= 100 ? resetsAt : null);
-      if (used >= USAGE_WARN_PCT && used < 100 && !warned.has(type)) {
-        warned.add(type);
+      if (used >= USAGE_WARN_PCT && used < 100) {
         cb.usageWarning?.({ resetsAt, rateLimitType: type, utilization: used / 100 });
       }
     }
@@ -660,6 +666,32 @@ export function startCliSession(opts: SessionOptions, callbacks: SessionCallback
       }
     }
     switch (event) {
+      case 'CodexUsage': {
+        if (cli !== 'codex' || sub || typeof b.session_id !== 'string' || (mainThread && b.session_id !== mainThread)) return {};
+        // The private hook URL is per process. Accept only its session's matching transcript metadata.
+        const data = codexUsage(b.session_id, b.records, Date.now());
+        if (data) {
+          cb.resource?.(data.resource);
+          if (cb.usageBatch) cb.usageBatch(data.observations);
+          else for (const observation of data.observations) cb.usage?.(observation);
+          for (const signal of data.signals) cb.quota?.(signal);
+        }
+        return {};
+      }
+      case 'AiResource':
+      case 'AiLimit': {
+        if (cli !== 'opencode' || sub || typeof b.session_id !== 'string' || (live?.resumeId && b.session_id !== live.resumeId)) return {};
+        const resource = resourceInput(cli, b.resource);
+        if (event === 'AiResource') cb.resource?.(resource);
+        else if (b.status === 429) cb.quota?.({ resource, kind: 'limit', resetsAt: typeof b.resetsAt === 'number' && Number.isFinite(b.resetsAt) ? b.resetsAt : null, utilization: null, limit: 'rate_limit', source: 'opencode-provider' });
+        return {};
+      }
+      case 'AiUsage': {
+        if (cli !== 'opencode' || sub || typeof b.session_id !== 'string' || (live?.resumeId && b.session_id !== live.resumeId)) return {};
+        const observation = openCodeUsage(String(b.session_id), b.message);
+        if (observation) cb.usage?.(observation);
+        return {};
+      }
       case 'PreToolUse': {
         const name = String(b.tool_name ?? '');
         const input = toolInput(b);

@@ -21,6 +21,7 @@ import { BrandIcon } from '../ui/Brand';
 // Opened from the Team and Kanban tabs; loaded when first opened (the terminal brings xterm.js).
 const TerminalView = lazy(() => import('../ui/TerminalView').then((m) => ({ default: m.TerminalView })));
 const AppViewer = lazy(() => import('../ui/AppViewer').then((m) => ({ default: m.AppViewer })));
+const UsageCard = lazy(() => import('../ui/MissionConsole').then((m) => ({ default: m.UsageCard })));
 
 export type PocketTab = 'company' | 'chat' | 'kanban' | 'team' | 'approvals';
 const TABS: PocketTab[] = ['company', 'chat', 'kanban', 'team', 'approvals'];
@@ -207,6 +208,7 @@ function Settings({ onClose }: { onClose: () => void }) {
   return (
     <Panel title={t('⚙️ This device and notifications')} onClose={onClose} className="pk-settings">
       <div className="card"><LanguageSelect /></div>
+      <Suspense fallback={null}><UsageCard hot={false} /></Suspense>
       <PhoneAccess />
       <NotifySettings />
       <AccessibilitySettings pocket />

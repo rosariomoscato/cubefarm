@@ -5,6 +5,7 @@ import type { AgentCli, AgentRole, AgentTask, EffortLevel, LogKind } from '../sh
 import type { BoxTarget } from './boxCli.ts';
 import type { OfficeTools } from './ceo.ts';
 import type { UsageWarning } from './pacing.ts';
+import { claudeMessageUsage, claudeStatusUsage } from '../shared/aiUsage.ts';
 import type { AgentTerminal } from './terminal.ts';
 import { browserProblem, playwrightMcp } from './browser.ts';
 import { CROSS_TURN_TOOLS } from './clis.ts';
@@ -68,6 +69,10 @@ export interface SessionResult {
 }
 
 export interface SessionCallbacks {
+  resource?(resource: import('../shared/aiUsage.ts').AiResource): void;
+  quota?(signal: import('../shared/aiUsage.ts').AiLimitSignal): void;
+  usage?(observation: import('../shared/aiUsage.ts').AiUsageObservation): void;
+  usageBatch?(observations: import('../shared/aiUsage.ts').AiUsageObservation[]): void;
   log(entries: LogEntry[]): void;
   tool(name: string | null): void;
   /** The session to resume next time; null: there's none to resume (the next session starts a new one). */
@@ -399,6 +404,7 @@ export function startSession(opts: SessionOptions, callbacks: SessionCallbacks):
       case 'system': {
         if (msg.subtype === 'init') {
           cb.sessionId(msg.session_id);
+          cb.resource?.({ tool: 'claude', provider: null, model: msg.model, account: null, access: 'unknown' });
           const mcp = msg.mcp_servers.map((s) => `${s.name}:${s.status}`).join(', ');
           cb.log([
             { kind: 'system', text: `✻ Claude Code ${msg.claude_code_version} · ${msg.model} · ${msg.effort ?? opts.effort} effort` },
@@ -426,6 +432,8 @@ export function startSession(opts: SessionOptions, callbacks: SessionCallbacks):
       }
       case 'assistant': {
         if (msg.parent_tool_use_id) break; // subagent chatter stays off the main screen
+        const observation = claudeMessageUsage(msg.session_id, msg.message, Date.now());
+        if (observation) cb.usage?.(observation);
         const out: LogEntry[] = [];
         for (const block of msg.message.content) {
           if (block.type === 'text' && block.text.trim()) {
@@ -479,6 +487,7 @@ export function startSession(opts: SessionOptions, callbacks: SessionCallbacks):
         break;
       }
       case 'result': {
+        cb.usage?.({ ...claudeStatusUsage(msg.session_id, { cost: { total_cost_usd: msg.total_cost_usd } }, Date.now()), id: `result:${msg.uuid}` });
         lastCost = msg.total_cost_usd;
         lastTurns = msg.num_turns;
         if (msg.subtype === 'success' && !msg.is_error && msg.num_turns === 0) {
