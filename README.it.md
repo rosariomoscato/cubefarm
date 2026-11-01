@@ -1,14 +1,14 @@
 # Droidsembly
 
 <p align="center">
-  <img src="client/public/icons/logo-light.svg" alt="Logo Droidsembly" width="360">
+  <img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-light.svg" alt="Logo Droidsembly" width="360">
 </p>
 
 **Small droids. Serious software.**
 
 Uno spazio visuale per lo sviluppo software assistito dall'AI: collega i tuoi repository GitHub, coordina gli agenti di coding e segui il lavoro in un ufficio 3D interattivo o in una dashboard adatta al telefono.
 
-[English](README.md) · **Italiano**
+[English](https://github.com/rosariomoscato/droidsembly/blob/main/README.md) · **Italiano**
 
 [Codice sorgente](https://github.com/rosariomoscato/droidsembly) · [Segnala un problema](https://github.com/rosariomoscato/droidsembly/issues) · [Documentazione](#documentazione) · [Sostieni il progetto](#sostieni-il-progetto)
 
@@ -18,14 +18,14 @@ Uno spazio visuale per lo sviluppo software assistito dall'AI: collega i tuoi re
 
 ## Guarda l'ufficio
 
-![Lobby demo di Droidsembly con agenti robot, reception e uffici del manager e del CEO](docs/branding/screenshots/office.png)
+![Lobby demo di Droidsembly con agenti robot, reception e uffici del manager e del CEO](https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/branding/screenshots/office.png)
 
 <details>
 <summary>Kanban e vista mobile Pocket</summary>
 
-![Bacheca Kanban demo con backlog, sviluppo, QA e fasi di merge](docs/screenshots/cyan-panels/kanban-en.png)
+![Bacheca Kanban demo con backlog, sviluppo, QA e fasi di merge](https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/screenshots/cyan-panels/kanban-en.png)
 
-<img src="docs/branding/screenshots/pocket-mobile.png" alt="Dashboard Pocket in italiano con stato del progetto, chat CEO e navigazione del team" width="360">
+<img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/branding/screenshots/pocket-mobile.png" alt="Dashboard Pocket in italiano con stato del progetto, chat CEO e navigazione del team" width="360">
 
 </details>
 
@@ -37,14 +37,16 @@ Sono catture demo già disponibili nel fork. Alcuni dettagli grafici precedono g
 - **Seguire il workflow completo:** issue → sviluppo e controlli iniziali → pull request → sessione QA separata → correzioni → merge quando le condizioni configurate sono soddisfatte.
 - **Mantenere il controllo:** assegnazione manuale o automatica, onboarding CEO facoltativo, approvazione dei cambi team e interruttore distinto per il merge automatico.
 - **Osservare il lavoro reale:** terminali live, piani dei progetti, Kanban e console del manager. Clone e worktree locali separano le copie di lavoro degli agenti; non sono sandbox di sicurezza.
-- **Consultare l'utilizzo AI:** osservazioni multi-provider, token/costi comunicati e limiti selettivi dello scheduler. I dati mancanti restano non disponibili, non zero o illimitati. Vedi [Utilizzo AI](docs/AI_USAGE.md).
+- **Consultare l'utilizzo AI:** osservazioni multi-provider, token/costi comunicati e limiti selettivi dello scheduler. I dati mancanti restano non disponibili, non zero o illimitati. Vedi [Utilizzo AI](https://github.com/rosariomoscato/droidsembly/blob/main/docs/AI_USAGE.md).
 - **Chiedere analisi in sola lettura:** avvia una conversazione senza issue o PR. Le regole di sola lettura sono istruzioni all'agente, non una sandbox.
-- **Usare desktop e mobile:** ufficio 3D e vista Pocket touch, interfaccia inglese/italiana, comandi da tastiera e impostazioni di accessibilità. Vedi [copertura delle lingue](docs/languages.md).
+- **Usare desktop e mobile:** ufficio 3D e vista Pocket touch, interfaccia inglese/italiana, comandi da tastiera e impostazioni di accessibilità. Vedi [copertura delle lingue](https://github.com/rosariomoscato/droidsembly/blob/main/docs/languages.md).
 - **Personalizzare l'ufficio:** agenti robot, cane robot, decorazioni, musica adattiva, modalità foto e time-lapse.
 
 ## Installa questo fork
 
-**Distribuzione attuale: compilazione dai sorgenti.** Le aggiunte del fork non sono pubblicate in un pacchetto npm dedicato o in un installer desktop. `npx cubefarm` installa il pacchetto originale, non Droidsembly. In questo checkout il nome tecnico del pacchetto/CLI resta `cubefarm`; la versione attuale è `0.3.20`.
+**Distribuzione attuale: compilazione dai sorgenti.** Il pacchetto npm `droidsembly@0.4.0-beta.1` e il comando pubblico `droidsembly` sono in preparazione locale; non sono stati pubblicati. Non è ancora disponibile un installer desktop. `npx cubefarm` installa il pacchetto originale, non Droidsembly.
+
+Dopo una pubblicazione beta esplicitamente autorizzata, il comando previsto è `npx droidsembly@next` (`npx.cmd droidsembly@next` in PowerShell). Non usarlo finché il rilascio non sarà annunciato in questo repository. Le versioni stabili useranno `latest`; le beta verificano gli aggiornamenti su `next`. Il nuovo pacchetto non espone un alias globale `cubefarm`. Il file interno `bin/cubefarm.js`, i launcher dei checkout esistenti e la cartella dati predefinita restano compatibili.
 
 ### Requisiti
 
@@ -123,13 +125,13 @@ SWARM_HOME="$HOME/.droidsembly" SWARM_PORT=4419 SWARM_HOST=127.0.0.1 SWARM_PREVI
 
 Apri **http://127.0.0.1:4419/**. Le cartelle degli esempi sono una scelta esplicita per una nuova installazione, non una migrazione: percorsi dati e launcher esistenti restano validi. Senza `SWARM_HOME`, il percorso predefinito dell'app rimane `~/.cubefarm`.
 
-Prima di collegare un progetto, seleziona il coding agent del CEO se non vuoi usare il predefinito Claude Code. Per saltare l'analisi AI iniziale, disattiva l'opzione che permette al CEO di studiare il repository e pianificare dal brief. Assegnazione automatica, merge automatico e revisioni periodiche CEO sono impostazioni distinte. Vedi [Agenti](docs/agents.md) per configurazione dei provider e limiti dei runtime.
+Prima di collegare un progetto, seleziona il coding agent del CEO se non vuoi usare il predefinito Claude Code. Per saltare l'analisi AI iniziale, disattiva l'opzione che permette al CEO di studiare il repository e pianificare dal brief. Assegnazione automatica, merge automatico e revisioni periodiche CEO sono impostazioni distinte. Vedi [Agenti](https://github.com/rosariomoscato/droidsembly/blob/main/docs/agents.md) per configurazione dei provider e limiti dei runtime.
 
 ## Desktop, mobile e PWA
 
 Il backend Node.js gira sul computer; il browser visualizza e controlla l'ufficio. Installare la PWA aggiunge l'interfaccia alla schermata iniziale, **ma non installa il backend Node.js o i coding agent**. Il computer dell'ufficio deve restare acceso e raggiungibile.
 
-Per installazione mobile e accesso remoto privato, segui [Pocket](docs/pocket.md) e [Accesso da telefono](docs/phone-access.md). Le funzioni PWA richiedono un browser compatibile e un contesto sicuro, come HTTPS o localhost. L'ufficio non ha un login integrato: mantienilo su loopback oppure usa un accesso privato autenticato, anziché esporlo pubblicamente.
+Per installazione mobile e accesso remoto privato, segui [Pocket](https://github.com/rosariomoscato/droidsembly/blob/main/docs/pocket.md) e [Accesso da telefono](https://github.com/rosariomoscato/droidsembly/blob/main/docs/phone-access.md). Le funzioni PWA richiedono un browser compatibile e un contesto sicuro, come HTTPS o localhost. L'ufficio non ha un login integrato: mantienilo su loopback oppure usa un accesso privato autenticato, anziché esporlo pubblicamente.
 
 ### Comandi essenziali
 
@@ -149,9 +151,9 @@ Le impostazioni comprendono sottotitoli, comfort di movimento, scala UI, contras
 
 ## Aggiornamenti
 
-Per un'installazione dai sorgenti, ferma l'ufficio quando gli agenti sono inattivi, salva un backup dello `SWARM_HOME` scelto e consulta il [changelog del fork](docs/FORK_CHANGELOG.md). In un checkout pulito su `main`, esegui `git pull --ff-only`, poi `npm.cmd ci` e `npm.cmd run build` su Windows (`npm ci` e `npm run build` su macOS/Linux). Riavvia con la stessa cartella dati e le stesse porte. Preserva eventuali modifiche locali prima di aggiornare.
+Per un'installazione dai sorgenti, ferma l'ufficio quando gli agenti sono inattivi, salva un backup dello `SWARM_HOME` scelto e consulta il [changelog del fork](https://github.com/rosariomoscato/droidsembly/blob/main/docs/FORK_CHANGELOG.md). In un checkout pulito su `main`, esegui `git pull --ff-only`, poi `npm.cmd ci` e `npm.cmd run build` su Windows (`npm ci` e `npm run build` su macOS/Linux). Riavvia con la stessa cartella dati e le stesse porte. Preserva eventuali modifiche locali prima di aggiornare.
 
-Non usare `npx cubefarm@latest` per aggiornare questo fork: punta al pacchetto npm originale. La CLI ereditata controlla ancora gli aggiornamenti di quel pacchetto. I comandi diretti del server qui indicati non usano il launcher autoaggiornante del checkout; vedi [come funzionano gli aggiornamenti](docs/how-it-works.md#updating-the-office) per quel flusso distinto.
+Non usare `npx cubefarm@latest` per aggiornare questo fork: punta al pacchetto npm originale. La CLI preparata verifica soltanto `droidsembly`, su `next` per le prerelease e `latest` per le stabili; una voce del registry non disponibile viene ignorata. I comandi diretti del server qui indicati non usano il launcher autoaggiornante del checkout; vedi [come funzionano gli aggiornamenti](https://github.com/rosariomoscato/droidsembly/blob/main/docs/how-it-works.md#updating-the-office) per quel flusso distinto. Gli aggiornamenti del pacchetto sono manuali; installare un nuovo nome npm non migra un'installazione esistente o i suoi dati.
 
 ## Sostieni il progetto
 
@@ -161,15 +163,15 @@ Droidsembly è gratuito e open source. Se ti è utile, puoi sostenerne lo svilup
 
 ## Documentazione
 
-- [Agenti e configurazione dei provider](docs/agents.md)
-- [Workflow, terminali, QA e aggiornamenti](docs/how-it-works.md)
-- [Utilizzo AI multi-provider](docs/AI_USAGE.md) (italiano)
-- [Pocket, PWA e notifiche](docs/pocket.md) · [Accesso da telefono](docs/phone-access.md)
-- [Agenti cloud opzionali](docs/cloud.md) · [Voce](docs/voice.md)
-- [Copertura inglese/italiano](docs/languages.md)
-- [Contributi e sviluppo](CONTRIBUTING.md)
-- [Changelog del fork](docs/FORK_CHANGELOG.md) (italiano)
-- [Report delle verifiche locali](docs/validation-english-italian.md) · [Indagine sul pathfinding](docs/pathfinding-investigation.md)
+- [Agenti e configurazione dei provider](https://github.com/rosariomoscato/droidsembly/blob/main/docs/agents.md)
+- [Workflow, terminali, QA e aggiornamenti](https://github.com/rosariomoscato/droidsembly/blob/main/docs/how-it-works.md)
+- [Utilizzo AI multi-provider](https://github.com/rosariomoscato/droidsembly/blob/main/docs/AI_USAGE.md) (italiano)
+- [Pocket, PWA e notifiche](https://github.com/rosariomoscato/droidsembly/blob/main/docs/pocket.md) · [Accesso da telefono](https://github.com/rosariomoscato/droidsembly/blob/main/docs/phone-access.md)
+- [Agenti cloud opzionali](https://github.com/rosariomoscato/droidsembly/blob/main/docs/cloud.md) · [Voce](https://github.com/rosariomoscato/droidsembly/blob/main/docs/voice.md)
+- [Copertura inglese/italiano](https://github.com/rosariomoscato/droidsembly/blob/main/docs/languages.md)
+- [Contributi e sviluppo](https://github.com/rosariomoscato/droidsembly/blob/main/CONTRIBUTING.md)
+- [Changelog del fork](https://github.com/rosariomoscato/droidsembly/blob/main/docs/FORK_CHANGELOG.md) (italiano)
+- [Report delle verifiche locali](https://github.com/rosariomoscato/droidsembly/blob/main/docs/validation-english-italian.md) · [Indagine sul pathfinding](https://github.com/rosariomoscato/droidsembly/blob/main/docs/pathfinding-investigation.md)
 
 Parte delle guide tecniche è in inglese. I risultati CI e i fallimenti storici locali sono evidenze distinte: una CI verde non dimostra che quei fallimenti locali siano risolti.
 
@@ -177,6 +179,6 @@ Parte delle guide tecniche è in inglese. I risultati CI e i fallimenti storici 
 
 Droidsembly è mantenuto da [Rosario Moscato](https://github.com/rosariomoscato), a partire da [CubeFarm di Leon van Zyl](https://github.com/leonvanzyl/cubefarm). Questo fork era precedentemente ospitato su `rosariomoscato/cubefarm`.
 
-Il fork aggiunge integrazione OpenCode V2, selezione di modelli/varianti, onboarding facoltativo e analisi manuale, supporto inglese/italiano, grafica robotica e identità visiva, stile coordinato desktop/mobile, musica adattiva e monitoraggio dell'utilizzo multi-provider. Il [changelog](docs/FORK_CHANGELOG.md) documenta implementazioni e verifiche.
+Il fork aggiunge integrazione OpenCode V2, selezione di modelli/varianti, onboarding facoltativo e analisi manuale, supporto inglese/italiano, grafica robotica e identità visiva, stile coordinato desktop/mobile, musica adattiva e monitoraggio dell'utilizzo multi-provider. Il [changelog](https://github.com/rosariomoscato/droidsembly/blob/main/docs/FORK_CHANGELOG.md) documenta implementazioni e verifiche.
 
-Distribuito con licenza [MIT](LICENSE), conservando l'avviso originale **Copyright (c) 2026 Leon van Zyl**. I componenti di terze parti mantengono le rispettive licenze, inclusa la [SIL Open Font License del font Sora](client/public/icons/Sora-OFL.txt).
+Distribuito con licenza [MIT](https://github.com/rosariomoscato/droidsembly/blob/main/LICENSE), conservando l'avviso originale **Copyright (c) 2026 Leon van Zyl**. I componenti di terze parti mantengono le rispettive licenze, inclusa la [SIL Open Font License del font Sora](https://github.com/rosariomoscato/droidsembly/blob/main/client/public/icons/Sora-OFL.txt).
