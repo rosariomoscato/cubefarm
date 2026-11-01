@@ -4568,6 +4568,10 @@ input.inline:focus {
   margin-top: auto;
   align-self: flex-start;
 }
+.catalogue.cyan-panel .catalogue-item .btn-good {
+  background: var(--accent);
+  color: var(--ink);
+}
 .catalogue-off {
   background: #f5f3ee;
 }

@@ -23,6 +23,24 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-11-01
 
+### Catalogo decorazioni coordinato alla palette finale
+
+Modifiche su `style/cyan-decoration-catalogue`: intestazione petrolio, pannello avorio, selezione piano e pulsanti acquisto ciano. Colore progetto conservato nel piccolo numero del piano, senza colorare tutta la scheda. Nessuna modifica a prezzi, monete, disponibilità o logica di acquisto. Commit, push e apertura PR sul solo fork autorizzati dal manager; merge e aggiornamento reale richiedono conferma distinta.
+
+TypeScript e build client/server superati. Demo isolata: catalogo IT/EN a 1280/390/820 px, colori verificati e nessun overflow interno o errore pagina; impostazioni e progressi confrontati prima/dopo e conservati, nessun acquisto effettuato. Primo click intercettato dal canvas 3D; ripetizione riuscita tramite apertura da tastiera. Screenshot in `docs/screenshots/cyan-catalogue/`. Suite globale non ripetuta; fallimenti storici invariati. Nessun deploy per questo seguito; conservati i documenti locali preesistenti, esclusi dalla pubblicazione.
+
+### Guida in italiano allo stack e all’architettura
+
+Creato localmente `docs/STACK_E_ARCHITETTURA.md`, con abstract, indice, capitoli, glossario e diagrammi Mermaid. Descrive client 3D/Pocket, server, runtime AI, GitHub, persistenza, preview, audio, ambienti e limiti di sicurezza, distinguendo capacità del prodotto e configurazione reale. Documento basato su codice e documentazione del fork fino alla PR #13. Il documento resta locale ed escluso dalla PR del catalogo: questa voce ne registra soltanto la preparazione. Nessun cambiamento al runtime, nessun test operativo o deploy.
+
+### PR #13 integrata e nuova musica nell’app reale
+
+Merge e aggiornamento reale autorizzati dal manager. [PR #13](https://github.com/rosariomoscato/cubefarm/pull/13) integrata nel solo fork con merge `5a2a883`; CI [41252744916](https://github.com/rosariomoscato/cubefarm/actions/runs/41252744916) superata su Ubuntu, Windows/macOS saltati dal workflow.
+
+Backup `futuristic-score-20261101-PR13` nella home reale: bundle Git verificato, build precedente, launcher e dati copiati a server fermo (esclusi backup precedenti e junction). Nessun agente in lavoro/preparazione al controllo iniziale. Checkout reale aggiornato in fast-forward da `e8b890e` a `5a2a883`, TypeScript e build client/server superati, riavvio tramite launcher originale.
+
+Verificati HTTP/HTTPS 200 e nuovo asset client. Confronto UTF-8: impostazioni, identità agenti, messaggi precedenti, colori progetto e automazioni conservati; launcher invariato. Preferenze audio del browser non modificate; nessuna richiesta AI di collaudo. Nota di deploy locale nella copia di sviluppo; le precedenti attese di autorizzazione descrivono le fasi storiche.
+
 ### Sottofondo adattivo electronic ambient: prima versione locale
 
 **Allineamento iniziale:** app reale su PR #12 (`e8b890e`), checkout reale pulito e nessuna PR aperta nel fork. Nuovo branch `feat/futuristic-soundtrack` da `origin/main`; conservati nota locale del deploy e `PerChatGPT.md`. Allegati nella chat restano una proposta discussa, non un lavoro implementato o in corso.
