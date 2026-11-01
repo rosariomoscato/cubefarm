@@ -40,15 +40,15 @@ export function Catalogue({ repoId }: { repoId?: string }) {
     }
   };
   return (
-    <Panel title={t('🛍️ Decoration catalogue')} accent={repo?.color} className="catalogue">
+    <Panel title={t('🛍️ Decoration catalogue')} accent="#65d8ef" className="catalogue cyan-panel">
       {!repo ? (
         <p className="muted"><T>Connect a repo first: floors earn coins when their PRs merge, and spend them here.</T></p>
       ) : (
         <>
           <div className="tabs catalogue-floors">
             {repos.map((r) => (
-              <button key={r.id} className={`tab ${r.id === repo.id ? 'tab-on' : ''}`} onClick={() => setPick(r.id)} style={{ ['--accent' as string]: r.color }}>
-                <span className="floor-badge">{r.floor}</span> {r.fullName.split('/')[1]} · 🪙 {floors[r.id]?.coins ?? 0}
+              <button key={r.id} className={`tab ${r.id === repo.id ? 'tab-on' : ''}`} onClick={() => setPick(r.id)}>
+                <span className="floor-badge" style={{ background: r.color }}>{r.floor}</span> {r.fullName.split('/')[1]} · 🪙 {floors[r.id]?.coins ?? 0}
               </button>
             ))}
           </div>
