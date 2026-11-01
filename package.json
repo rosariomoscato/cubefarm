@@ -1,6 +1,6 @@
 {
-  "name": "cubefarm",
-  "version": "0.3.20",
+  "name": "droidsembly",
+  "version": "0.4.0-beta.1",
   "description": "Droidsembly: a visual 3D office and mobile dashboard for coordinating AI coding agents on your GitHub projects.",
   "keywords": [
     "claude-code",
@@ -23,7 +23,12 @@
   "author": "Leon van Zyl",
   "type": "module",
   "bin": {
-    "cubefarm": "bin/cubefarm.js"
+    "droidsembly": "bin/cubefarm.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "tag": "next"
   },
   "files": [
     "bin",

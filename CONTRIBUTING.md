@@ -1,6 +1,6 @@
 # Contributing
 
-How to develop Droidsembly, the fork of [leonvanzyl/cubefarm](https://github.com/leonvanzyl/cubefarm). The technical package/CLI name remains `cubefarm`. Agent sessions working on this repo also follow [CLAUDE.md](CLAUDE.md).
+How to develop Droidsembly, the fork of [leonvanzyl/cubefarm](https://github.com/leonvanzyl/cubefarm). The prepared package/CLI is `droidsembly`; the internal entry file remains `bin/cubefarm.js` for checkout compatibility. Agent sessions working on this repo also follow [CLAUDE.md](CLAUDE.md), whose historical npm examples refer to the upstream package.
 
 For installation and isolated demo commands, start with the [English README](README.md) or [README italiano](README.it.md). The development launcher below can update its own checkout; use a separate development copy and dedicated data/ports as described in `CLAUDE.md`. In PowerShell, use `npm.cmd` in place of `npm`.
 
@@ -55,7 +55,7 @@ client/  Vite + React + react-three-fiber (toon materials, canvas textures)
   src/world/   the 3D building: floors, desks, characters, laptops, whiteboard, elevator, player
   src/ui/      HUD and panels: terminal, Kanban, elevator, manager's console
   src/photo/   photo mode: a free camera over a frozen office, filters, shots, clips and instant replay
-bin/cubefarm.js  the `npx cubefarm` command: checks the machine, starts the server, opens the browser
+bin/cubefarm.js  the `droidsembly` command: checks the machine, starts the server, opens the browser
 scripts/office.mjs  the launcher for a checkout (npm run dev / demo / start): runs the office and updates it
 server/  Node + Express + ws
   swarm.ts        orchestrator: floors, agents, scheduling, persistence, websocket fan-out
@@ -77,19 +77,12 @@ The server streams everything to the browser over one websocket (`/ws`); an open
 
 ## Publishing
 
-**Fork status:** Droidsembly does not yet have a dedicated npm release or installer. The following describes the inherited upstream release machinery, not an approved publishing procedure for this fork. Before enabling a fork release, agree on the package identity, registry ownership, version policy and update channel, then adapt and verify the workflow. The current package name is still `cubefarm`; do not run the release workflow or push `v*` tags to publish Droidsembly with this configuration. Publishing requires explicit maintainer authorization.
+**Fork status:** `droidsembly@0.4.0-beta.1` is prepared locally, not published. The sole public command is `droidsembly`. See [the release guide](docs/NPM_RELEASE.md) for initial account setup, validation and the manual release process. Publication, tags and remote workflow execution require explicit maintainer authorization.
 
 The npm package holds `bin/cubefarm.js` (the command), `dist/` (the built client) and `dist-server/` (the server, bundled into plain JavaScript by `scripts/build-server.mjs`, because Node won't run TypeScript from inside `node_modules`). The client's libraries are bundled into `dist/`, so users only install the server's dependencies.
 
-Releases are published by GitHub Actions (`.github/workflows/release.yml`), not from a laptop. Once `main` has what you want to ship and its CI is green: on GitHub, open **Actions → Release → Run workflow**, pick `patch`, `minor` or `major` and run it. The workflow bumps `package.json`, runs the tests, the build and the package smoke test, pushes a `Release x.y.z` commit and its `vx.y.z` tag to `main`, publishes to npm and creates a GitHub release whose notes list the PRs merged since the last one.
+The prepared workflow `.github/workflows/release.yml` is manual-only on the fork's `main`. It accepts an existing `droidsembly-v<version>` tag, requires matching package/lock metadata and a commit belonging to main's history, and verifies typecheck, tests, build and installed-package demo on Windows, macOS and Linux before the publish job. It does not bump versions, push main, create Git tags or run on a tag push. Version changes are reviewed through PRs.
 
-It publishes with [trusted publishing](https://docs.npmjs.com/trusted-publishers): npm trusts that workflow file in this repo, so there is no npm token to store or renew, and every version gets a provenance statement. If anything fails before the push, nothing was released: fix it and run the workflow again (the same goes for a PR merged while it ran). If the publish itself fails after the push, that version number is used up on GitHub only, and the next run releases the one after it.
+The publish job uses [trusted publishing](https://docs.npmjs.com/trusted-publishers) with npm 11 on Node 24. Configure the package's trusted publisher for this fork and `release.yml`; the upstream configuration does not transfer. The first package creation/bootstrap still needs the maintainer's npm account and separate authorization. No credentials belong in repository files. Beta releases go to `next`, stable versions to `latest`; `publishConfig.tag` must agree with the version.
 
-Pushing a tag from a laptop still works and runs the same workflow:
-
-```bash
-npm version patch -m "Release %s"   # or minor / major: bumps package.json, commits and tags v<version>
-git push --follow-tags              # the v* tag starts the release workflow
-```
-
-`npm pack --dry-run` lists exactly what would be published, and `node scripts/smoke-package.mjs` (after `npm run build`) installs the package into an empty folder and boots it in demo mode, like CI does.
+`npm pack --dry-run --ignore-scripts` lists package contents without publishing. After building, `node scripts/smoke-package.mjs` packs into a temporary folder, installs the tarball there, exercises the installed command, and starts a demo with an isolated home and unused loopback port. It disables update registry checks and deletes only its own temporary installation. Windows shells use `npm.cmd`.
