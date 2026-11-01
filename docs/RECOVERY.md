@@ -14,4 +14,10 @@ GitHub non conserva automaticamente lo stato degli uffici, i repository collegat
 
 Le chiavi del sito restano nei Secret Vercel, non nel codice. Per recuperare gli account usare i rispettivi metodi di recupero; se necessario rigenerare la chiave Resend e autenticare nuovamente GitHub CLI e provider AI.
 
-Stato: backup dei dati reali ancora da concordare con il titolare (destinazione e arresto dell'app). Le copie locali aggiuntive dei sorgenti e degli appunti non proteggono dal guasto del disco finché non vengono trasferite fuori dal computer.
+Stato: destinazione privata kDrive e arresto dell'app autorizzati dal titolare; copia locale e verifica SHA256 in preparazione. Cifratura, verifica del ripristino e sincronizzazione cloud ancora da completare. Le copie locali aggiuntive dei sorgenti e degli appunti non proteggono dal guasto del disco finché non vengono trasferite fuori dal computer.
+
+## Verifiche della revisione documentale (1 novembre 2026)
+
+Typecheck e build superati. La suite locale con `npm test -- --maxWorkers=2` ha concluso con 2.626 test superati e 6 falliti in 5 file (959,30 secondi): `walkways.test.ts` mediana 14,0729 ms rispetto al limite di 8 ms; `sky/indoor.test.ts` e `toys/throwSim.test.ts` timeout di 5 secondi; `server/scale.test.ts` timeout di 120 secondi; due test di `server/workspace.test.ts` timeout di 60 secondi, oltre al timeout di 10 secondi del relativo `afterAll`. Non è stato dimostrato che questi fallimenti siano preesistenti.
+
+Il titolare ha autorizzato esplicitamente l'apertura della sola PR documentale nonostante i fallimenti locali, subordinando il merge al superamento della CI GitHub.
