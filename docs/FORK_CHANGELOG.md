@@ -23,6 +23,16 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-11-01
 
+### Presentazione pubblica Droidsembly — README EN/IT e metadati
+
+**Documentazione / metadati.** README inglese riscritto e versione italiana aggiunta con logo, screenshot demo esistenti, funzionalità, installazione dai sorgenti, avvio demo/reale con dati separati, aggiornamenti e distinzione fra PWA e backend. Droidsembly è presentato come gratuito e open source MIT con sostegno volontario; `droidsembly.com` è in arrivo e GitHub Sponsors è previsto, senza link di pagamento ancora attivi. Conservate attribuzioni a CubeFarm e Leon van Zyl.
+
+Descrizione, homepage, repository e issue del pacchetto puntano al fork; guida contributi aggiornata con clone corretto e stato del workflow release ereditato. Nome tecnico `cubefarm`, versione `0.3.20`, licenza, autore originale, dipendenze e lockfile invariati. Nessuna modifica funzionale, a launcher o percorsi dati esistenti.
+
+Verifiche documentali superate: 58 riferimenti locali a file/asset, comandi EN/IT equivalenti, `npm.cmd` negli esempi PowerShell, coerenza package/lock e `git diff --check`. Typecheck e build client/server superati, con avvisi Rapier/chunk. Suite completa standard: 2.620 test passati e 5 falliti su 2.625, 242 file passati su 247, durata 413,11 s. Fallimenti: timeout scale (120 s), indoor e throwSim (5 s); budget walkways (20,26 ms contro <8 ms); notifier con 2 dispositivi persistiti invece di 1. Ripetizione completa `npm.cmd test -- --maxWorkers=1`: tutti i 2.625 test e 247 file superati in 716,52 s, senza modifiche a test, soglie o configurazione. Il successo sequenziale non dimostra la risoluzione delle anomalie del run standard né dei fallimenti storici locali. Screenshot demo preesistenti ispezionati; nessun nuovo test browser o richiesta AI reale.
+
+Commit, push e apertura PR sul solo fork autorizzati dal manager; merge e deploy richiedono autorizzazione separata. Documenti locali e precedenti note di merge/deploy esclusi dalla pubblicazione.
+
 ### Palette unificata dei popup — sviluppo locale
 
 Estesa e verificata esplicitamente la schermata Pocket «Dispositivo e notifiche»: intestazione petrolio, pulsanti ciano, checkbox/radio/slider petrolio e focus dei campi coordinato. Accento condiviso nel corpo dei pannelli anche quando il contenitore eredita un colore precedente. Smoke finale con input touch emulato passato, catture notifiche e accessibilità in italiano a 360 px ispezionate; typecheck/build ripassati. Preferenze notifiche e accessibilità non modificate.

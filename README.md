@@ -1,231 +1,182 @@
-# ✻ cubefarm
+# Droidsembly
 
-A cartoon 3D office where a team of AI coding agents works through your GitHub issues. You walk the floors, look over their shoulders and watch their pull requests get tested and merged.
+<p align="center">
+  <img src="client/public/icons/logo-light.svg" alt="Droidsembly logo" width="360">
+</p>
 
-Every agent is a real coding agent, **Claude Code, Codex or OpenCode V2**, running in a terminal of its own on your machine with your logins, settings, skills and MCP servers. Run the whole team on one, or give each agent its own. The office hands out the work, has every pull request reviewed and tested in a real browser, and merges what passes.
+**Small droids. Serious software.**
 
-## About this fork
+A visual workspace for AI-assisted software development: connect your GitHub repositories, coordinate coding agents and follow their work in an interactive 3D office or a mobile-friendly dashboard.
 
-This is [Rosario Moscato's fork](https://github.com/rosariomoscato/cubefarm) of [leonvanzyl/cubefarm](https://github.com/leonvanzyl/cubefarm). It adds:
+**English** · [Italiano](README.it.md)
 
-- **OpenCode V2 for the CEO and team**, including version checks, private per-agent servers, MCP integration and session completion callbacks.
-- **Live model and reasoning-variant selection**, with searchable models from your OpenCode setup and changes applied to resumed chats.
-- **Manual read-only analysis**, without an issue or PR workflow, and **optional CEO onboarding** when connecting a project.
-- **Roomba pathfinding optimizations**, reducing collision checks and temporary heap allocations.
-- **English/Italian office language**: a saved language selector, primary interface labels, CEO/analysis reply instructions and language-aware speech. See [language coverage and limitations](docs/languages.md).
+[Source code](https://github.com/rosariomoscato/droidsembly) · [Report an issue](https://github.com/rosariomoscato/droidsembly/issues) · [Documentation](#documentation) · [Support the project](#support-the-project)
 
-Dates, descriptions, validation results and integration status are tracked in the [fork changelog](docs/FORK_CHANGELOG.md) (in Italian). OpenCode/analysis and the original fork documentation were merged into the fork's `main` through [PR #2](https://github.com/rosariomoscato/cubefarm/pull/2). English/Italian support and dictation feedback were merged through [PR #3](https://github.com/rosariomoscato/cubefarm/pull/3), after CI passed on Ubuntu, Windows and macOS. These fork additions are on the fork's `main`, **not published to npm**. The environment-sensitive local pathfinding budget remains documented separately; see the [validation report](docs/validation-english-italian.md) and [investigation](docs/pathfinding-investigation.md).
+**Website coming soon:** `droidsembly.com`. Until it launches, this repository is the reference for installation and documentation.
 
-## Get started
+**Free and open source, under the MIT license.** No paid activation or commercial agent unlocks. Voluntary support helps development; your AI subscriptions, API usage and optional cloud services have their own costs and limits.
 
-### Use this fork from source
+## See the office
 
-Use a checkout containing the fork changes, then install dependencies and build:
+![Droidsembly demo lobby with robot agents, reception and the manager and CEO offices](docs/branding/screenshots/office.png)
+
+<details>
+<summary>Kanban and mobile Pocket view</summary>
+
+![Demo Kanban board showing backlog, development, QA and merge stages](docs/screenshots/cyan-panels/kanban-en.png)
+
+<img src="docs/branding/screenshots/pocket-mobile.png" alt="Italian Pocket dashboard with project status, CEO chat and team navigation" width="360">
+
+</details>
+
+These are existing demo captures from the fork. Some styling predates the latest popup updates; company and project names are demo content.
+
+## What you can do
+
+- **Coordinate coding agents:** Claude Code, Codex and OpenCode V2, with model selection and supported reasoning variants. Provider availability depends on the runtime; the Agent SDK runtime is Claude-only, and OpenCode is currently local-only.
+- **Follow the full workflow:** issue → development and initial checks → pull request → separate QA session → corrections → merge when the configured conditions pass.
+- **Keep control:** manual or automatic assignment, optional CEO onboarding, team-change approvals and a separate auto-merge switch.
+- **Watch real work:** live terminals, project floors, a Kanban board and the manager console. Local clones and worktrees separate agents' working copies; they are not security sandboxes.
+- **Inspect AI usage:** multi-provider observations, reported tokens/costs and selective scheduling limits. Missing provider data remains unavailable, not zero or unlimited. See [AI usage](docs/AI_USAGE.md) (Italian).
+- **Ask for read-only analysis:** start a discussion without an issue or PR. Read-only rules are agent instructions, not a sandbox.
+- **Use desktop or mobile:** a 3D office and a touch-friendly Pocket view, English/Italian interface, keyboard controls and accessibility settings. See [language coverage](docs/languages.md).
+- **Make the office yours:** robot agents, a robot dog, decorations, adaptive music, photo mode and time-lapse.
+
+## Install this fork
+
+**Current distribution: build from source.** This fork's additions are not published as a dedicated npm package or desktop installer. `npx cubefarm` installs the original package, not Droidsembly. The technical package/CLI name in this checkout remains `cubefarm`; the current version is `0.3.20`.
+
+### Requirements
+
+- [Node.js](https://nodejs.org/) **22 or newer**, with npm, and [Git](https://git-scm.com/).
+- For real work: [GitHub CLI](https://cli.github.com/), authenticated with `gh auth login`, and a supported coding agent signed in to its provider.
+- Claude Code is bundled through the Agent SDK. OpenCode **2.x** and Codex are installed separately when selected. OpenCode-only terminal sessions do not require a Claude subscription.
+- Google Chrome for agents that test projects in a browser.
+
+The project targets Windows, macOS and Linux. The no-AI demo below does not require provider credentials or a GitHub login.
+
+### 1. Download and build
+
+Run these commands in the parent folder where you want a **new** checkout.
+
+**Windows — PowerShell**
+
+```powershell
+git clone https://github.com/rosariomoscato/droidsembly.git
+cd droidsembly
+npm.cmd ci
+npm.cmd run build
+```
+
+**macOS / Linux**
 
 ```bash
+git clone https://github.com/rosariomoscato/droidsembly.git
+cd droidsembly
 npm ci
 npm run build
 ```
 
-For an isolated, no-AI demo, start the server directly. In PowerShell:
+### 2. Try the no-AI demo
+
+From the checkout, start the built server with a dedicated data folder and ports:
+
+**Windows — PowerShell**
 
 ```powershell
-$env:SWARM_HOME = Join-Path $env:LOCALAPPDATA 'CubeFarm-Fork-Demo'
+$env:SWARM_HOME = Join-Path $env:LOCALAPPDATA 'Droidsembly-Demo'
 $env:SWARM_PORT = '4419'
 $env:SWARM_HOST = '127.0.0.1'
 $env:SWARM_PREVIEW_PORT = '9600'
 $env:SWARM_DEMO = '1'
-node --import tsx server/index.ts --demo
+node dist-server/index.js --demo
 ```
 
-On macOS/Linux:
+**macOS / Linux**
 
 ```bash
-SWARM_HOME="$HOME/.cubefarm-fork-demo" SWARM_PORT=4419 SWARM_HOST=127.0.0.1 SWARM_PREVIEW_PORT=9600 SWARM_DEMO=1 node --import tsx server/index.ts --demo
+SWARM_HOME="$HOME/.droidsembly-demo" SWARM_PORT=4419 SWARM_HOST=127.0.0.1 SWARM_PREVIEW_PORT=9600 SWARM_DEMO=1 node dist-server/index.js --demo
 ```
 
-Open **http://127.0.0.1:4419/**. The banner must say **DEMO MODE**; GitHub and agents are simulated. These examples keep the fork's state and ports separate from an existing installation. Choose unused ports if needed, and stop the server with `Ctrl+C` when finished. A real office needs its own dedicated `SWARM_HOME`, `SWARM_DEMO=0`, and no `--demo` flag; real AI sessions consume your provider's quota.
+Open **http://127.0.0.1:4419/** and confirm **DEMO MODE** is displayed. GitHub and agents are simulated; demo state is saved only in the chosen demo folder. Stop with `Ctrl+C`. Choose unused ports if these are occupied.
 
-### Original npm package
+### 3. Start a real office
 
-The commands below refer to the original published package, **not automatically to this fork or its local changes**. Installing or updating it does not install this fork's additions.
+Stop the demo first. Use a separate data folder and remove `--demo`. Real sessions can modify connected projects and consume AI quota.
+
+**Windows — PowerShell**
+
+```powershell
+$env:SWARM_HOME = Join-Path $env:LOCALAPPDATA 'Droidsembly'
+$env:SWARM_PORT = '4419'
+$env:SWARM_HOST = '127.0.0.1'
+$env:SWARM_PREVIEW_PORT = '9600'
+$env:SWARM_DEMO = '0'
+node dist-server/index.js
+```
+
+**macOS / Linux**
 
 ```bash
-npx cubefarm
+SWARM_HOME="$HOME/.droidsembly" SWARM_PORT=4419 SWARM_HOST=127.0.0.1 SWARM_PREVIEW_PORT=9600 SWARM_DEMO=0 node dist-server/index.js
 ```
 
-That's it. cubefarm checks your machine, starts the office and opens it in your browser. The first time, `npx` asks whether to install cubefarm: say yes.
+Open **http://127.0.0.1:4419/**. These example folders are an explicit choice for a new installation, not a migration: existing data paths and launchers remain valid. Without `SWARM_HOME`, the application's default remains `~/.cubefarm`.
 
-### What you need
+Before connecting a project, select the CEO's coding agent if you do not want the default Claude Code. To skip the initial AI analysis, turn off **Let the CEO study this repository and plan from the brief**. Auto-assignment, auto-merge and periodic CEO reviews are separate settings. See [Agents](docs/agents.md) for provider setup and runtime limitations.
 
-- **Node.js 22 or newer**: [nodejs.org](https://nodejs.org)
-- **git**
-- **The GitHub CLI**, signed in: install it from [cli.github.com](https://cli.github.com), then run `gh auth login`
-- **A signed-in coding agent**: Claude Code is bundled and remains the default. With this fork's **Real terminals** runtime, the CEO and team can use **OpenCode 2.x** instead; a Claude subscription is not required for OpenCode-only sessions. The Agent SDK runtime remains Claude-only.
-- **OpenCode 2.x**, if selected: install it separately, connect a provider in OpenCode and verify `opencode --version`. CubeFarm refuses V1, unsupported major versions and versions it cannot verify. It does not upgrade OpenCode for you. **Codex** is also optional for team members.
-- **Google Chrome**, for agents that test your app in a browser.
+## Desktop, mobile and PWA
 
-It runs on Windows, macOS and Linux. Not sure you're ready? `npx cubefarm doctor` checks all of it.
+The Node.js backend runs on your computer; the browser displays and controls the office. Installing the PWA adds the interface to your home screen **but does not install the Node.js backend or coding agents**. The office computer must remain running and reachable.
 
-### Just want to look around?
+For mobile installation and private remote access, follow [Pocket mode](docs/pocket.md) and [Phone access](docs/phone-access.md). PWA features require a supported browser and a secure context, such as HTTPS or localhost. The office has no built-in sign-in: keep it on loopback or use authenticated private access rather than exposing it publicly.
 
-```bash
-npx cubefarm --demo
-```
+### Essential controls
 
-Demo mode fakes GitHub and the agents, so it costs nothing and changes nothing.
-
-## Your first five minutes
-
-1. **Set up your company.** A short wizard asks your name, names your company and introduces your CEO.
-2. **Move in a project.** Pick one of your project folders or a GitHub repo, or start a new one. It gets its own floor. Every project needs to be on GitHub, because issues and pull requests are how the team works.
-3. **Choose whether the CEO should plan.** Select the CEO's coding agent before connecting a project if you do not want its first task to use the default Claude Code. Normally the CEO studies the project, writes its QA checklist and sizes the floor's team. Turn off **Let the CEO study this repository and plan from the brief** to skip that initial AI request and plan; auto-assignment and auto-merge have separate switches. New work only ever comes from you: give the CEO a brief (when the project moves in, or later with **Plan**) or message them, and they turn it into GitHub issues. The CEO never files issues on its own. Press `P` for your phone to chat with them and approve team changes, or meet the new agents waiting in the lobby and set them up (coding agent, model, effort) before you hire them.
-4. **Watch the work.** Agents are interchangeable: a free agent picks up the next issue, builds it on a branch of its own and opens a pull request. Another agent reviews and tests it in a fresh session and a real browser, then posts a report with screenshots on the pull request. If QA fails, the author fixes it and it goes round again. With auto-merge on, a pull request merges itself once QA passes and GitHub's checks are green. Each agent works on a machine of its own (its own clone, worktree and temp folder; see [Agents](docs/agents.md)).
-
-## Coding agents
-
-Every agent, the CEO included, is the actual coding-agent CLI in a terminal on your machine. Open someone's desk to watch their terminal live, click it to type to them, or press `Esc` in it to interrupt. They load your setup the way your own terminal sessions do: your settings, `CLAUDE.md` or `AGENTS.md`, skills, plugins and MCP servers.
-
-| | Claude Code | Codex | OpenCode |
-| --- | --- | --- | --- |
-| Install | bundled; sign in with Claude Code | your own, signed in | your own, signed in; **2.x required** |
-| What the office sees | every step, plus cost and usage | every step, once you trust its hooks | each finished turn |
-| Status | the default; available for the CEO | experimental | experimental; V2, available for the CEO |
-
-- **One for everyone, or one each.** The manager's console → Settings sets the default coding agent, its model and the reasoning effort (out of the box: Claude Code with Claude Opus 5.5 at medium effort). An agent's ⚙️ Setup, the Team tab, or a new agent's chair in the lobby changes them for one agent. One subscription is all you need; mixing them (say, Codex agents testing what Claude Code agents wrote) is up to you.
-- **Local models.** Codex and OpenCode agents can run a model on your own computer instead of a subscription: give them a model named after its server, `ollama/qwen3-coder`, `lmstudio/<model>`, `llamacpp/<model>` or `omlx/<model>` (see [Local models](docs/agents.md#local-models)).
-- **Codex's hooks.** The first time, Codex asks you to review the office's hooks: type `/hooks` in a Codex agent's terminal and press `t` to trust them. Until then the office shows a Codex agent's task rather than each step.
-- **Usage.** Agents on the same coding agent share its usage limits. When Claude warns that usage is getting high, the office slows down new work until the window resets. To cap how many agents run at once, set a session limit in the manager's console.
-- **Restarts.** Agents keep working while the office restarts (an update, a crash): their terminals live in a small process of their own and reconnect when the office is back.
-- **Cloud agents.** Optionally, agents work in an [Upstash Box](docs/cloud.md) each instead of on your computer, so they finish their task even with the office closed or your laptop shut. Connect your Upstash account in Settings → Cloud agents; your Claude subscription, API keys and GitHub are set up once for every Box.
-
-More in [How it works](docs/how-it-works.md#agents-terminals).
-
-### OpenCode V2 setup
-
-1. Select **Real terminals** in the manager's console → Settings. OpenCode is not used by the Claude Agent SDK runtime.
-2. For the **CEO**, choose **OpenCode** on the CEO tab or in its **Setup**. For the **team**, set the default coding agent in Settings or override it per member. The CEO's default is independent of the team's.
-3. Click **Browse OpenCode models**, search by name/ID or filter by provider, select a model and an optional variant, then press **Use model** to save. The **Selected** summary shows the saved choice.
-4. The effort control becomes an **OpenCode variant** selector, offering only variants supported by that model. For example, `provider/model#medium` requests its `medium` variant; manual model entry is still available.
-5. Model and variant changes apply when the **next task or a resumed idle chat starts**, not to a task already running.
-
-The inventory is project-specific and read without AI generation. Use **Refresh** to reload it. **OpenCode default** clears an override; a worker with an OpenCode office default instead inherits that office default. Each agent uses a private server (`--standalone`), leaving your shared OpenCode service's configuration separate. OpenCode is currently **local-only**, not supported in Upstash Boxes. See [the full guide](docs/agents.md#the-ceo-on-opencode).
-
-### Read-only analysis without an issue or PR
-
-Open a team member's terminal panel → **Start read-only analysis**, enter a question and press **Start analysis**. The agent reads the repository checkout and replies without a development worktree, dependency installation, PR handoff or automatic missing-PR retry. Send a follow-up to continue the analysis, or press **Clear desk** to return the agent to normal scheduling.
-
-Analysis is local-only. Its no-write/no-shell rules are **agent instructions, not a sandbox**. For a controlled first test, skip CEO onboarding, turn off auto-assignment and auto-merge, and set periodic CEO reviews to zero separately. See [Manual read-only analysis](docs/agents.md#manual-read-only-analysis).
-
-## What's in the office
-
-### The work
-
-- **Floors**: one per project. Ride the elevator between them.
-- **Desks**: walk up behind an agent to watch their monitor, and open it for their real terminal, which you can type into. It also shows a live browser when they test the UI. The ⚙️ Setup in their panel changes their name, look, coding agent, model and effort, and "What they're told" shows the prompts the office gives them for each kind of task.
-- **The whiteboard**: the Kanban board, from backlog to merged. Aim at a sticky and press `E` to read it up close, or peel a Backlog sticky off with `G` and carry it to a free agent's desk to hand them the issue (a pull request sticky asks them to test it). Red strings join issues to the ones they depend on, and the corner counts today's merges, the issue-to-merge time, the QA queue and anything that needs you.
-- **Who's doing what**: a sign over each busy agent says what they're on (📖 reading, ✏️ editing, 🧪 testing, 🌐 browsing, 🐙 git, ⏳ CI, 🔍 QA, 🔧 fixing). Keep someone in your sights for a moment for a card with their task, last steps and cost so far, and an LED ticker over the whiteboard scrolls the floor's news.
-- **The lobby**: the manager's office, where you connect projects, meet new agents, file issues and change settings, and the CEO's corner office.
-- **Mission control**: the bank of screens behind reception: each floor's pipeline, merges today, lead time, QA wait, GitHub's checks, cost, and Claude's usage meter. A beacon spins red when a pull request needs you.
-- **Your app, running**: every floor can run its app so you can use it from the office, and any open pull request can run beside it in the PR theatre (aim at a channel on the big screen and press `E`), with main side by side if you want to compare.
-- **Merges**: confetti bursts over the author's desk when their pull request merges, and the floor's gong booms while everyone cheers (press `E` at the gong to bang it yourself).
-
-### Office life
-
-- **Chatter**: the team talks about their real work in speech bubbles ("PR #212 is up for QA", "Tests are green! ✅", "Ugh, a merge conflict in store.ts") in a cute babble voice of their own, Animal Crossing style. Aim at someone with nothing to do and press `E` to say hi. Off, quiet or lively, with or without the babble, in help (`H`).
-- **Rituals**: when the CEO files a burst of issues, the free agents gather at the whiteboard and the CEO comes up in the elevator to put up the new stickies (and says so out loud if the CEO's voice is on). The CEO walks the floors now and then (press `E` on them to text them), people eat lunch from noon to one, pizza arrives on Friday afternoons, and in the evening the desk lamps come on, idle agents head home and come back in the morning with a coffee. They follow the sky's clock (in help: a 30-minute day, your own clock, or always afternoon).
-- **Careers and coins**: every agent has a career card with a rank, badges, stats and their last merged pull requests. Merges, first-time QA passes and green checks earn the floor coins to spend on decorations at the lobby's kiosk, and the office's achievements stand on its trophy shelf.
-- **The roof**: the elevator's top stop. A garden, deck chairs to sit back in, a barbecue for a sausage, a telescope for the billboards by day and the moon and constellations by night, string lights at dusk and a helipad. Idle agents come up for a break now and then.
-- **Toys**: balls to throw, a basketball hoop (aim at the painted square and charge about halfway), foam blasters, a roomba, a jukebox on every floor, and coffee: take a mug from the dispenser, brew it at the machine and sip it with `E`. The kitchenette fridge opens with `E` (the light comes on); grab a cold drink or a snack, then `E` drinks or eats it. Agents raid it on their breaks, and the dog begs when you hold food.
-- **The office dog**: one dog for the whole building (Biscuit, renameable in Settings). Pet it with `E` and it follows you, throw a ball and it fetches it, and it naps, keeps struggling agents company, celebrates merges and rides the elevator between floors.
-- **Ping-pong**: `E` at either end of the table picks up a paddle and someone free comes to play you; the mouse moves the paddle and your swing sets the pace and spin. Games go to 11 and feed the floor's leaderboard on the wall.
-- **Outside**: a city around the building, a sky that follows the office's clock, and weather: a calm cycle, or your own local weather (Settings).
-- **Holidays**: the office dresses up for Halloween, Christmas, New Year's Eve, Valentine's Day, Easter and your birthday (Settings → Themes).
-
-### Around the office
-
-- **Visitors**: anyone else with the office open (another tab, a colleague) walks around in it as a visitor, and you see them. Hold `T` to emote and press `X` (or middle-click) to point something out. Your name, colour and whether others see you are in Settings → Profile.
-- **Voice**: hear the CEO's messages read aloud (your browser's voice, or ElevenLabs with your own key), and talk instead of typing: hold the 🎙️ or `V` in any message box. See [Voice messages](docs/voice.md).
-- **Pocket mode**: on a phone, the office opens as a 2D app with the pipeline, the CEO chat, the Kanban, the team and approvals. It installs on your home screen and can notify you when something needs you. See [The office in your pocket](docs/pocket.md).
-- **Time-lapse**: watch the day (or just what happened while you were away) replay in the office at up to 600×, from the manager's console or the screen in the lobby.
-- **Photo mode**: `K` freezes the office and hands you a camera to fly, with filters, shots, clips and instant replay.
-- **Accessibility**: captions for the office's sounds, colour-blind-safe status colours and shapes, motion comfort, UI scale, a readable font, high contrast, and a list view of each floor for anyone who can't use the 3D view (Settings → Accessibility).
-- **Sounds and graphics**: a master volume, `M` to mute, and a slider each for footsteps, typing, toys and alerts; graphics from Low to High, or Auto to keep it smooth. Both in help (`H`).
-
-## Controls
-
-| Key | Action |
+| Control | Action |
 | --- | --- |
-| `W A S D` / arrows | walk |
-| `Shift` | run |
-| mouse | look around (click the view first) |
-| `E` / left click | use what you're looking at: a desk, the whiteboard, the elevator, the manager's computer, a ball, a mug, the coffee machine, the jukebox; say hi to someone with nothing to do |
-| `E` with coffee | take a sip (three to a mug, the last a big gulp) |
-| `E` at the fridge | open or shut it; with the door open, grab a snack or a cold drink (then `E` eats or drinks it, `G` gets rid of it) |
-| `E` on the roof | sit back in a deck chair, grill (and eat) a sausage, look through the telescope (mouse wheel zooms) |
-| `F` / left click, holding something | throw a ball (hold to charge) or fire a blaster |
-| mouse / left click, playing ping-pong | move the paddle (swing it for pace and spin) / toss and serve |
-| `G` | drop what you're holding, or peel the whiteboard sticky you aim at off the board |
-| `R` | reload a blaster |
-| `-` / `+` | the jukebox softer or louder |
-| `T` (hold) | the emote wheel: wave, thumbs up, clap, point, laugh |
-| `X` / middle click | ping where you aim, for everyone on the floor |
-| `V` (hold, in a message box) | talk instead of typing |
-| `P` | your phone |
-| `Tab` | the overview: the whole floor from above, dollhouse style (drag to pan, scroll to zoom, `Q` / `E` to turn, click someone to open their panel); `Tab` again flies you back, twice quickly shows the whole building |
-| `L` | show or hide who's working |
-| `K` | photo mode: freeze the office, fly a camera, filters, shots and clips |
-| `I` | save the last 15 seconds (once instant replay is on, in photo mode or help) |
-| `M` | mute or unmute |
-| `H` | help, with every control and the sound settings; its Controls tab rebinds every key and sets up the mouse and gamepad |
-| `Esc` | let go of the mouse, close a panel, or leave the overview |
+| `W A S D` / arrows | Walk |
+| `Shift` | Run |
+| `E` / left click | Interact |
+| `P` | Open the phone |
+| `Tab` | Office overview |
+| `K` | Photo mode |
+| `M` | Mute |
+| `H` | Help and full control list |
+| `Esc` | Release the mouse / close a panel |
 
-A gamepad works too (left stick walks, right stick looks, A uses, B goes back, X picks up or drops, the triggers throw, Start opens the phone, Select the overview), and **🎥 Follow** in an agent's panel trails them with the camera.
-
-## Commands
-
-| Command | What it does |
-| --- | --- |
-| `npx cubefarm` | start the office and open it in your browser |
-| `npx cubefarm login` | sign in to Claude Code, which comes with cubefarm (Codex and OpenCode use their own sign-in) |
-| `npx cubefarm doctor` | check that your machine is ready |
-| `npx cubefarm --demo` | fake GitHub and fake agents |
-| `npx cubefarm --demo --floors 10 --agents 15` | a big demo company: 10 floors of 15 people, to see the office at scale |
-| `npx cubefarm --port 4400` | use another port (the default is 4317) |
-| `npx cubefarm --host 0.0.0.0` | listen on your network too, not just this computer (no sign-in: see below) |
-| `npx cubefarm --no-open` | don't open the browser |
+Settings include captions, motion comfort, UI scaling, contrast and list views. Pocket provides touch-friendly navigation.
 
 ## Updating
 
-For this fork, follow its own Git branches and the [fork changelog](docs/FORK_CHANGELOG.md), then rebuild the checkout. The npm update instructions below apply to the original published package, not to unmerged fork changes.
+For a source installation, stop the office when agents are idle, back up your chosen `SWARM_HOME`, and review the [fork changelog](docs/FORK_CHANGELOG.md). In a clean checkout on `main`, use `git pull --ff-only`, then `npm.cmd ci` and `npm.cmd run build` on Windows (`npm ci` and `npm run build` on macOS/Linux). Restart using the same data folder and ports. Preserve local changes before updating.
 
-`npx` keeps using the version it downloaded first. When a newer one is out, cubefarm tells you as it starts. To update:
+Do not use `npx cubefarm@latest` to update this fork: it targets the original npm package. The inherited CLI still checks that package for updates. The direct server commands above do not use the checkout's self-updating launcher; see [how updating works](docs/how-it-works.md#updating-the-office) for that separate workflow.
 
-```bash
-npx cubefarm@latest
-```
+## Support the project
 
-Prefer a permanent install? Run `npm install -g cubefarm`, then start it with `cubefarm`.
+Droidsembly is free and open source. If it helps you, you can support its development by starring the repository, sharing it, reporting reproducible issues or contributing improvements.
 
-Running it from a clone of this repo (`npm start`)? Then the office updates itself from GitHub once its agents are done: see [Updating the office](docs/how-it-works.md#updating-the-office).
+**Voluntary financial support is planned through GitHub Sponsors.** The profile is not yet activated; a link will be added when it is available. No donation is required to use the app or unlock agents. Technical limits and AI-provider quotas still apply.
 
-## Good to know
+## Documentation
 
-- **It runs on your own subscriptions.** Each agent uses the login of the coding agent it runs, and agents on the same coding agent share its usage limits.
-- **Agents work like the coding agents you run yourself**: unsandboxed, with your skills, MCP servers and settings, each in its own copy of the repo. Nobody has to be there to approve a tool call, so the office approves them all: run it where you'd run your own coding agents. The office's rules are in the agents' instructions: push your own branch and open a pull request, never push to your main branch or merge. The office merges, after QA.
-- **Your office lives in `~/.cubefarm`**: settings, clones of your repos and one machine (a clone and a worktree) per agent. Set `SWARM_HOME` to use another folder. Machines and desks nobody uses any more are swept away every 30 minutes, and any unpushed work on them is kept as a patch in `~/.cubefarm/leftovers`.
-- **It's only open to your own computer.** The office listens on `127.0.0.1`. To reach it from your phone, put something that signs you in in front of it, like Tailscale Serve: see [Reach the office from your phone](docs/pocket.md#reach-the-office-from-your-phone). `--host 0.0.0.0` (or `SWARM_HOST`) opens it to your network as it is, say to run it on a Mac mini and watch from your laptop: the office has no sign-in, so anyone who can reach it can run your agents. Only do that on a network you trust.
+- [Agents and provider setup](docs/agents.md)
+- [Workflow, terminals, QA and updates](docs/how-it-works.md)
+- [Multi-provider AI usage](docs/AI_USAGE.md) (Italian)
+- [Pocket, PWA and notifications](docs/pocket.md) · [Phone access](docs/phone-access.md)
+- [Optional cloud agents](docs/cloud.md) · [Voice](docs/voice.md)
+- [English/Italian coverage](docs/languages.md)
+- [Contributing and development](CONTRIBUTING.md)
+- [Fork changelog](docs/FORK_CHANGELOG.md) (Italian)
+- [Local validation report](docs/validation-english-italian.md) · [Pathfinding investigation](docs/pathfinding-investigation.md)
 
-## Learn more
+CI results and historical local test failures are separate evidence; a green CI run does not establish that those local failures have been resolved.
 
-- [Fork changelog](docs/FORK_CHANGELOG.md): dated features, fixes, validation results and integration status since customization began (Italian)
-- [How it works](docs/how-it-works.md): the life of an issue, QA, auto-merge, models and usage, agents' terminals, the safety model and floor previews
-- [Agents](docs/agents.md): interchangeable agents, team sizes and the CEO's team changes, each agent's machine and how it signs in
-- [Cloud agents](docs/cloud.md): agents in Upstash Boxes that keep working while the office is closed: setup, sign-in, costs and limits
-- [The office in your pocket](docs/pocket.md): pocket mode on your phone, installing the app, notifications (desktop, push, ntfy) and reaching the office safely from your phone
-- [Voice messages](docs/voice.md): the CEO's messages read aloud, ElevenLabs voices and talking instead of typing
-- [Contributing](CONTRIBUTING.md): run it from source, tests, architecture and publishing
+## Credits and license
 
-## License
+Droidsembly is maintained by [Rosario Moscato](https://github.com/rosariomoscato), based on [CubeFarm by Leon van Zyl](https://github.com/leonvanzyl/cubefarm). This fork was previously hosted at `rosariomoscato/cubefarm`.
 
-[MIT](LICENSE)
+The fork adds OpenCode V2 integration, model/variant selection, optional onboarding and manual analysis, English/Italian support, robot visuals and branding, coordinated desktop/mobile styling, adaptive music and multi-provider usage monitoring. The [changelog](docs/FORK_CHANGELOG.md) records implementation and validation history.
+
+Licensed under [MIT](LICENSE), preserving the original **Copyright (c) 2026 Leon van Zyl** notice. Third-party components retain their respective licenses, including the [Sora font's SIL Open Font License](client/public/icons/Sora-OFL.txt).

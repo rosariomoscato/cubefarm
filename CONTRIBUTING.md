@@ -1,12 +1,14 @@
 # Contributing
 
-How to run cubefarm from source, test it and publish it. Agent sessions working on this repo also follow [CLAUDE.md](CLAUDE.md).
+How to develop Droidsembly, the fork of [leonvanzyl/cubefarm](https://github.com/leonvanzyl/cubefarm). The technical package/CLI name remains `cubefarm`. Agent sessions working on this repo also follow [CLAUDE.md](CLAUDE.md).
+
+For installation and isolated demo commands, start with the [English README](README.md) or [README italiano](README.it.md). The development launcher below can update its own checkout; use a separate development copy and dedicated data/ports as described in `CLAUDE.md`. In PowerShell, use `npm.cmd` in place of `npm`.
 
 ## Run it from source
 
 ```bash
-git clone https://github.com/leonvanzyl/cubefarm.git
-cd cubefarm
+git clone https://github.com/rosariomoscato/droidsembly.git
+cd droidsembly
 npm install
 npm run dev    # or: npm run demo
 ```
@@ -74,6 +76,8 @@ shared/types.ts   the websocket / REST contract
 The server streams everything to the browser over one websocket (`/ws`); an open terminal panel has its own (`/ws/term?agent=<id>`). Laptop screens and the whiteboard are canvases drawn from that data and used as textures. They only repaint when something changed, and less often when you're far away.
 
 ## Publishing
+
+**Fork status:** Droidsembly does not yet have a dedicated npm release or installer. The following describes the inherited upstream release machinery, not an approved publishing procedure for this fork. Before enabling a fork release, agree on the package identity, registry ownership, version policy and update channel, then adapt and verify the workflow. The current package name is still `cubefarm`; do not run the release workflow or push `v*` tags to publish Droidsembly with this configuration. Publishing requires explicit maintainer authorization.
 
 The npm package holds `bin/cubefarm.js` (the command), `dist/` (the built client) and `dist-server/` (the server, bundled into plain JavaScript by `scripts/build-server.mjs`, because Node won't run TypeScript from inside `node_modules`). The client's libraries are bundled into `dist/`, so users only install the server's dependencies.
 
