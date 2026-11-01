@@ -1,6 +1,16 @@
 # Contributing
 
-How to develop Droidsembly, the fork of [leonvanzyl/cubefarm](https://github.com/leonvanzyl/cubefarm). The prepared package/CLI is `droidsembly`; the internal entry file remains `bin/cubefarm.js` for checkout compatibility. Agent sessions working on this repo also follow [CLAUDE.md](CLAUDE.md), whose historical npm examples refer to the upstream package.
+**English** · [Italiano](CONTRIBUTING.it.md)
+
+How to develop Droidsembly, the fork of [leonvanzyl/cubefarm](https://github.com/leonvanzyl/cubefarm). The published package/CLI is `droidsembly`; the internal entry file remains `bin/cubefarm.js` for checkout compatibility. Agent sessions working on this repo also follow [CLAUDE.md](CLAUDE.md), whose historical npm examples refer to the upstream package.
+
+## Ways to contribute
+
+- Report reproducible bugs or suggest improvements in [this fork's issues](https://github.com/rosariomoscato/droidsembly/issues). English and Italian are welcome. Include the app version, operating system, steps, expected result and actual result; remove secrets and personal data from logs and screenshots.
+- Help with documentation, translations, accessibility and desktop/mobile usability.
+- Before a substantial change, open an issue to agree on scope. Submit focused pull requests against this fork's `main`, explain the change and report the checks you ran and any failures. Preserve English/Italian coverage and original license notices.
+
+Project code is [MIT licensed](LICENSE). Original CubeFarm attribution and third-party license notices remain applicable. See [credits and license](README.md#credits-and-license).
 
 For installation and isolated demo commands, start with the [English README](README.md) or [README italiano](README.it.md). The development launcher below can update its own checkout; use a separate development copy and dedicated data/ports as described in `CLAUDE.md`. In PowerShell, use `npm.cmd` in place of `npm`.
 
@@ -77,12 +87,12 @@ The server streams everything to the browser over one websocket (`/ws`); an open
 
 ## Publishing
 
-**Fork status:** `droidsembly@0.4.0-beta.1` is prepared locally, not published. The sole public command is `droidsembly`. See [the release guide](docs/NPM_RELEASE.md) for initial account setup, validation and the manual release process. Publication, tags and remote workflow execution require explicit maintainer authorization.
+**Fork status:** [`droidsembly@0.4.0-beta.1`](https://www.npmjs.com/package/droidsembly) is published; use the explicit `next` channel. See the [GitHub prerelease](https://github.com/rosariomoscato/droidsembly/releases/tag/droidsembly-v0.4.0-beta.1) for release notes and known validation limits. The sole public command is `droidsembly`. See [the release guide](docs/NPM_RELEASE.md) for validation and the manual release process. Publication, tags and remote workflow execution require explicit maintainer authorization.
 
 The npm package holds `bin/cubefarm.js` (the command), `dist/` (the built client) and `dist-server/` (the server, bundled into plain JavaScript by `scripts/build-server.mjs`, because Node won't run TypeScript from inside `node_modules`). The client's libraries are bundled into `dist/`, so users only install the server's dependencies.
 
 The prepared workflow `.github/workflows/release.yml` is manual-only on the fork's `main`. It accepts an existing `droidsembly-v<version>` tag, requires matching package/lock metadata and a commit belonging to main's history, and verifies typecheck, tests, build and installed-package demo on Windows, macOS and Linux before the publish job. It does not bump versions, push main, create Git tags or run on a tag push. Version changes are reviewed through PRs.
 
-The publish job uses [trusted publishing](https://docs.npmjs.com/trusted-publishers) with npm 11 on Node 24. Configure the package's trusted publisher for this fork and `release.yml`; the upstream configuration does not transfer. The first package creation/bootstrap still needs the maintainer's npm account and separate authorization. No credentials belong in repository files. Beta releases go to `next`, stable versions to `latest`; `publishConfig.tag` must agree with the version.
+The publish job is prepared for [trusted publishing](https://docs.npmjs.com/trusted-publishers) with npm 11 on Node 24. OIDC setup and validation are still pending for a future release; the first beta was published manually with maintainer authentication. Configure the package's trusted publisher for this fork and `release.yml`; the upstream configuration does not transfer. No credentials belong in repository files. Beta releases go to `next`, stable versions to `latest`; `publishConfig.tag` must agree with the version.
 
 `npm pack --dry-run --ignore-scripts` lists package contents without publishing. After building, `node scripts/smoke-package.mjs` packs into a temporary folder, installs the tarball there, exercises the installed command, and starts a demo with an isolated home and unused loopback port. It disables update registry checks and deletes only its own temporary installation. Windows shells use `npm.cmd`.

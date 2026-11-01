@@ -1,7 +1,11 @@
 # Droidsembly
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-light.svg" alt="Droidsembly logo" width="360">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-light.svg">
+    <img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-light.svg" alt="Droidsembly — Software, assembled by agents." width="360">
+  </picture>
 </p>
 
 **Small droids. Serious software.**
@@ -10,26 +14,34 @@ A visual workspace for AI-assisted software development: connect your GitHub rep
 
 **English** · [Italiano](https://github.com/rosariomoscato/droidsembly/blob/main/README.it.md)
 
-[Source code](https://github.com/rosariomoscato/droidsembly) · [Report an issue](https://github.com/rosariomoscato/droidsembly/issues) · [Documentation](#documentation) · [Support the project](#support-the-project)
+[Website](https://droidsembly.com) · [npm](https://www.npmjs.com/package/droidsembly) · [Releases](https://github.com/rosariomoscato/droidsembly/releases) · [Report an issue](https://github.com/rosariomoscato/droidsembly/issues) · [Contributing](CONTRIBUTING.md) · [Documentation](#documentation) · [Support the project](#support-the-project)
 
-**Website coming soon:** `droidsembly.com`. Until it launches, this repository is the reference for installation and documentation.
+**Public beta:** [0.4.0-beta.1 release notes](https://github.com/rosariomoscato/droidsembly/releases/tag/droidsembly-v0.4.0-beta.1). Visit [droidsembly.com](https://droidsembly.com) for an introduction and demo instructions; this repository contains the source and technical documentation.
 
 **Free and open source, under the MIT license.** No paid activation or commercial agent unlocks. Voluntary support helps development; your AI subscriptions, API usage and optional cloud services have their own costs and limits.
 
+## Who it is for
+
+- **Solo developers:** coordinate multiple agents on code and checks while staying in control of decisions.
+- **Small development teams:** follow tasks, reviews and project progress in a shared workspace.
+- **Makers and open-source maintainers:** experiment with prototypes and organize work across repositories.
+
+You set the goals and supervise the work. The agents help you get it done.
+
 ## See the office
 
-![Droidsembly demo lobby with robot agents, reception and the manager and CEO offices](https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/branding/screenshots/office.png)
+![Droidsembly demo project floor with six working agents and a live activity panel](https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/branding/screenshots/project-floor-beta.png)
 
 <details>
 <summary>Kanban and mobile Pocket view</summary>
 
-![Demo Kanban board showing backlog, development, QA and merge stages](https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/screenshots/cyan-panels/kanban-en.png)
+![Demo Kanban board with six tasks in progress assigned to agents](https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/branding/screenshots/kanban-beta.png)
 
 <img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/branding/screenshots/pocket-mobile.png" alt="Italian Pocket dashboard with project status, CEO chat and team navigation" width="360">
 
 </details>
 
-These are existing demo captures from the fork. Some styling predates the latest popup updates; company and project names are demo content.
+The project floor and Kanban are actual captures of beta 0.4.0-beta.1 in an isolated demo, with simulated projects and activity and an English interface. The Pocket image is an earlier Italian demo capture.
 
 ## What you can do
 

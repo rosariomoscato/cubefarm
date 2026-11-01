@@ -1,7 +1,11 @@
 # Droidsembly
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-light.svg" alt="Logo Droidsembly" width="360">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-light.svg">
+    <img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-light.svg" alt="Droidsembly — Software, assembled by agents." width="360">
+  </picture>
 </p>
 
 **Small droids. Serious software.**
@@ -10,26 +14,34 @@ Uno spazio visuale per lo sviluppo software assistito dall'AI: collega i tuoi re
 
 [English](https://github.com/rosariomoscato/droidsembly/blob/main/README.md) · **Italiano**
 
-[Codice sorgente](https://github.com/rosariomoscato/droidsembly) · [Segnala un problema](https://github.com/rosariomoscato/droidsembly/issues) · [Documentazione](#documentazione) · [Sostieni il progetto](#sostieni-il-progetto)
+[Sito](https://droidsembly.com) · [npm](https://www.npmjs.com/package/droidsembly) · [Release](https://github.com/rosariomoscato/droidsembly/releases) · [Segnala un problema](https://github.com/rosariomoscato/droidsembly/issues) · [Contribuire](CONTRIBUTING.it.md) · [Documentazione](#documentazione) · [Sostieni il progetto](#sostieni-il-progetto)
 
-**Sito in arrivo:** `droidsembly.com`. Fino alla sua apertura, questo repository è il riferimento per installazione e documentazione.
+**Beta pubblica:** [note della release 0.4.0-beta.1](https://github.com/rosariomoscato/droidsembly/releases/tag/droidsembly-v0.4.0-beta.1). Visita [droidsembly.com](https://droidsembly.com) per la presentazione e le istruzioni demo; questo repository contiene i sorgenti e la documentazione tecnica.
 
 **Gratuito e open source, con licenza MIT.** Nessuna attivazione a pagamento o sblocco commerciale degli agenti. Il sostegno volontario aiuta lo sviluppo; abbonamenti AI, consumi API e servizi cloud opzionali hanno costi e limiti propri.
 
+## A chi è destinato
+
+- **Sviluppatori individuali:** coordina più agenti su codice e verifiche, mantenendo il controllo delle decisioni.
+- **Piccoli team di sviluppo:** segui attività, revisioni e avanzamento dei progetti in uno spazio condiviso.
+- **Maker e manutentori open source:** sperimenta con prototipi e organizza il lavoro sui repository.
+
+Tu definisci gli obiettivi e supervisioni il lavoro. Gli agenti ti aiutano a realizzarlo.
+
 ## Guarda l'ufficio
 
-![Lobby demo di Droidsembly con agenti robot, reception e uffici del manager e del CEO](https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/branding/screenshots/office.png)
+![Piano di progetto della demo Droidsembly con sei agenti al lavoro e pannello delle attività](https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/branding/screenshots/project-floor-beta.png)
 
 <details>
 <summary>Kanban e vista mobile Pocket</summary>
 
-![Bacheca Kanban demo con backlog, sviluppo, QA e fasi di merge](https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/screenshots/cyan-panels/kanban-en.png)
+![Bacheca Kanban demo con sei attività in corso assegnate agli agenti](https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/branding/screenshots/kanban-beta.png)
 
 <img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/docs/branding/screenshots/pocket-mobile.png" alt="Dashboard Pocket in italiano con stato del progetto, chat CEO e navigazione del team" width="360">
 
 </details>
 
-Sono catture demo già disponibili nel fork. Alcuni dettagli grafici precedono gli ultimi aggiornamenti dei popup; nomi di aziende e progetti sono contenuti dimostrativi.
+Il piano di progetto e il Kanban sono catture reali della beta 0.4.0-beta.1 in una demo isolata, con progetti e attività simulati e interfaccia inglese. L'immagine Pocket proviene da una precedente cattura demo in italiano.
 
 ## Cosa puoi fare
 
@@ -169,7 +181,7 @@ Droidsembly è gratuito e open source. Se ti è utile, puoi sostenerne lo svilup
 - [Pocket, PWA e notifiche](https://github.com/rosariomoscato/droidsembly/blob/main/docs/pocket.md) · [Accesso da telefono](https://github.com/rosariomoscato/droidsembly/blob/main/docs/phone-access.md)
 - [Agenti cloud opzionali](https://github.com/rosariomoscato/droidsembly/blob/main/docs/cloud.md) · [Voce](https://github.com/rosariomoscato/droidsembly/blob/main/docs/voice.md)
 - [Copertura inglese/italiano](https://github.com/rosariomoscato/droidsembly/blob/main/docs/languages.md)
-- [Contributi e sviluppo](https://github.com/rosariomoscato/droidsembly/blob/main/CONTRIBUTING.md)
+- [Contributi e sviluppo](https://github.com/rosariomoscato/droidsembly/blob/main/CONTRIBUTING.it.md) · [Guida tecnica inglese](https://github.com/rosariomoscato/droidsembly/blob/main/CONTRIBUTING.md)
 - [Changelog del fork](https://github.com/rosariomoscato/droidsembly/blob/main/docs/FORK_CHANGELOG.md) (italiano)
 - [Report delle verifiche locali](https://github.com/rosariomoscato/droidsembly/blob/main/docs/validation-english-italian.md) · [Indagine sul pathfinding](https://github.com/rosariomoscato/droidsembly/blob/main/docs/pathfinding-investigation.md)
 
