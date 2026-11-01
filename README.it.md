@@ -44,9 +44,9 @@ Sono catture demo già disponibili nel fork. Alcuni dettagli grafici precedono g
 
 ## Installa questo fork
 
-**Distribuzione attuale: compilazione dai sorgenti.** Il pacchetto npm `droidsembly@0.4.0-beta.1` e il comando pubblico `droidsembly` sono in preparazione locale; non sono stati pubblicati. Non è ancora disponibile un installer desktop. `npx cubefarm` installa il pacchetto originale, non Droidsembly.
+**La prima beta pubblica è disponibile:** [droidsembly@0.4.0-beta.1 su npm](https://www.npmjs.com/package/droidsembly). Avvia con `npx droidsembly@next` (`npx.cmd droidsembly@next` in PowerShell), oppure compila dai sorgenti come indicato sotto. Per scegliere questa versione esatta usa `npx droidsembly@0.4.0-beta.1`. Non è ancora disponibile un installer desktop. `npx cubefarm` installa il pacchetto originale, non Droidsembly.
 
-Dopo una pubblicazione beta esplicitamente autorizzata, il comando previsto è `npx droidsembly@next` (`npx.cmd droidsembly@next` in PowerShell). Non usarlo finché il rilascio non sarà annunciato in questo repository. Le versioni stabili useranno `latest`; le beta verificano gli aggiornamenti su `next`. Il nuovo pacchetto non espone un alias globale `cubefarm`. Il file interno `bin/cubefarm.js`, i launcher dei checkout esistenti e la cartella dati predefinita restano compatibili.
+**È una beta, non una versione stabile.** Usa il canale esplicito `next`: npm attualmente punta anche `latest` a questa prima beta, quindi anche un'installazione senza canale la seleziona. Una futura stabile subentrerà su `latest`; le beta verificano gli aggiornamenti su `next`. Il pacchetto non espone un alias globale `cubefarm`. Il file interno `bin/cubefarm.js`, i launcher dei checkout esistenti e la cartella dati predefinita restano compatibili. Per l'uso affiancato scegli uno `SWARM_HOME` separato e porte libere come descritto sotto.
 
 ### Requisiti
 

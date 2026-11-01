@@ -23,6 +23,12 @@ La data della prima modifica è ricavata dalla cronologia Git; non viene usata c
 
 ## 2026-11-01
 
+### Documentazione post-pubblicazione e preparazione release GitHub
+
+Su richiesta di proseguire autonomamente preparate modifiche locali su `docs/published-npm-beta`, creato da origin/main `803cb9e`. README EN/IT aggiornati con disponibilità npm, comandi next/versione esatta, natura beta anche del dist-tag latest e compatibilità dati. Guida npm aggiornata con bootstrap completato, hash pubblico verificato, gestione dell'elaborazione iniziale e procedura separata per documentare la prima beta su GitHub senza ripubblicarla. Note release EN/IT preparate in Temp/opencode/droidsembly-beta1-release-notes.md; nessuna release GitHub presente al controllo.
+
+Documentazione npm OIDC ricontrollata: primo publish necessario entro due giorni dalla creazione del publisher, quindi configurazione da coordinare con la prossima versione. Campi verificati contro release.yml: owner rosariomoscato, repository droidsembly, filename release.yml, nessun environment, permesso npm publish; workflow Node 24/npm 11 e id-token write. Configurazione remota non effettuata. Controlli di coerenza comandi EN/IT, stato pubblicazione, commit/hash e diff check superati. Modifiche solo documentali, nessun test runtime ripetuto. Commit/push/PR di documentazione e tag/release GitHub restano da autorizzare specificamente; documenti e note preesistenti preservati, nessuna nuova pubblicazione npm o deploy.
+
 ### Correzione locale avvisi delle librerie client
 
 Smoke concluso con successo sull'esatto tarball corretto: comando installato versione/help, testi di licenza dei 93 pacchetti, browser tool, client HTTP e persistenza della demo isolata verificati (2 piani, 11 agenti simulati). Processo e cartella temporanei ripuliti. Artefatto conservato per revisione; prima di una pubblicazione occorrono integrazione autorizzata e nuova build pulita dal commit approvato.
