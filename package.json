@@ -1,7 +1,7 @@
 {
   "name": "cubefarm",
   "version": "0.3.20",
-  "description": "A cartoon 3D office where a team of AI coding agents works through your GitHub issues.",
+  "description": "Droidsembly: a visual 3D office and mobile dashboard for coordinating AI coding agents on your GitHub projects.",
   "keywords": [
     "claude-code",
     "codex",
@@ -13,11 +13,11 @@
     "automation",
     "threejs"
   ],
-  "homepage": "https://github.com/leonvanzyl/cubefarm#readme",
-  "bugs": "https://github.com/leonvanzyl/cubefarm/issues",
+  "homepage": "https://github.com/rosariomoscato/droidsembly#readme",
+  "bugs": "https://github.com/rosariomoscato/droidsembly/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/leonvanzyl/cubefarm.git"
+    "url": "git+https://github.com/rosariomoscato/droidsembly.git"
   },
   "license": "MIT",
   "author": "Leon van Zyl",
