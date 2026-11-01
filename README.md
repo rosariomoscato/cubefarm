@@ -1,11 +1,8 @@
 # Droidsembly
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-light.svg">
-    <img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-light.svg" alt="Droidsembly — Software, assembled by agents." width="360">
-  </picture>
+  <img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-dark.svg#gh-dark-mode-only" alt="Droidsembly — Software, assembled by agents." width="360">
+  <img src="https://raw.githubusercontent.com/rosariomoscato/droidsembly/main/client/public/icons/logo-light.svg#gh-light-mode-only" alt="Droidsembly — Software, assembled by agents." width="360">
 </p>
 
 **Small droids. Serious software.**
