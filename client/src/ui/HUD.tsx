@@ -51,7 +51,7 @@ function UsageChip() {
   const text = usageChip(usage, sessions, Date.now(), language);
   if (!text || overlay?.kind === 'manager') return null;
   return (
-    <button className={`office-chip usage-chip usage-chip-${usage.state}`} onClick={() => openOverlay({ kind: 'manager', tab: 'ops', card: 'usage' })} title={t('Claude’s usage is holding new work back. Open Mission control')}>
+    <button className={`office-chip usage-chip usage-chip-${usage.state}`} onClick={() => openOverlay({ kind: 'manager', tab: 'ops', card: 'usage' })} title={t('An AI quota is holding work back. Open Mission control')}>
       {text}
     </button>
   );

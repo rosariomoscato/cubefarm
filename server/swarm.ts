@@ -1,6 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { mergeUsage, quotaKey, type AiUsageObservation, type AiResource, type AiLimitSignal, type AiResourceView } from '../shared/aiUsage.ts';
+import { QuotaGate, type QuotaWindow } from './quotaGate.ts';
+import { openCodeModelRef } from '../shared/opencodeModels.ts';
 import { analysisPrompt } from './analysisPrompt.ts';
 import { communicationInstructions, languageOf } from '../shared/i18n.ts';
 import type { WebSocket } from 'ws';
@@ -39,7 +42,7 @@ import { pruneQaShots, qaShotsDir, readQaShot, removeQaShots, saveQaShots } from
 import { agentPromptPreview, ceoPromptPreview, devBranch, devSystemPrompt, failedLogLines, noPushNudge, ownPrLine, qaBranch, qaSystemPrompt } from './prompts.ts';
 import { QA_RESUME_PROMPT, qaRetry } from './qaRetry.ts';
 import { drainDecision, lastUpdateMessage, POSTPONE_MS, type DrainInput, type LastUpdate } from './officeUpdate.ts';
-import { clampPacingSessions, DEFAULT_PACING_SESSIONS, mayStart, PACING_MS, pacingMessage, resumeRefusal, usageLabel, usageView, waived, warningView, type UsageWarning, type Waiver, type WorkKind } from './pacing.ts';
+import { clampPacingSessions, DEFAULT_PACING_SESSIONS, usageLabel, type UsageWarning, type WorkKind } from './pacing.ts';
 import { emptyHistory, loadHistory, opsView, recordChecks, recordCost, recordMerges, recordQa, type OpsFloorState, type OpsHistory } from './metrics.ts';
 import { clampTrimIdleMin, DEFAULT_TRIM_IDLE_MIN, desksToTrim, formatBytes, freedMessage, idleSince, TRIM_SWEEP_MS } from './deskTrim.ts';
 import { boxVersions, cliLabel, isCli } from './clis.ts';
@@ -102,7 +105,6 @@ import type {
   ServerEvent,
   SwarmSettings,
   UsageView,
-  UsageWarningView,
   WorldSnapshot,
 } from '../shared/types.ts';
 
@@ -215,6 +217,10 @@ interface HeldIssue {
 }
 
 interface Persisted {
+  aiUsage?: AiUsageObservation[];
+  aiResources?: Record<string, { resource: AiResource; configuredModel: string; host?: string; at: number }>;
+  aiQuotas?: Record<string, QuotaWindow>;
+  aiGroups?: Record<string, string>;
   settings: SwarmSettings;
   repos: PersistedRepo[];
   agents: PersistedAgent[];
@@ -341,8 +347,6 @@ const ERROR_COOLDOWN_MS = 2 * 60_000;
 const MAX_ISSUE_FAILURES = 2;
 // Failed QA runs (sessions, or desks that couldn't be set up) before a PR goes to the manager.
 const MAX_QA_FAILURES = 2;
-// How long the office waits after Claude's usage limit is hit when Claude doesn't say when it resets.
-const LIMIT_PAUSE_MS = 15 * 60_000;
 // Everyone on a floor this size or bigger busy at once is a full house (an achievement).
 const FULL_HOUSE = 4;
 // Mission control's numbers are recomputed after these events (debounced), and every half minute for the clock's sake.
@@ -739,6 +743,10 @@ export class Swarm {
         phoneReadAt: loaded.phoneReadAt ?? 0,
         prLimits: loaded.prLimits ?? 1,
         ops: loadHistory(loaded.ops, Date.now()),
+        aiUsage: Array.isArray(loaded.aiUsage) ? loaded.aiUsage : [],
+        aiResources: loaded.aiResources ?? {},
+        aiQuotas: loaded.aiQuotas ?? {},
+        aiGroups: loaded.aiGroups ?? {},
         held: loaded.held ?? [],
         progress: loadLedger(loaded.progress),
         pong: loaded.pong && typeof loaded.pong === 'object' ? loaded.pong : {},
@@ -1404,6 +1412,7 @@ export class Swarm {
   }
 
   private clearTask(a: PersistedAgent) {
+    this.quotaWaiting.delete(a.id);
     Object.assign(a, { status: 'idle', task: null, issueNumber: null, issueTitle: null, branch: null, prNumber: null, prUrl: null, lastError: null });
     this.emitAgent(a);
   }
@@ -2626,6 +2635,7 @@ export class Swarm {
   }
 
   stopAgent(id: string) {
+    this.quotaWaiting.delete(id);
     const a = this.agent(id);
     if (!BUSY.includes(a.status)) return;
     a.status = 'stopped';
@@ -2655,6 +2665,7 @@ export class Swarm {
   }
 
   resetAgent(id: string) {
+    this.quotaWaiting.delete(id);
     const a = this.agent(id);
     if (BUSY.includes(a.status)) throw new HttpError(409, `${a.name} is busy; stop them first`);
     for (const q of this.state.qa) {
@@ -2682,6 +2693,11 @@ export class Swarm {
     }
   }
 
+  private ensureUsage(a: PersistedAgent, kind: WorkKind) {
+    if (this.quotaWaiting.has(a.id)) throw new HttpError(409, 'This agent has work waiting for a quota reset. Clear the desk to replace it.');
+    if (!this.mayStart(kind, a)) throw new HttpError(429, 'This AI quota is paused or pacing. See AI usage for the affected resource and reset time.');
+  }
+
   /** A manual, local, read-only workflow: no issue, worktree, dependency install or PR pipeline. */
   analyze(agentId: string, text: string, resume = false) {
     const a = this.agent(agentId);
@@ -2692,6 +2708,7 @@ export class Swarm {
     const repo = this.repo(a.repoId);
     if (this.repoRt.get(repo.id)?.cloneStatus !== 'ready') throw new HttpError(409, 'Wait until the repository checkout is ready.');
     if (!this.backend.deskExists(this.backend.mainDir(repo.fullName))) throw new HttpError(409, 'The repository checkout is missing; reconnect it before starting analysis.');
+    this.ensureUsage(a, 'issue');
     this.ensureSlot();
     const cli = a.cli || this.state.settings.defaultCli;
     if (this.state.settings.runtime === 'terminal' && !this.cliReady(cli)) throw new HttpError(400, `${cliLabel(cli)} isn't installed on this computer.`);
@@ -2711,6 +2728,7 @@ export class Swarm {
     const repo = this.repo(a.repoId);
     if (a.role === 'ceo') throw new HttpError(400, `${a.name} runs the company; give issues to the agents on the floors.`);
     if (BUSY.includes(a.status)) throw new HttpError(409, `${a.name} is busy: ${this.agentDoing(a)}`);
+    this.ensureUsage(a, 'issue');
     this.ensureSlot();
     const issues = this.repoRt.get(repo.id)?.issues ?? [];
     const issue = issues.find((i) => i.number === issueNumber);
@@ -3050,9 +3068,17 @@ export class Swarm {
       void this.restoreDesk(a, repo).then((dir) => dir && this.startAgentSession(a, repo, dir, prompt, systemAppend, a.machine === machine ? resumeSessionId : undefined, outputSchema, mode));
       return;
     }
+    const how = this.sessionRuntime(a, resumeSessionId);
+    if (!mode && !this.quotaGate().allows(this.gateKey(a, this.resourceFor(a, how.cli ?? 'claude')), 'ceo', Date.now(), 0, 1)) {
+      this.quotaWaiting.set(a.id, () => this.launchSession(a, repo, cwd, prompt, systemAppend, resumeSessionId, outputSchema, mode, box, linked));
+      a.status = 'stopped';
+      a.lastError = 'Waiting for AI quota reset';
+      this.emitAgent(a);
+      this.save();
+      return;
+    }
     a.status = 'working';
     this.activity.set(a.id, Date.now());
-    const how = this.sessionRuntime(a, resumeSessionId);
     this.emitAgent(a);
     const active = (entries: LogEntry[]) => {
       if (entries.some((e) => e.kind !== 'manager')) this.activity.set(a.id, Date.now());
@@ -3109,8 +3135,12 @@ export class Swarm {
             .then(() => fs.writeFile(screenFile(a.id, mime), data))
             .catch((err) => console.warn('could not save screenshot', err));
         },
-        limited: (at) => this.pauseForLimit(at),
-        usageWarning: (info) => this.paceForWarning(info),
+        usage: (observation) => this.recordAiUsage(a, observation),
+        usageBatch: (observations) => this.recordAiUsageBatch(a, observations),
+        resource: (resource) => this.recordResource(a, resource),
+        quota: (signal) => this.recordQuota(a, signal),
+        limited: (at) => this.pauseForLimit(at, a),
+        usageWarning: (info) => this.paceForWarning(info, a),
         finished: (result) => {
           // A cloud agent's CLI whose login expired: the task carries on (the same conversation) once it's signed in again.
           const again = () => this.startAgentSession(a, repo, cwd, a.sessionId ? SIGNED_IN_AGAIN : prompt, systemAppend, a.sessionId ?? undefined, outputSchema, null);
@@ -3209,7 +3239,7 @@ export class Swarm {
 
     if (a.status === 'stopped') return; // the manager already logged the stop
     if (!result.ok) {
-      this.issueFailed(repo, a.issueNumber);
+      this.issueFailed(repo, a.issueNumber, a);
       return this.fail(a, result, `#${a.issueNumber}`);
     }
     this.issueFailures.delete(`${repo.id}#${a.issueNumber}`);
@@ -3318,6 +3348,7 @@ export class Swarm {
     const tester = agentId ? this.agent(agentId) : null;
     if (tester && (tester.repoId !== repo.id || tester.role === 'ceo')) throw new HttpError(400, `${tester.name} doesn't work on ${repo.fullName}`);
     if (tester && BUSY.includes(tester.status)) throw new HttpError(409, `${tester.name} is busy: ${this.agentDoing(tester)}`);
+    if (tester) this.ensureUsage(tester, 'qa');
     if (tester) this.ensureSlot();
     this.clearPrepStrikes(repo.id, prNumber);
     this.queueQa(repo, prNumber, dev ?? null, pr.closesIssues[0] ?? null);
@@ -3463,7 +3494,7 @@ export class Swarm {
     const rt = this.agentRt.get(a.id)!;
     const report = result.ok ? parseReport(result) : null;
     const resume = rt.qaResume;
-    const next = qaRetry({ stopped: a.status === 'stopped', limited: this.limited(), ok: result.ok, report: !!report, canResume: !!resume && !!a.sessionId });
+    const next = qaRetry({ stopped: a.status === 'stopped', limited: this.limited(a, true), ok: result.ok, report: !!report, canResume: !!resume && !!a.sessionId });
     if (next === 'resume' && resume && a.sessionId) {
       // Same session, context and screenshots: they likely ended a turn to wait on something that never woke them.
       rt.qaResume = null;
@@ -3476,7 +3507,7 @@ export class Swarm {
     if (next === 'give-up' || !report) {
       if (a.status !== 'stopped') this.fail(a, { ...result, errors: result.errors.length ? result.errors : ['QA finished without a usable report'] }, `QA of PR #${a.prNumber}`);
       if (rec) {
-        const failures = rec.sessionFailures + (this.limited() ? 0 : 1); // the usage limit isn't the PR's fault
+        const failures = rec.sessionFailures + (this.limited(a, true) ? 0 : 1); // the usage limit isn't the PR's fault
         const patch = { qaAgentId: null, sessionFailures: failures, summary: a.status === 'stopped' ? QA_STOPPED : rec.summary };
         if (a.status === 'stopped') this.setQa(rec, { ...patch, status: 'needs-human', escalated: true }); // the manager stopped it: theirs to decide
         else if (failures >= MAX_QA_FAILURES) this.stuck(rec, patch, `QA ended without a usable report ${failures} times in a row`);
@@ -3694,7 +3725,7 @@ export class Swarm {
     if (!result.ok) {
       this.fail(a, result, `the fix for PR #${a.prNumber}`);
       // Someone else gets a go before it lands on the manager.
-      const failures = rec ? rec.sessionFailures + (this.limited() ? 0 : 1) : 0;
+      const failures = rec ? rec.sessionFailures + (this.limited(a, true) ? 0 : 1) : 0;
       if (rec && failures >= MAX_FIX_FAILURES) this.stuck(rec, { sessionFailures: failures }, `${failures} fix sessions in a row failed`);
       else if (rec) this.setQa(rec, { status: 'failed', sessionFailures: failures });
       return;
@@ -3705,12 +3736,12 @@ export class Swarm {
       return;
     }
     const head = current?.headSha ?? null;
-    const step = fixOutcome(rec, head, this.minutes(a), !this.limited(), current?.checks ?? null);
+    const step = fixOutcome(rec, head, this.minutes(a), !this.limited(a, true), current?.checks ?? null);
     if (!step.pushed && head) {
       // Asked once to push or say why nothing needs to change, before it counts as a strike.
       const key = `${repo.id}#${rec.prNumber}`;
       const noChange = noChangeReason(result.text);
-      const next = unpushedFix(rec, head, { nudged: this.fixNudged.has(key), noChange, counts: !this.limited() });
+      const next = unpushedFix(rec, head, { nudged: this.fixNudged.has(key), noChange, counts: !this.limited(a, true) });
       if (next.do === 'retest') {
         this.fixNudged.delete(key);
         a.status = 'done';
@@ -3788,6 +3819,7 @@ export class Swarm {
     if (a.status === 'preparing') throw new HttpError(409, `${a.name} is still setting up; try again in a moment`);
     if (a.task === 'analysis') return this.analyze(id, text, true);
     if (!a.sessionId || !a.branch || a.task === 'qa') throw new HttpError(409, `${a.name} has no session to continue. Give them an issue or a PR to test instead.`);
+    if (!typed) this.ensureUsage(a, a.task === 'fix' ? 'fix' : 'issue');
     this.ensureSlot();
     this.appendLog(a, [{ kind: 'manager', text: `▶ Manager: ${text}` }]);
     const cwd = this.deskOf(a, repo);
@@ -3877,6 +3909,7 @@ export class Swarm {
    * else instead of waiting for the manager to reset them.
    */
   private isFree(a: PersistedAgent) {
+    if (this.quotaWaiting.has(a.id)) return false;
     if (a.task === 'analysis') return false; // Reserved for manual follow-ups until Clear desk or an explicit new task.
     if (a.needsSignIn) return false; // a cloud agent waiting to be signed in takes no work (docs/cloud.md)
     return FREE.includes(a.status) || (a.status === 'error' && Date.now() - (a.endedAt ?? 0) >= ERROR_COOLDOWN_MS);
@@ -3884,19 +3917,16 @@ export class Swarm {
 
   /** A floor's agents who can take work now, by desk. */
   private available(repo: PersistedRepo) {
-    return this.state.agents.filter((a) => a.repoId === repo.id && a.role !== 'ceo' && this.isFree(a)).sort((x, y) => x.desk - y.desk);
+    return this.state.agents.filter((a) => a.repoId === repo.id && a.role !== 'ceo' && this.isFree(a) && !this.limited(a)).sort((x, y) => x.desk - y.desk);
   }
 
   private scheduleOffset = 0;
   private issueFailures = new Map<string, number>(); // `${repoId}#${issue}` → failed sessions on it
   private nudged = new Set<string>(); // `${repoId}#${issue}`: its agent was asked once to finish the missing PR
   private fixNudged = new Set<string>(); // `${repoId}#${pr}`: its fix session was asked once to push or say why not
-  private pausedUntil = 0; // Claude's usage limit was hit: nothing new starts before this
-  private pacingUntil = 0; // Claude warned about usage: new issues are paced until this
-  private pacingLimit: string | null = null; // which of Claude's limits the pacing is for
-  private lastWarning: UsageWarningView | null = null; // the latest usage warning, for the usage meter
-  private waiver: Waiver | null = null; // pacing the manager cleared with "Resume full speed"
   private lastUsage = '';
+  private lastUsageAt = 0;
+  private quotaWaiting = new Map<string, () => void>();
 
   /** Backlog issues that can start now, most urgent first: the ones holding up the longest chain of other issues, then the oldest. */
   private readyIssues(repo: PersistedRepo) {
@@ -3948,6 +3978,7 @@ export class Swarm {
     }
     for (const rec of fixes) {
       const author = this.state.agents.find((a) => a.id === rec.devAgentId && a.repoId === repo.id && a.role !== 'ceo') ?? null;
+      if (author && this.limited(author)) continue; // a quota pause is not permission to switch this fix to another provider
       const headRef = this.repoRt.get(repo.id)!.pulls.find((p) => p.number === rec.prNumber)?.headRefName ?? null;
       const to = fixGoesTo(author, !!author && free.includes(author), rec.prNumber, headRef);
       if (to === 'wait') continue; // the author gets it when their session ends
@@ -3962,8 +3993,8 @@ export class Swarm {
    * "Depends on #N" wait until #N is closed; the rest go in readyIssues() order.
    */
   private startIssueWork(repo: PersistedRepo): boolean {
-    if (!repo.autoAssign || !this.mayStart('issue')) return false;
-    const agent = this.available(repo)[0];
+    if (!repo.autoAssign) return false;
+    const agent = this.available(repo).find((a) => this.mayStart('issue', a));
     const next = agent ? this.readyIssues(repo)[0] : undefined;
     if (!agent || !next) return false;
     // assign() flips the agent to 'preparing' synchronously, so the next pass sees it as busy.
@@ -3971,90 +4002,180 @@ export class Swarm {
     return agent.status === 'preparing';
   }
 
-  private limited() {
-    return Date.now() < this.pausedUntil;
+  private quotaGate() {
+    return new QuotaGate(this.state.aiQuotas ??= {});
   }
 
-  /** Claude turned a session away for the usage limit: start nothing new until it resets, rather than failing agent after agent. */
-  private pauseForLimit(resetsAt: number | null) {
-    const until = (resetsAt ?? Date.now() + LIMIT_PAUSE_MS) + 30_000;
-    if (until <= this.pausedUntil) return;
-    const fresh = Date.now() >= this.pausedUntil;
-    this.pausedUntil = until;
-    if (fresh) this.postMessage('office', `⏸ Claude's usage limit was reached. The office starts no new work until ${new Date(until).toLocaleTimeString()}; sessions already running carry on.`);
+  private usageTool(a: PersistedAgent): AgentCli {
+    return a.host === 'box' || (this.state.settings.runtime === 'terminal' && this.backend.terminals) ? a.cli || (a.role === 'ceo' ? 'claude' : this.state.settings.defaultCli) : 'claude';
+  }
+
+  private resourceFor(a: PersistedAgent, tool = this.usageTool(a)): AiResource {
+    const model = this.modelFor(a, tool);
+    const known = this.state.aiResources?.[a.id];
+    const ref = tool === 'opencode' ? openCodeModelRef(model) : null;
+    if (known?.resource.tool === tool && known.host === this.usageHost(a)) {
+      if (ref && ref.providerID === known.resource.provider) return { ...known.resource, model: ref.id };
+      if (!ref && known.configuredModel === model) return known.resource;
+    }
+    return { tool, provider: ref?.providerID ?? null, model: ref?.id ?? (model || null), account: null, access: 'unknown' };
+  }
+
+  private resourceKey(a: PersistedAgent, resource = this.resourceFor(a)) {
+    // Unknown accounts are isolated, including across tools and machines. Explicit associations can join them.
+    const identity = quotaKey({ ...resource, fallback: `${a.id}:${this.usageHost(a)}` });
+    return crypto.createHash('sha256').update(identity).digest('hex').slice(0, 32);
+  }
+
+  private gateKey(a: PersistedAgent, resource = this.resourceFor(a)) {
+    const key = this.resourceKey(a, resource);
+    return this.state.aiGroups?.[key] ? `group:${this.state.aiGroups[key]}` : key;
+  }
+
+  private usageHost(a: PersistedAgent) {
+    return a.host === 'box' ? `box:${a.machine ?? a.id}` : 'local';
+  }
+
+  private recordResource(a: PersistedAgent, resource: AiResource) {
+    // Credential IDs are not secrets, but only an opaque, host-scoped hash is persisted or exposed.
+    if (resource.account) resource = { ...resource, account: crypto.createHash('sha256').update(`${this.usageHost(a)}:${resource.tool}:${resource.account}`).digest('hex').slice(0, 24) };
+    (this.state.aiResources ??= {})[a.id] = { resource, configuredModel: this.modelFor(a, resource.tool), host: this.usageHost(a), at: Date.now() };
+    this.save();
     this.emitUsage();
   }
 
-  /** Claude warned that usage is getting high: pace new issues until the window resets, rather than run into the limit. */
-  private paceForWarning(info: UsageWarning) {
-    const now = Date.now();
-    this.lastWarning = warningView(info, now);
-    const until = info.resetsAt && info.resetsAt > now ? info.resetsAt : now + PACING_MS;
-    // The manager already resumed full speed for this window: they topped up, or their usage was reset.
-    if (until <= this.pacingUntil || waived(info, this.waiver, now)) return this.emitUsage();
-    const fresh = now >= this.pacingUntil;
-    this.pacingUntil = until;
-    this.pacingLimit = info.rateLimitType;
-    if (fresh) this.postMessage('office', pacingMessage(info, until, this.state.settings.pacingSessions, now));
+  private recordQuota(a: PersistedAgent, signal: AiLimitSignal) {
+    this.recordResource(a, signal.resource);
+    if (signal.kind === 'limit') this.pauseForLimit(signal.resetsAt, a);
+    else this.paceForWarning({ resetsAt: signal.resetsAt, utilization: signal.utilization, rateLimitType: signal.limit }, a);
+  }
+
+  private limited(a: PersistedAgent, observed = false) {
+    const resource = observed ? this.state.aiResources?.[a.id]?.resource : undefined;
+    return !this.quotaGate().allows(this.gateKey(a, resource), 'ceo', Date.now(), 0, 1);
+  }
+
+  private pauseForLimit(resetsAt: number | null, a: PersistedAgent) {
+    const key = this.gateKey(a, this.state.aiResources?.[a.id]?.resource), gate = this.quotaGate();
+    const fresh = gate.view(key, Date.now()).state !== 'paused';
+    gate.limit(key, resetsAt, Date.now());
+    if (fresh) this.postMessage('office', `⏸ ${a.name} · ${this.resourceFor(a).provider ?? this.usageTool(a)}: usage limit. Only work using this quota is held; running sessions carry on.`);
+    this.save();
     this.emitUsage();
   }
 
-  /** The manager's "Resume full speed" (they topped up, or their usage was reset): pacing ends now. A hard pause never does. */
-  resumeFullSpeed(): UsageView {
-    const now = Date.now();
-    const refused = resumeRefusal({ now, pausedUntil: this.pausedUntil, pacingUntil: this.pacingUntil });
-    if (refused) throw new HttpError(409, refused);
-    this.waiver = { until: this.pacingUntil, limit: this.pacingLimit };
-    this.pacingUntil = 0;
-    this.postMessage('office', '⏩ You resumed full speed: new issues start as usual again. If Claude turns a session away at the limit, the office still pauses until it resets.');
+  private paceForWarning(info: UsageWarning, a: PersistedAgent) {
+    this.quotaGate().warn(this.gateKey(a, this.state.aiResources?.[a.id]?.resource), info, Date.now());
+    this.save();
+    this.emitUsage();
+  }
+
+  resumeFullSpeed(resourceKey?: string): UsageView {
+    const resources = this.usageNow().resources;
+    const selected = resourceKey ? resources.find((r) => r.key === resourceKey) : resources.filter((r) => r.state === 'pacing').length === 1 ? resources.find((r) => r.state === 'pacing') : undefined;
+    if (!selected) throw new HttpError(409, 'Select the quota to resume in AI usage.');
+    const key = selected.group ? `group:${selected.group}` : selected.key;
+    if (!this.quotaGate().resume(key, Date.now())) throw new HttpError(409, 'This quota is not pacing, or its hard limit has not reset.');
+    this.save();
     this.emitUsage();
     setTimeout(() => this.schedule(), 200);
     return this.usageNow();
   }
 
+  setUsageGroup(key: string, group: unknown): UsageView {
+    if (!this.usageNow().resources.some((r) => r.key === key)) throw new HttpError(404, 'Unknown usage resource');
+    if (typeof group !== 'string' || !/^[\w -]{0,64}$/.test(group)) throw new HttpError(400, 'Use a quota label of up to 64 letters, numbers, spaces or dashes.');
+    // Joining or leaving must not bypass an existing hard pause or warning.
+    const oldKey = this.state.aiGroups?.[key] ? `group:${this.state.aiGroups[key]}` : key;
+    const newKey = group.trim() ? `group:${group.trim()}` : key;
+    this.quotaGate().transfer(oldKey, newKey);
+    (this.state.aiGroups ??= {})[key] = group.trim();
+    this.save();
+    this.emitUsage();
+    return this.usageNow();
+  }
+
   /** The demo's stand-in for Claude's usage warning or limit (POST /api/usage/simulate), so pacing and the pause can be tried. */
-  simulateUsage(kind: unknown): UsageView {
+  simulateUsage(kind: unknown, agentId?: string): UsageView {
     const fake = this.backend.simulateUsage;
     if (!fake) throw new HttpError(404, 'Usage can only be simulated in the demo office.');
     if (kind !== 'warning' && kind !== 'limit') throw new HttpError(400, 'kind must be "warning" or "limit"');
     const usage = fake(kind, Date.now());
-    if ('limitResetsAt' in usage) this.pauseForLimit(usage.limitResetsAt);
+    const a = agentId ? this.agent(agentId) : this.ceo();
+    if ('limitResetsAt' in usage) this.pauseForLimit(usage.limitResetsAt, a);
     else {
-      this.waiver = null; // a simulated warning always paces, even after Resume full speed
-      this.paceForWarning(usage);
+      const w = this.state.aiQuotas?.[this.gateKey(a)];
+      if (w) { w.waiver = null; w.warnings = {}; }
+      this.paceForWarning(usage, a);
     }
     return this.usageNow();
   }
 
   /** May work of this kind start now, as far as Claude's usage goes? */
-  private mayStart(kind: WorkKind) {
-    return mayStart(kind, { now: Date.now(), pausedUntil: this.pausedUntil, pacingUntil: this.pacingUntil, running: this.running(), pacingSessions: this.state.settings.pacingSessions });
+  private mayStart(kind: WorkKind, a: PersistedAgent) {
+    const key = this.gateKey(a);
+    const running = this.state.agents.filter((other) => BUSY.includes(other.status) && this.gateKey(other) === key).length;
+    return this.quotaGate().allows(key, kind, Date.now(), running, this.state.settings.pacingSessions);
   }
 
   private usageNow() {
-    return usageView({ now: Date.now(), pausedUntil: this.pausedUntil, pacingUntil: this.pacingUntil }, this.lastWarning);
+    const resources: AiResourceView[] = [];
+    const byKey = new Map<string, AiResourceView>();
+    const gate = this.quotaGate();
+    const now = Date.now();
+    for (const a of this.state.agents) {
+      const resource = this.resourceFor(a), key = this.resourceKey(a, resource);
+      const known = this.state.aiResources?.[a.id];
+      let view = byKey.get(key);
+      if (!view) {
+        const group = this.state.aiGroups?.[key] || null;
+        view = { ...resource, key, group, agentIds: [], running: 0, observedAt: known?.resource.tool === resource.tool && known.host === this.usageHost(a) && known.configuredModel === this.modelFor(a, this.usageTool(a)) ? known.at : null, ...gate.view(group ? `group:${group}` : key, now) };
+        resources.push(view);
+        byKey.set(key, view);
+      }
+      view.agentIds.push(a.id);
+      if (BUSY.includes(a.status)) view.running++;
+    }
+    const worst = resources.find((r) => r.state === 'paused') ?? resources.find((r) => r.state === 'pacing');
+    return { state: worst?.state ?? 'normal', until: worst?.until ?? null, warning: worst?.warning ?? null, resources, observations: (this.state.aiUsage ?? []).slice(-200) } satisfies UsageView;
+  }
+
+  private recordAiUsage(a: PersistedAgent, observation: AiUsageObservation) {
+    this.recordAiUsageBatch(a, [observation]);
+  }
+
+  private recordAiUsageBatch(a: PersistedAgent, observations: AiUsageObservation[]) {
+    let changed = false;
+    for (const observation of observations) {
+      if (mergeUsage(this.state.aiUsage ??= [], { ...observation, agentId: a.id, repoId: a.repoId, observedAt: Date.now() })) changed = true;
+    }
+    if (!changed) return;
+    this.save();
+    this.emitUsage();
   }
 
   private emitUsage() {
     const usage = this.usageNow();
     const key = JSON.stringify(usage);
     if (key === this.lastUsage) return;
-    const was = this.lastUsage ? (JSON.parse(this.lastUsage) as typeof usage).state : 'normal';
-    this.lastUsage = key;
-    this.broadcast({ type: 'usage', usage });
-    if (usage.state !== was && usage.state !== 'normal') {
-      const until = usage.until ? new Date(usage.until).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'it resets';
-      if (usage.state === 'paused') this.notifier.notify('usage', "Claude's usage limit was reached", `The office starts no new work until ${until}; running sessions carry on.`);
-      else this.notifier.notify('usage', 'Pacing new work', `Claude warned that usage is high, so new issues start slowly until ${until}.`);
+    const previous = this.lastUsage ? (JSON.parse(this.lastUsage) as UsageView).resources ?? [] : [];
+    const controls = (rows: AiResourceView[]) => JSON.stringify(rows.map((r) => [r.key, r.group, r.state, r.until]));
+    // Limits and identity changes arrive immediately; counters/activity are coalesced for large offices.
+    if (this.lastUsage && controls(previous) === controls(usage.resources) && Date.now() - this.lastUsageAt < 5000) return;
+    const notified = new Set<string>();
+    for (const r of usage.resources) {
+      const identity = r.group ?? r.key;
+      if (r.state === 'normal' || notified.has(identity) || previous.find((p) => p.key === r.key)?.state === r.state) continue;
+      notified.add(identity);
+      this.notifier.notify('usage', `${r.tool} · ${r.provider ?? 'AI'}: ${r.state}`, 'Only work using the affected quota is held. See AI usage for signals and reset times.');
     }
+    this.lastUsage = key;
+    this.lastUsageAt = Date.now();
+    this.broadcast({ type: 'usage', usage });
   }
 
   /** Pacing and pauses run out on their own: say so when pacing ends. */
   private tickUsage() {
-    if (this.pacingUntil && Date.now() >= this.pacingUntil) {
-      this.pacingUntil = 0;
-      this.postMessage('office', "✅ Claude's usage is back to normal. The office starts new work at full speed again.");
-    }
     this.emitUsage();
   }
 
@@ -4107,8 +4228,8 @@ export class Swarm {
   }
 
   /** A failed session releases its issue for someone else; an issue that keeps failing waits for the manager. */
-  private issueFailed(repo: PersistedRepo, n: number | null) {
-    if (n == null || this.limited()) return; // the usage limit isn't the issue's fault
+  private issueFailed(repo: PersistedRepo, n: number | null, a: PersistedAgent) {
+    if (n == null || this.limited(a, true)) return; // the usage limit isn't the issue's fault
     const key = `${repo.id}#${n}`;
     const failures = (this.issueFailures.get(key) ?? 0) + 1;
     this.issueFailures.set(key, failures);
@@ -4127,7 +4248,11 @@ export class Swarm {
     this.progressTick();
     if (this.officeUpdateTick()) return; // draining for the office's own update
     this.applyTeamChanges(); // before handing out work, so agents on their way out get none
-    if (this.limited()) return;
+    for (const [id, start] of [...this.quotaWaiting]) {
+      const a = this.state.agents.find((agent) => agent.id === id);
+      if (!a) { this.quotaWaiting.delete(id); continue; }
+      if (!this.slotsFull() && !this.limited(a)) { this.quotaWaiting.delete(id); start(); }
+    }
     // Management first: the CEO's jobs are short and shape everyone else's work.
     this.maybeHeartbeat();
     this.startCeoWork();
@@ -4386,6 +4511,7 @@ export class Swarm {
       this.save();
     }
     if (!a || BUSY.includes(a.status) || c.job || c.queue.length === 0) return;
+    if (!this.mayStart('ceo', a)) return;
     if (this.slotsFull()) return;
     const rank: Record<CeoJob['kind'], number> = { chat: 0, triage: 0, onboard: 1, plan: 1, review: 2 };
     // A floor's jobs wait for its clone and first sync, so the CEO has something to read.
@@ -4441,6 +4567,16 @@ export class Swarm {
       this.emitCeo();
       return;
     }
+    if (this.limited(a)) {
+      this.state.ceo.job = null;
+      this.state.ceo.queue.unshift(job);
+      a.status = 'stopped';
+      a.lastError = 'Waiting for AI quota reset';
+      this.emitAgent(a);
+      this.emitCeo();
+      this.save();
+      return;
+    }
     // A chat carries on from the CEO's last session, so "why did you propose that?" has an answer.
     const how = this.sessionRuntime(a, job.kind === 'chat' ? (a.sessionId ?? undefined) : undefined);
     rt.session = this.backend.startSession(
@@ -4470,8 +4606,12 @@ export class Swarm {
         browserUrl: () => undefined,
         screenshot: () => undefined,
         turn: (text) => this.postMessage('ceo', text),
-        limited: (at) => this.pauseForLimit(at),
-        usageWarning: (info) => this.paceForWarning(info),
+        usage: (observation) => this.recordAiUsage(a, observation),
+        usageBatch: (observations) => this.recordAiUsageBatch(a, observations),
+        resource: (resource) => this.recordResource(a, resource),
+        quota: (signal) => this.recordQuota(a, signal),
+        limited: (at) => this.pauseForLimit(at, a),
+        usageWarning: (info) => this.paceForWarning(info, a),
         finished: (result) => this.onCeoFinished(a, result),
       },
     );

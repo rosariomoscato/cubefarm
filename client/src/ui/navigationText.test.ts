@@ -32,9 +32,9 @@ describe('navigation framing and content boundaries', () => {
     const now = new Date(2026, 9, 31, 12).getTime();
     const until = new Date(2026, 10, 1, 12).getTime();
     const warning = null;
-    expect(usageChip({ state: 'paused', until, warning }, 3, now)).toBe("⏸ Paused until Sun 12:00: at Claude's usage limit, nothing new starts");
-    expect(usageChip({ state: 'paused', until, warning }, 3, now, 'it')).toBe('⏸ In pausa fino alle dom 12:00: limite di utilizzo di Claude, non parte nuovo lavoro');
-    expect(usageChip({ state: 'pacing', until, warning }, 1, now, 'it')).toContain('meno di 1 sessione attiva');
+    expect(usageChip({ state: 'paused', until, warning }, 3, now)).toBe('⏸ AI quota held until Sun 12:00; independent resources continue');
+    expect(usageChip({ state: 'paused', until, warning }, 3, now, 'it')).toBe('⏸ Quota AI sospesa fino alle dom 12:00; le risorse indipendenti proseguono');
+    expect(usageChip({ state: 'pacing', until, warning }, 1, now, 'it')).toContain('meno di 1 sessione su quella quota');
     expect(usageChip({ state: 'normal', until: null, warning }, 3, now, 'it')).toBeNull();
   });
 });

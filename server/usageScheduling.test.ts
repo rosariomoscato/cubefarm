@@ -1,0 +1,96 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Swarm } from './swarm.ts';
+
+// Exercise real admission/scheduling methods with no constructor, filesystem, CLI, GitHub or AI backend.
+function office() {
+  const s = Object.create(Swarm.prototype) as any;
+  const agent = (id: string, provider: string, role = 'developer') => ({ id, name: id, repoId: role === 'ceo' ? '' : 'repo', role, cli: 'opencode', model: `${provider}/model`, status: 'idle', task: null, desk: id === 'a' ? 1 : 2 });
+  const agents = [agent('a', 'one'), agent('b', 'two'), agent('ceo', 'one', 'ceo')];
+  s.state = { agents, aiResources: {}, aiQuotas: {}, aiGroups: {}, qa: [], repos: [], settings: { runtime: 'terminal', defaultCli: 'opencode', defaultModel: '', pacingSessions: 1, sessionLimit: 0 }, ceo: { queue: [{ kind: 'chat', text: 'fixture' }], job: null } };
+  s.backend = { terminals: true, demo: true };
+  s.quotaWaiting = new Map();
+  s.repoRt = new Map([['repo', { pulls: [{ number: 1, headRefName: 'branch' }] }]]);
+  s.prepStrikes = new Map();
+  s.save = vi.fn(); s.emitUsage = vi.fn(); s.emitAgent = vi.fn(); s.emitCeo = vi.fn(); s.postMessage = vi.fn();
+  s.runCeoJob = vi.fn(); s.runQa = vi.fn(); s.runFix = vi.fn();
+  s.floorState = () => ({ fetchedAt: 0, openIssues: [], closedIssues: new Map(), closedPulls: new Map(), pulls: [{ number: 1, state: 'OPEN' }] });
+  s.readyIssues = () => [{ issue: { number: 1 } }];
+  s.assign = vi.fn(async (id: string) => { s.agent(id).status = 'preparing'; });
+  for (const a of agents) s.recordResource(a, { tool: 'opencode', provider: a.model.split('/')[0], model: 'model', account: 'same-connection', access: 'unknown' });
+  return s;
+}
+afterEach(() => vi.useRealTimers());
+
+describe('AI quota scheduling integration', () => {
+  it('cancels a deferred launch when its task is cleared', () => {
+    const s = office();
+    const launch = vi.fn();
+    s.quotaWaiting.set('a', launch);
+    s.clearTask(s.agent('a'));
+    expect(s.quotaWaiting.has('a')).toBe(false);
+    expect(launch).not.toHaveBeenCalled();
+  });
+  it('starts queued QA only on an eligible resource and holds an author’s fix instead of changing provider', () => {
+    const s = office();
+    s.pauseForLimit(Date.now() + 60000, s.agent('a'));
+    const rec = { repoId: 'repo', prNumber: 1, status: 'queued', devAgentId: 'a', updatedAt: 0 };
+    s.state.qa = [rec];
+    expect(s.startPipelineWork({ id: 'repo' })).toBe(true);
+    expect(s.runQa).toHaveBeenCalledWith(s.agent('b'), { id: 'repo' }, rec);
+    rec.status = 'failed';
+    expect(s.startPipelineWork({ id: 'repo' })).toBe(false);
+    expect(s.runFix).not.toHaveBeenCalled();
+  });
+  it('blocks the actual shared connection including CEO while another provider starts an issue', () => {
+    const s = office();
+    s.pauseForLimit(Date.now() + 60000, s.agent('a'));
+    expect(s.available({ id: 'repo' }).map((a: any) => a.id)).toEqual(['b']);
+    s.startCeoWork();
+    expect(s.runCeoJob).not.toHaveBeenCalled();
+    expect(s.state.ceo.queue).toHaveLength(1);
+    expect(s.startIssueWork({ id: 'repo', autoAssign: false })).toBe(false);
+    expect(s.startIssueWork({ id: 'repo', autoAssign: true })).toBe(true);
+    expect(s.assign).toHaveBeenCalledWith('b', 1);
+  });
+  it('counts only the affected quota for pacing and keeps QA/fix/CEO eligible', () => {
+    const s = office();
+    s.agent('b').status = 'working';
+    s.paceForWarning({ resetsAt: Date.now() + 60000, utilization: .9, rateLimitType: 'weekly' }, s.agent('a'));
+    expect(s.mayStart('issue', s.agent('a'))).toBe(true);
+    s.agent('ceo').status = 'working';
+    expect(s.mayStart('issue', s.agent('a'))).toBe(false);
+    for (const kind of ['qa', 'fix', 'ceo']) expect(s.mayStart(kind, s.agent('a'))).toBe(true);
+  });
+  it('joins tools only after confirmation, persists gates, and does not bypass a hard limit on unlink', () => {
+    const s = office();
+    s.agent('b').cli = 'codex';
+    const a = s.resourceKey(s.agent('a')), b = s.resourceKey(s.agent('b'));
+    s.setUsageGroup(a, 'confirmed'); s.setUsageGroup(b, 'confirmed');
+    s.pauseForLimit(Date.now() + 60000, s.agent('a'));
+    expect(s.limited(s.agent('b'))).toBe(true);
+    s.state = JSON.parse(JSON.stringify(s.state));
+    expect(s.limited(s.agent('b'))).toBe(true);
+    s.setUsageGroup(b, '');
+    expect(s.limited(s.agent('b'))).toBe(true);
+    expect(() => s.resumeFullSpeed(b)).toThrow(/hard limit/);
+  });
+  it('keeps history and provider-level limits when changing model, releases a different provider', () => {
+    const s = office();
+    s.pauseForLimit(Date.now() + 60000, s.agent('a'));
+    s.agent('a').model = 'one/another-model';
+    expect(s.limited(s.agent('a'))).toBe(true);
+    s.agent('a').model = 'new-provider/model';
+    expect(s.limited(s.agent('a'))).toBe(false);
+    expect(s.limited(s.agent('a'), true)).toBe(true); // the previous failure still belongs to its observed resource
+  });
+  it('resumes only a selected paced quota and keeps unrelated limits', () => {
+    vi.useFakeTimers();
+    const s = office(), warning = { resetsAt: Date.now() + 60000, utilization: .9, rateLimitType: 'weekly' };
+    s.paceForWarning(warning, s.agent('a')); s.paceForWarning(warning, s.agent('b'));
+    const b = s.resourceKey(s.agent('b'));
+    s.resumeFullSpeed(b);
+    expect(s.usageNow().resources.find((r: any) => r.key === b).state).toBe('normal');
+    expect(s.usageNow().resources.find((r: any) => r.agentIds.includes('a')).state).toBe('pacing');
+    vi.clearAllTimers();
+  });
+});

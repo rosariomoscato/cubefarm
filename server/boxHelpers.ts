@@ -3,6 +3,8 @@
 // session's events file, which the office reads (server/boxCli.ts). Each line is ASCII-only JSON, written in one
 // append, so a reader that counts bytes never splits a line or a character.
 
+import { CODEX_USAGE_READER_SOURCE } from './codexUsage.ts';
+
 /** Shared by the scripts below: one event, one line. */
 const PUT = String.raw`
 const fs = require('fs');
@@ -68,8 +70,9 @@ process.stdin.on('data', (c) => (body += c));
 process.stdin.on('end', () => {
   try {
     const s = JSON.parse(body);
-    const ev = { hook_event_name: 'StatusLine', session_id: s.session_id, cost: s.cost, rate_limits: s.rate_limits };
-    const key = JSON.stringify([ev.cost && ev.cost.total_cost_usd, ev.rate_limits]);
+    const ev = { hook_event_name: 'StatusLine', session_id: s.session_id, cost: s.cost, rate_limits: s.rate_limits,
+      model: s.model && { id: s.model.id }, context_window: s.context_window && { total_input_tokens: s.context_window.total_input_tokens, total_output_tokens: s.context_window.total_output_tokens } };
+    const key = JSON.stringify([ev.cost && ev.cost.total_cost_usd, ev.rate_limits, ev.model, ev.context_window]);
     let last = '';
     try { last = fs.readFileSync(file + '.status', 'utf8'); } catch {}
     if (key !== last) {
@@ -96,11 +99,18 @@ if (event.type === 'agent-turn-complete') {
 /** Codex's hooks: what Codex tells a hook, to the events file (CUBEFARM_HOOK_URL holds its path in a Box). */
 export const BOX_CODEX_HOOK_SOURCE = String.raw`// cubefarm: Codex's hooks in a cloud agent's Box.
 ${PUT}
+${CODEX_USAGE_READER_SOURCE}
 const file = process.env.CUBEFARM_HOOK_URL;
 const chunks = [];
 process.stdin.on('data', (c) => chunks.push(c));
 process.stdin.on('end', () => {
-  try { if (file) put(file, JSON.parse(Buffer.concat(chunks).toString('utf8'))); } catch {}
+  try {
+    const event = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    if (file) {
+      try { const records = usageRecords(event); if (records.length) put(file, { hook_event_name: 'CodexUsage', session_id: event.session_id, records }); } catch {}
+      put(file, event);
+    }
+  } catch {}
 });
 `;
 

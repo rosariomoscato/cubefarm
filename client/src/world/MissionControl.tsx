@@ -123,6 +123,7 @@ export function MissionControl() {
   const ops = useStore((s) => s.ops);
   const repos = useStore((s) => s.repos);
   const usage = useStore((s) => s.usage);
+  const language = useStore((s) => s.settings.language);
 
   const tags = useMemo(
     () =>
@@ -158,7 +159,7 @@ export function MissionControl() {
     { floors: tags.map(({ tag, n }) => ({ ...tag, busy: n.busy, idle: n.idle, errors: n.errors })), total: { busy: t.busy, idle: t.idle, errors: t.errors } },
     drawTeam,
   );
-  const m = usageMeter(usage, officeNow());
+  const m = usageMeter(usage, officeNow(), language);
   const meterData: UsageScreen = {
     ...m,
     hint: usage.state === 'pacing' ? `Press ${use} to resume full speed` : usage.state === 'paused' ? "A pause at the limit can't be cleared early" : 'New work starts at full speed',
@@ -174,8 +175,8 @@ export function MissionControl() {
   );
   const meterRef = useInteractable<THREE.Group>(
     usage.state === 'pacing'
-      ? { id: 'usage-meter', label: "Resume full speed (Claude's usage is pacing new work)", action: { kind: 'resume' } }
-      : { id: 'usage-meter', label: `Claude usage: ${m.state.toLowerCase()} · open it in the console`, action: { kind: 'manager', tab: 'ops', card: 'usage' } },
+      ? { id: 'usage-meter', label: 'AI usage: select the quota to resume', action: { kind: 'resume' } }
+      : { id: 'usage-meter', label: 'AI usage: open it in the console', action: { kind: 'manager', tab: 'ops', card: 'usage' } },
     5,
   );
 

@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { CODEX_USAGE_READER_SOURCE } from './codexUsage.ts';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { run } from './exec.ts';
@@ -251,7 +252,7 @@ function opencodeLocal(local: ReturnType<typeof localModel>): Record<string, unk
 const EFFORT_CODEX: Record<EffortLevel, string> = { low: 'low', medium: 'medium', high: 'high', xhigh: 'xhigh', max: 'xhigh' };
 
 /** Codex hooks the office listens to: its steps, and Esc interrupting a turn. Turn endings come from notify. */
-export const CODEX_HOOK_EVENTS = ['SessionStart', 'UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Interrupt'];
+export const CODEX_HOOK_EVENTS = ['SessionStart', 'UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'Interrupt', 'Stop'];
 
 /**
  * The command Codex runs for each hook. It never changes (the office's address travels in CUBEFARM_HOOK_URL), so the
@@ -437,7 +438,7 @@ process.stdin.on('end', async () => {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ hook_event_name: 'StatusLine', session_id: status.session_id, cost: status.cost, rate_limits: status.rate_limits }),
+      body: JSON.stringify({ hook_event_name: 'StatusLine', session_id: status.session_id, model: status.model && { id: status.model.id }, cost: status.cost, rate_limits: status.rate_limits, context_window: status.context_window && { total_input_tokens: status.context_window.total_input_tokens, total_output_tokens: status.context_window.total_output_tokens } }),
       signal: AbortSignal.timeout(2000),
     });
     const out = await res.json();
@@ -468,12 +469,21 @@ if (event.type === 'agent-turn-complete') {
 
 /** Codex's hook program: passes what Codex tells a hook on to the office and answers nothing, so Codex carries on as usual. */
 export const CODEX_HOOK_SOURCE = String.raw`// cubefarm: Codex's hooks. Tells the office what Codex is doing; never changes what it does.
+${CODEX_USAGE_READER_SOURCE}
 const url = process.env.CUBEFARM_HOOK_URL;
 const chunks = [];
 process.stdin.on('data', (c) => chunks.push(c));
 process.stdin.on('end', async () => {
   try {
-    if (url) await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: Buffer.concat(chunks), signal: AbortSignal.timeout(5000) });
+    const body = Buffer.concat(chunks);
+    const event = JSON.parse(body.toString('utf8'));
+    if (url) {
+      try {
+        const records = usageRecords(event);
+        if (records.length) await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ hook_event_name: 'CodexUsage', session_id: event.session_id, records }), signal: AbortSignal.timeout(2000) });
+      } catch { /* optional transcript telemetry never blocks the lifecycle hook */ }
+      await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body, signal: AbortSignal.timeout(5000) });
+    }
   } catch {}
   process.stdout.write('{}');
 });
@@ -488,6 +498,7 @@ export default {
     if (!sessionID || !notifyUrl) throw new Error('Missing Droidsembly callback configuration');
     const controller = new AbortController();
     let lastIdle;
+    const reportedUsage = new Map();
     const post = async (body) => {
       const response = await fetch(notifyUrl, {
         method: 'POST', headers: { 'content-type': 'application/json' },
@@ -507,6 +518,41 @@ export default {
       if (model) await ctx.session.switchModel({ sessionID, model });
       await post({ hook_event_name: 'UserPromptSubmit', prompt: event.prompt.text });
     });
+    // Active connection metadata only. Never resolve a credential or inspect request headers/bodies.
+    const resourceFor = async (model) => {
+      const resource = { provider: model?.providerID ?? null, model: model?.id ?? null, account: null, access: 'unknown' };
+      try {
+        const provider = await ctx.provider.get({ providerID: model.providerID });
+        const connection = provider.integrationID && await ctx.integration.connection.active(provider.integrationID);
+        if (connection?.type === 'credential') {
+          resource.account = connection.id;
+          // OAuth is an authentication method, not proof of a subscription billing plan.
+          if (connection.method === 'key') resource.access = 'api';
+        }
+      } catch { /* provider discovered, connection identity unavailable */ }
+      return resource;
+    };
+    const reportResource = async (event, limit = false, resetsAt = null) => {
+      if (event.sessionID !== sessionID) return;
+      try {
+        const resource = await resourceFor(event.model);
+        await post({ hook_event_name: limit ? 'AiLimit' : 'AiResource', resource, status: limit ? 429 : undefined, resetsAt });
+      } catch { /* telemetry must never change provider execution */ }
+    };
+    const observe = async (name, callback) => {
+      try { await ctx.session.hook(name, callback); } catch { /* older V2: completion still works without this signal */ }
+    };
+    await observe('model.request', (event) => reportResource(event));
+    await observe('http.response', async (event) => {
+      if (event.sessionID !== sessionID || event.response.status !== 429) return;
+      const retry = event.response.headers.get('retry-after');
+      const seconds = retry && /^\d+(?:\.\d+)?$/.test(retry) ? Number(retry) : NaN;
+      const at = Number.isFinite(seconds) ? Date.now() + seconds * 1000 : retry ? Date.parse(retry) : NaN;
+      await reportResource(event, true, Number.isFinite(at) ? at : null);
+    });
+    await observe('retry', async (event) => {
+      if (event.error?.status === 429) await reportResource(event, true);
+    });
     const listen = async () => {
       for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
         const props = event.data ?? event.properties ?? event;
@@ -517,6 +563,24 @@ export default {
         ]);
         const idle = messages.at(-1);
         if (idle?.id && idle.id === lastIdle) continue;
+        // Report the actual historical model, never the current configured default.
+        // Only usage fields cross the callback boundary; message content is excluded.
+        for (const m of messages) {
+          if (m.type !== 'assistant' || !m.id || !m.time) continue;
+          const message = {
+            id: m.id, type: m.type, time: { created: m.time.created },
+            model: m.model && { providerID: m.model.providerID, id: m.model.id },
+            cost: m.cost, tokens: m.tokens && {
+              input: m.tokens.input, output: m.tokens.output, reasoning: m.tokens.reasoning,
+              cache: m.tokens.cache && { read: m.tokens.cache.read, write: m.tokens.cache.write },
+            },
+          };
+          const fingerprint = JSON.stringify(message);
+          if (reportedUsage.get(m.id) === fingerprint) continue;
+          await post({ hook_event_name: 'AiUsage', message })
+            .then(() => reportedUsage.set(m.id, fingerprint))
+            .catch((err) => console.warn('Droidsembly usage observation:', String(err)));
+        }
         const outcome = event.type === 'session.execution.failed' ? 'failed'
           : event.type === 'session.execution.interrupted' ? 'interrupted'
           : event.type === 'session.execution.succeeded' ? 'succeeded'
