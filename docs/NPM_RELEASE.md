@@ -2,9 +2,17 @@
 
 ## Stato / Status
 
-**IT:** Preparazione locale autorizzata: pacchetto pubblico `droidsembly`, comando `droidsembly`, versione `0.4.0-beta.1`, canale `next`. Non ancora pubblicato. Account npm indicato dal manager: `rosariomoscato`; la titolarità del pacchetto e la configurazione del publisher non sono state verificate tramite login.
+**IT:** Pubblicato e verificato [droidsembly@0.4.0-beta.1](https://www.npmjs.com/package/droidsembly), comando `droidsembly`, canale consigliato `next`, dal commit `803cb9eab25fc98a5312667f91b43fbd3a77fccc`. Prima pubblicazione effettuata con account `rosariomoscato` e verifica interattiva 2FA. Il publisher GitHub/OIDC resta da configurare e validare per una futura versione.
 
-**EN:** Authorized local preparation: public package `droidsembly`, command `droidsembly`, version `0.4.0-beta.1`, channel `next`. Not published yet. The maintainer supplied npm username `rosariomoscato`; package ownership and publisher setup have not been verified through authentication.
+**EN:** [droidsembly@0.4.0-beta.1](https://www.npmjs.com/package/droidsembly) is published and verified, with command `droidsembly` and recommended channel `next`, from commit `803cb9eab25fc98a5312667f91b43fbd3a77fccc`. The initial publication used account `rosariomoscato` and interactive 2FA. GitHub/OIDC publishing still needs configuration and validation for a future version.
+
+**IT:** Il registry punta sia `next` sia `latest` alla prima beta. La rimozione di `latest` è stata rifiutata con E400: non ripetere il tentativo né ripubblicare la versione. Documentare esplicitamente lo stato beta; una futura stabile aggiornerà `latest`. Durante l'elaborazione iniziale npm mostrava temporaneamente `0.0.0-stage`: attendere la disponibilità e verificare l'integrità, senza duplicare l'invio.
+
+**EN:** The registry points both `next` and `latest` to the first beta. Removing `latest` was rejected with E400: do not retry removal or republish the version. Explicitly document beta status; a future stable release will update `latest`. During initial processing npm temporarily exposed `0.0.0-stage`: wait for availability and verify integrity rather than submitting again.
+
+SHA256 del tarball pubblico verificato / verified public tarball SHA256:
+`D0E7E4E72F1A9F824C7655B17EDCC67D7F247EABCD03538EB8557DF54CCD8BBA`.
+Smoke del download pubblico superato: CLI, 93 testi di licenza client, browser tool, HTTP e demo isolata. / Public-download smoke passed: CLI, 93 client license texts, browser tool, HTTP and isolated demo.
 
 ## Compatibilità / Compatibility
 
@@ -33,7 +41,7 @@ Su macOS/Linux usare `npm` e la sintassi della shell per le variabili. La suite 
 
 Lo smoke installa il tarball effettivo in una cartella temporanea, controlla versione/help tramite il comando installato, verifica licenze e avvia solo la demo. `CI=1` disabilita il controllo degli aggiornamenti. Non usa l'ufficio reale né richieste AI. / The smoke installs the actual tarball in a temporary folder, checks the installed command's version/help and license files, and starts only a demo. `CI=1` disables update checks. It does not use the real office or make AI requests.
 
-## Prima pubblicazione / First publication
+## Bootstrap completato e OIDC futuro / Completed bootstrap and future OIDC
 
 Per verificare un artefatto già conservato, passarlo come argomento: `node scripts/smoke-package.mjs "percorso/droidsembly-0.4.0-beta.1.tgz"`. Non viene ricreato. / To validate a retained artifact without repacking it, pass its path as the script's argument.
 
@@ -42,7 +50,17 @@ Per verificare un artefatto già conservato, passarlo come argomento: `node scri
 3. Configurare OIDC per owner `rosariomoscato`, repository `droidsembly`, workflow `release.yml`, autorizzando la pubblicazione diretta `npm publish`. Node >=22.14.0 e npm >=11.5.1 sono richiesti per OIDC; il job usa Node 24 e npm 11. / Configure OIDC with those exact fields and allow direct `npm publish`; the job uses Node 24 and npm 11 to meet the OIDC requirements.
 4. Configurare il publisher quando pronti: secondo le regole npm consultate, una nuova configurazione scade se non validata entro due giorni. / Configure the publisher when ready: current npm rules expire an unused new configuration after two days.
 
-Nessun comando di pubblicazione viene eseguito da queste istruzioni o dai controlli locali. Il primo rilascio richiede autorizzazione distinta. / These instructions and local checks perform no publication. The first release requires separate authorization.
+I controlli locali non pubblicano nulla. Ogni nuova pubblicazione richiede autorizzazione distinta. / Local checks perform no publication. Each new publication requires separate authorization.
+
+Il bootstrap descritto ai punti 1–2 è già completato per questa beta. Configurare OIDC vicino alla prossima pubblicazione: la documentazione npm attuale richiede un primo publish riuscito entro due giorni. Campi GitHub: owner `rosariomoscato`, repository `droidsembly`, workflow `release.yml`, environment vuoto (il job non ne usa uno), consentire `npm publish`. Il workflow usa Node 24/npm 11 e `id-token: write`. Salvare la configurazione non ne prova il funzionamento; non ripubblicare la beta per validarla.
+
+Bootstrap steps 1–2 above are complete for this beta. Configure OIDC close to the next publication: current npm documentation requires a first successful publish within two days. GitHub fields: owner `rosariomoscato`, repository `droidsembly`, workflow `release.yml`, environment empty (the job does not use one), allow `npm publish`. The workflow uses Node 24/npm 11 and `id-token: write`. Saving the configuration does not prove it works; do not republish this beta to validate it.
+
+## Prima release GitHub / First GitHub release
+
+La beta npm esiste già. Per documentarla su GitHub, dopo autorizzazione creare il tag `droidsembly-v0.4.0-beta.1` sul commit esatto `803cb9eab25fc98a5312667f91b43fbd3a77fccc` e una release marcata **prerelease**, con note EN/IT. Non avviare il workflow Release per questa versione: tenterebbe un'altra pubblicazione npm. Il tag deve identificare il codice pubblicato, non un successivo commit di sola documentazione.
+
+The npm beta already exists. To document it on GitHub, after authorization create tag `droidsembly-v0.4.0-beta.1` at exact commit `803cb9eab25fc98a5312667f91b43fbd3a77fccc` and a release marked **prerelease**, with EN/IT notes. Do not dispatch the Release workflow for this version: it would attempt another npm publication. The tag must identify the published code, not a later documentation-only commit.
 
 ## Release successive / Subsequent releases
 
