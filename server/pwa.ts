@@ -14,7 +14,7 @@ export function serviceWorkerSource(version: string): string {
   return `// cubefarm's service worker (server/pwa.ts). Version ${version}.
 const VERSION = ${JSON.stringify(version)};
 const CACHE = 'cubefarm-shell-' + VERSION;
-const PRECACHE = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
+const PRECACHE = ['/', '/manifest.webmanifest', ...['icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png', 'icon.svg', 'favicon.svg', 'favicon-32.png', 'badge-96.png', 'sora-400.ttf', 'sora-700.ttf', 'droid-wire.svg', 'droid-shell.svg', 'droid-eyes.svg', 'droid-antenna.svg', 'droid-spark.svg'].map(name => '/icons/' + name)];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
@@ -63,7 +63,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  let n = { title: 'cubefarm', body: '', tag: 'cubefarm', url: '/' };
+  let n = { title: 'Droidsembly', body: '', tag: 'cubefarm', url: '/' };
   try {
     n = Object.assign(n, event.data ? event.data.json() : {});
   } catch {}

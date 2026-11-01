@@ -1,14 +1,14 @@
 {
   "id": "/",
-  "name": "cubefarm",
-  "short_name": "cubefarm",
+  "name": "Droidsembly",
+  "short_name": "Droidsembly",
   "description": "Your AI coding office: its pipeline, the CEO chat, the board, the team and the decisions waiting on you.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#fffdf6",
-  "theme_color": "#ff8a5b",
+  "background_color": "#faf9f5",
+  "theme_color": "#101925",
   "categories": ["productivity", "developer"],
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

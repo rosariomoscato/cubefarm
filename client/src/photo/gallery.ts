@@ -54,5 +54,5 @@ export const saveItem = (i: GalleryItem) => download(i.url, i.name);
 export function here(): { label: string; floor: number } {
   const s = useStore.getState();
   const repo = s.floor === 0 ? null : repoOnFloor(s.repos, s.floor);
-  return { label: repo?.fullName ?? (s.settings.companyName || 'cubefarm'), floor: repo ? repo.floor : 0 };
+  return { label: repo?.fullName ?? (s.settings.companyName || 'Droidsembly'), floor: repo ? repo.floor : 0 };
 }

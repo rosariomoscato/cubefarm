@@ -1075,16 +1075,12 @@ input.inline:focus {
 }
 .start .btn-big,
 .wizard .wizard-nav .btn-good {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
   background: var(--accent);
   color: var(--ink);
   text-shadow: none;
-}
-.start-logo {
-  font-size: 4rem;
-  line-height: 1;
-  color: #17485c;
-  animation: spin 12s linear infinite;
-  display: inline-block;
 }
 @keyframes spin {
   to {
@@ -2546,7 +2542,6 @@ input.inline:focus {
   width: min(680px, 100%);
 }
 .wizard h1,
-.wizard .start-logo,
 .wizard .start-tag,
 .wizard h2,
 .wizard-icon {
@@ -2560,11 +2555,6 @@ input.inline:focus {
 .wizard-icon {
   font-size: 3rem;
   line-height: 1.1;
-}
-.wizard .start-logo {
-  display: block;
-  width: fit-content;
-  margin: 0 auto;
 }
 .wizard .btn-big {
   display: block;
@@ -3942,12 +3932,6 @@ input.inline:focus {
   padding-top: max(8px, env(safe-area-inset-top));
   background: #17485c;
   border-bottom: 3px solid var(--ink);
-}
-.pk-logo {
-  font-size: 1.5rem;
-  line-height: 1;
-  color: #fff;
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
 }
 .pk-title {
   color: #faf8f5;

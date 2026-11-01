@@ -2,6 +2,8 @@
 // date caption and (on screen only) rule-of-thirds guides. The same code draws the preview over the 3D view, the
 // finished shot at its full size and every frame of a clip, so they all match. Sizes follow the picture's height.
 
+import { drawBrandIcon } from '../world/brand';
+
 export interface OverlayOptions {
   frame: boolean;
   stamp: string | null;
@@ -88,8 +90,8 @@ export function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number,
   if (o.stamp) {
     const size = Math.round(unit * 3.4);
     ctx.font = `700 ${size}px ${FONT}`;
-    const label = `✻ ${o.stamp}`;
-    const tw = Math.min(ctx.measureText(label).width, inner.w * 0.5);
+    const iconWidth = size * 1.5;
+    const tw = Math.min(ctx.measureText(o.stamp).width + iconWidth, inner.w * 0.5);
     const pad = size * 0.5;
     const bw = tw + pad * 2;
     const bh = size + pad * 1.3;
@@ -104,9 +106,9 @@ export function drawOverlay(ctx: CanvasRenderingContext2D, w: number, h: number,
     ctx.fillStyle = '#ff8a5b';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText('✻', x + pad, y + bh / 2);
+    drawBrandIcon(ctx, x + pad, y + (bh - size * 1.3) / 2, size * 1.3);
     ctx.fillStyle = '#1f1d2b';
-    ctx.fillText(o.stamp, x + pad + ctx.measureText('✻ ').width, y + bh / 2, tw - ctx.measureText('✻ ').width);
+    ctx.fillText(o.stamp, x + pad + iconWidth, y + bh / 2, Math.max(1, tw - iconWidth));
   }
   ctx.restore();
 }

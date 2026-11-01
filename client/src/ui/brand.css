@@ -1,0 +1,27 @@
+@font-face { font-family: Sora; font-style: normal; font-weight: 400; font-display: swap; src: url('/icons/sora-400.ttf') format('truetype'); }
+@font-face { font-family: Sora; font-style: normal; font-weight: 700; font-display: swap; src: url('/icons/sora-700.ttf') format('truetype'); }
+.brand-lockup { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 12px auto 18px; color: #101925; }
+.brand-icon { display: inline-block; position: relative; width: 40px; aspect-ratio: 152 / 170; flex-shrink: 0; vertical-align: middle; }
+.brand-icon img { display: block; width: 100%; height: 100%; }
+.brand-lockup > .brand-icon { width: 94px; }
+.brand-type { min-width: 0; text-align: left; font-family: Sora, sans-serif; }
+.brand-name { font-size: clamp(1.35rem, 4.8vw, 2.4rem); font-weight: 700; letter-spacing: -.06em; white-space: nowrap; }
+.brand-name span { color: #007eaf; }
+.brand-payoff { margin-top: 6px; font-size: clamp(.6rem, 2vw, .85rem); line-height: 1.5; }
+.brand-parts, .brand-part { position: absolute; inset: 0; }
+.brand-assemble .brand-static { animation: brand-final 2.2s step-end both; }
+.brand-assemble .brand-parts { animation: brand-parts 2.2s step-end both; }
+.brand-shell { animation: brand-reveal .65s .25s both; }
+.brand-eyes { animation: brand-reveal .4s .8s both; }
+.brand-antenna { animation: brand-reveal .4s 1.15s both; }
+.brand-spark { animation: brand-spark .6s 1.55s both; }
+.brand-wire { animation: brand-wire 1s both; }
+@keyframes brand-reveal { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes brand-spark { 0%,100% { opacity: 0; } 35%,65% { opacity: 1; } }
+@keyframes brand-wire { from { opacity: .7; } to { opacity: 0; } }
+@keyframes brand-final { from { visibility: hidden; } to { visibility: visible; } }
+@keyframes brand-parts { from { visibility: visible; } to { visibility: hidden; } }
+[data-reduce-motion] .brand-icon *, [data-reduce-motion] .brand-icon .brand-static { animation: none; visibility: visible; }
+[data-reduce-motion] .brand-icon .brand-parts { display: none; }
+@media (prefers-reduced-motion: reduce) { .brand-icon * { animation: none !important; visibility: visible !important; } .brand-icon .brand-parts { display: none; } }
+@media (max-width: 420px) { .brand-lockup { gap: 8px; } .brand-lockup > .brand-icon { width: 64px; } }

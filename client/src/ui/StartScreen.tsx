@@ -8,6 +8,7 @@ import { Key } from './Key';
 import { SetupWizard } from './SetupWizard';
 import { unlockAudio } from './sfx';
 import { announce } from './announce';
+import { Brand } from './Brand';
 
 export function StartScreen() {
   const t = useT();
@@ -40,8 +41,8 @@ export function StartScreen() {
     <div className="start">
       <div className="start-card">
         {loaded && <LanguageSelect />}
-        <div className="start-logo">✻</div>
-        <h1>{settings.companyName || 'cubefarm'}</h1>
+        <Brand animated />
+        {settings.companyName && <h1>{settings.companyName}</h1>}
         <p className="start-tag">{settings.managerName ? t('Welcome back, {name}.', { name: settings.managerName }) : t('A cartoon office where a team of AI coding agents works through your GitHub issues.')}</p>
         <ul className="start-list">
           <li>
@@ -60,7 +61,7 @@ export function StartScreen() {
             <T>📱 Pocket mode, for phones and touch screens</T>
           </button>
           {demo && <span className="pill pill-demo"><T>DEMO MODE: fake repos, fake agents</T></span>}
-          {version && <span className="small">cubefarm {version}</span>}
+          {version && <span className="small">Droidsembly {version}</span>}
         </div>
       </div>
     </div>

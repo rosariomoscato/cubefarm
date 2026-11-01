@@ -7,6 +7,7 @@ import { inkOn } from '../ui/colorMath';
 import { KIND_ICON, kindStrong, STANDARD_LOOK, STATUS_KIND, TONE_KIND, toneFill, type StatusKind, type StatusLook } from '../ui/statusLook';
 import { statsChips, type BoardStats } from './boardStats';
 import type { Pair } from './whiteboard';
+import { drawBrandIcon } from './brand';
 
 // 2D canvas painters for everything in the office that shows text: laptop terminals,
 // the Kanban whiteboard, signs and name tags.
@@ -182,7 +183,7 @@ function drawScreensaver(ctx: CanvasRenderingContext2D, x: number, y: number, w:
   const by = y + h / 2 + Math.cos(t * 0.9) * h * 0.18;
   ctx.textAlign = 'center';
   ctx.font = `64px ${SANS}`;
-  ctx.fillText('✻', bx, by - 20);
+  drawBrandIcon(ctx, bx - 36, by - 90, 80);
   ctx.fillStyle = '#ffd6a5';
   ctx.font = `600 26px ${SANS}`;
   ctx.fillText(`${agent.name} is free`, bx, by + 34);

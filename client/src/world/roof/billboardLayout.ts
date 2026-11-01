@@ -123,6 +123,6 @@ export function boardTexts(n: OfficeNumbers): BoardText[] {
     { top: 'AGENTS AT WORK RIGHT NOW', big: `${n.working} / ${n.agents}`, under: `on ${plural(n.floors, 'floor')}`, bg: '#ffd166', fg: '#2b2d42' },
     { top: 'PULL REQUESTS MERGED', big: String(n.merged), under: `${n.openPrs} open · ${n.inQa} in QA`, bg: '#06d6a0', fg: '#073b4c' },
     { top: 'OPEN ISSUES', big: String(n.issues), under: n.issues ? 'the backlog awaits' : 'inbox zero!', bg: '#ef476f', fg: '#ffffff' },
-    { top: (n.company || 'cubefarm').toUpperCase(), big: 'SHIP IT', under: 'small PRs, happy reviewers', bg: '#3a86ff', fg: '#ffffff' },
+    { top: (n.company || 'Droidsembly').toUpperCase(), big: 'SHIP IT', under: 'small PRs, happy reviewers', bg: '#3a86ff', fg: '#ffffff' },
   ];
 }

@@ -6,6 +6,7 @@ import { requestLook } from '../world/Player';
 import { CEO_ID, type RepoView } from '../../../shared/types';
 import { Key } from './Key';
 import { ProjectPicker } from './ProjectPicker';
+import { Brand } from './Brand';
 
 // First run: who you are, the company, your CEO and your first project. Every field has a default, so
 // "Skip" (or just pressing Next) gets a working office.
@@ -101,8 +102,8 @@ export function SetupWizard() {
 
         {step === 0 && (
           <>
-            <div className="start-logo">✻</div>
-            <h1>cubefarm</h1>
+            <Brand animated />
+            <h1 className="sr-only">Droidsembly</h1>
             <p className="start-tag"><T>Your own cartoon software company, staffed by AI coding agents.</T></p>
             <ul className="start-list">
               <li><T>🏢 Every project gets its own floor, with a team of coding agents building and testing its GitHub issues.</T></li>

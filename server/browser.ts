@@ -51,7 +51,7 @@ export const hasChrome = () => chromePaths().some((p) => fs.existsSync(p));
 
 /** The one line a session's log shows when browser testing can't work on this machine, or null when it can. */
 export function browserProblem(mcp: McpCommand | null, chrome = hasChrome()): string | null {
-  if (!mcp) return '⚠ The browser tool (@playwright/mcp) is not installed with cubefarm: reinstall it, or run npx cubefarm doctor';
+  if (!mcp) return '⚠ The browser tool (@playwright/mcp) is not installed with Droidsembly: reinstall it, or run npx cubefarm doctor';
   if (!chrome) return '⚠ Google Chrome not found, so this session cannot test in a browser: install it, or run npx cubefarm doctor';
   return null;
 }

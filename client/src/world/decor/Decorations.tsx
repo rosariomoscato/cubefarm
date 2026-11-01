@@ -202,7 +202,7 @@ function Arcade({ accent }: { accent: string }) {
       ctx.textAlign = 'center';
       ctx.font = `700 20px monospace`;
       ctx.fillStyle = '#ffd166';
-      ctx.fillText('CUBEFARM', 128, 34);
+      ctx.fillText('DROIDSEMBLY', 128, 34);
       ctx.font = `700 16px monospace`;
       ['▶ CUBETRIS', '  CABLE SNAKE', '  DESK PET'].forEach((t, i) => {
         ctx.fillStyle = i === 0 ? '#7CFFB2' : '#c77dff';

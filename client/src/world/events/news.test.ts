@@ -19,9 +19,9 @@ describe('the blimp banner', () => {
   it("doesn't count yesterday's merges as today's, and has a friendly line when there's no news", () => {
     const yesterday = (h: number) => new Date(2026, 9, 3, h).toISOString();
     const floors = [{ floor: 1, fullName: 'a/one', pulls: [pr(1, yesterday(18)), pr(2, yesterday(20))] }];
-    expect(bannerLines(floors, now)).toEqual(['PR #2 merged! 🎉', 'cubefarm ♥ its team']);
-    expect(bannerLines([{ floor: 1, fullName: 'a/one', pulls: [pr(3, yesterday(9))] }], now)).toEqual(['cubefarm ♥ its team']); // over a day ago
-    expect(bannerText([], now, '', 0.5)).toBe('cubefarm ♥ its team');
+    expect(bannerLines(floors, now)).toEqual(['PR #2 merged! 🎉', 'Droidsembly ♥ its team']);
+    expect(bannerLines([{ floor: 1, fullName: 'a/one', pulls: [pr(3, yesterday(9))] }], now)).toEqual(['Droidsembly ♥ its team']); // over a day ago
+    expect(bannerText([], now, '', 0.5)).toBe('Droidsembly ♥ its team');
   });
 });
 
@@ -30,6 +30,6 @@ describe('skywriting', () => {
     expect(skyText('demo-co/pixel-todo', 'Demo Co.')).toBe('PIXEL TODO');
     expect(skyText(null, 'Demo Co.')).toBe('DEMO CO.');
     expect(skyText('a/a-very-long-repository-name', '')).toHaveLength(14);
-    expect(skyText(null, '')).toBe('CUBEFARM');
+    expect(skyText(null, '')).toBe('DROIDSEMBLY');
   });
 });

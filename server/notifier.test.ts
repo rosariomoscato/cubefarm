@@ -54,7 +54,7 @@ describe('notification secrets', () => {
     const pr = out.filter((l) => l.includes('⚠️ PR #4 needs you'));
     expect(pr.map((l) => l.match(/demo (\w+)/)?.[1]).sort()).toEqual(['ntfy', 'push']);
     expect(pr[0]).toContain('pixel-todo: Add login. ⏎ https://office.example.ts.net/');
-    expect(sent.filter((m) => JSON.parse(m).type === 'notify').map((m) => (JSON.parse(m).note as NoteView).title)).toEqual(['⚠️ PR #4 needs you', '🔔 Test from cubefarm']);
+    expect(sent.filter((m) => JSON.parse(m).type === 'notify').map((m) => (JSON.parse(m).note as NoteView).title)).toEqual(['⚠️ PR #4 needs you', '🔔 Test from Droidsembly']);
 
     const snap = swarm.snapshot();
     expect(snap.notifyChannels.webhooks.ntfy).toEqual({ set: true, hint: 'ntfy.sh/…4242 · with a token' });

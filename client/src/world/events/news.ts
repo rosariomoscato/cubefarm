@@ -24,7 +24,7 @@ export function bannerLines(floors: readonly Floor[], now: number, company = '')
   if (busiest) lines.push(`Floor ${busiest.floor}: ${busiest.n} merges today`);
   const open = floors.reduce((n, f) => n + f.pulls.filter((p) => p.state === 'OPEN').length, 0);
   if (open > 0) lines.push(`${open} PR${open === 1 ? '' : 's'} in flight 🚀`);
-  lines.push(`${company.trim() || 'cubefarm'} ♥ its team`);
+  lines.push(`${company.trim() || 'Droidsembly'} ♥ its team`);
   return lines;
 }
 
@@ -37,7 +37,7 @@ export function bannerText(floors: readonly Floor[], now: number, company: strin
 
 /** What the skywriter spells: the floor's repo name (or the company's in the lobby), short enough for the sky. */
 export function skyText(repoFullName: string | null, company: string): string {
-  const name = repoFullName ? (repoFullName.split('/').pop() ?? repoFullName) : company.trim() || 'cubefarm';
+  const name = repoFullName ? (repoFullName.split('/').pop() ?? repoFullName) : company.trim() || 'Droidsembly';
   const clean = name.replace(/[^\p{L}\p{N} .!&+-]/gu, ' ').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
   return (clean || 'hello').slice(0, 14).toUpperCase();
 }
